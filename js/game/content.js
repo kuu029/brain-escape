@@ -1,0 +1,89 @@
+// キャラ・タワー・道具・スキンの定義（すべてオリジナル。見た目は絵文字＋図形）
+
+// 敵（看守たち）
+export const ENEMY_LOOK = {
+  grunt: { emoji: '🧦', name: 'クツシタ看守' },
+  runner: { emoji: '🐟', name: 'サンマ・ローラー' },
+  tank: { emoji: '🧊', name: 'レイゾウコ・ゴリーノ' },
+  review: { emoji: '👻', name: 'リベンジおばけ' },
+  boss: { emoji: '🗿', name: '看守長' },
+};
+
+// 単元ごとのボス
+export const BOSSES = {
+  'signed-numbers': { emoji: '🧲', name: 'ジシャク・カニーニ' },
+  'fractions-decimals': { emoji: '🍩', name: 'ドーナツ・ワクセイ卿' },
+  expressions: { emoji: '🧽', name: 'スポンジ・ケンポー' },
+  'linear-equations': { emoji: '🪣', name: 'バケツ・ドラマーレ' },
+  polynomials: { emoji: '🔌', name: 'コンセント・ブタリーノ' },
+  simultaneous: { emoji: '🦷', name: 'ハミガキ・シャークス' },
+  'expand-factor': { emoji: '🥫', name: 'カンヅメ・カイゾク' },
+  'square-roots': { emoji: '🐌', name: 'カタツムリ・ターボ' },
+  quadratic: { emoji: '🐸', name: 'カエル・ネクタイーノ総長' },
+};
+
+// コレクション用カード
+export const CARDS = [
+  { id: 'kutsushita', emoji: '🧦', name: 'クツシタ看守', rarity: 1, text: '左右で柄がちがう。本人は気にしていない。' },
+  { id: 'sanma', emoji: '🐟', name: 'サンマ・ローラー', rarity: 1, text: 'ローラースケートで2マス進む。止まり方は知らない。' },
+  { id: 'reizouko', emoji: '🧊', name: 'レイゾウコ・ゴリーノ', rarity: 2, text: 'かたい。中身はプリンだけ。' },
+  { id: 'obake', emoji: '👻', name: 'リベンジおばけ', rarity: 1, text: '前に間違えた問題をおぼえている。しつこい。' },
+  { id: 'broccoli', emoji: '🥦', name: 'ブロッコ・ブンブンチーノ', rarity: 1, text: 'ヘッドホンで重低音を浴びている。野菜です。' },
+  { id: 'onigiri', emoji: '🍙', name: 'オニギリ・メガネーゼ', rarity: 1, text: '具は不明。メガネは伊達。' },
+  { id: 'toast', emoji: '🍞', name: 'トースト・ジャンピーノ', rarity: 1, text: '焼けると跳ぶ。焦げると拗ねる。' },
+  { id: 'duck', emoji: '🦆', name: 'アヒル・ラッパリーニ', rarity: 2, text: 'ラッパで朝を告げる。うるさい。' },
+  { id: 'kani', emoji: '🧲', name: 'ジシャク・カニーニ', rarity: 3, text: 'プラスとマイナスを引きよせる磁石ガニ。' },
+  { id: 'donut', emoji: '🍩', name: 'ドーナツ・ワクセイ卿', rarity: 3, text: '穴の大きさは分数で表せるらしい。' },
+  { id: 'sponge', emoji: '🧽', name: 'スポンジ・ケンポー', rarity: 3, text: '同類項を吸いこむ拳法の達人。' },
+  { id: 'bucket', emoji: '🪣', name: 'バケツ・ドラマーレ', rarity: 3, text: '左右のバランス（＝）にうるさいドラマー。' },
+  { id: 'consent', emoji: '🔌', name: 'コンセント・ブタリーノ', rarity: 3, text: 'かっこを外すとビリっとくる。' },
+  { id: 'hamigaki', emoji: '🦷', name: 'ハミガキ・シャークス', rarity: 3, text: '2本の式で獲物をはさむ。' },
+  { id: 'kanzume', emoji: '🥫', name: 'カンヅメ・カイゾク', rarity: 3, text: '中身を全部かっこに詰めこむ海賊。' },
+  { id: 'katatsumuri', emoji: '🐌', name: 'カタツムリ・ターボ', rarity: 3, text: '殻の中に√が巻いている。意外と速い。' },
+  { id: 'kaeru', emoji: '🐸', name: 'カエル・ネクタイーノ総長', rarity: 4, text: '監獄のラスボス。解は2つ持っている。' },
+  { id: 'moai', emoji: '🗿', name: '無言のモアイ看守', rarity: 2, text: '何も言わない。たまにまばたきする。' },
+  { id: 'pigeon', emoji: '🕊️', name: 'ハト・デンセツーノ', rarity: 2, text: '脱獄の手紙を運ぶ。読まずに食べることもある。' },
+  { id: 'snail', emoji: '🧃', name: 'ジュース・ストローネ', rarity: 1, text: 'ストローが3本ささっている。全部ちがう味。' },
+  { id: 'robot', emoji: '🤖', name: 'ポンコツ計算ロボ', rarity: 2, text: '計算は速いが、たまに符号をまちがえる。' },
+  { id: 'sushi', emoji: '🍣', name: 'スシ・ボクサーノ', rarity: 2, text: '回転しながらパンチを出す。' },
+  { id: 'banana-car', emoji: '🛺', name: 'サンリン・バクソーノ', rarity: 2, text: '三輪車でドリフトする看守。' },
+  { id: 'cheese', emoji: '🧀', name: 'チーズ・ホールズ', rarity: 1, text: '穴の数をいつも数えている。' },
+  { id: 'crown', emoji: '👑', name: '脱獄王', rarity: 4, text: 'ブレイン監獄を完全制覇した者だけが持つ称号。' },
+];
+// ボス撃破でもらえるカード
+export const BOSS_CARD = {
+  'signed-numbers': 'kani', 'fractions-decimals': 'donut', expressions: 'sponge', 'linear-equations': 'bucket',
+  polynomials: 'consent', simultaneous: 'hamigaki', 'expand-factor': 'kanzume', 'square-roots': 'katatsumuri', quadratic: 'kaeru',
+};
+// ガチャに出るカード（ボス・称号以外）
+export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2).map((c) => c.id);
+
+// タワー
+export const TOWER_LOOK = {
+  beam: { emoji: '🔫', name: 'ビーム砲', desc: '前の敵に 1/2/3 ダメージ' },
+  frost: { emoji: '❄️', name: 'ひえひえ扇風機', desc: '近くの敵の足を止める（強化でダメージも）' },
+  bomb: { emoji: '💣', name: 'ポップコーン爆弾', desc: '近くの敵ぜんぶに 1/1/2 ダメージ' },
+};
+
+// タワーのスキン（色・見た目）
+export const SKINS = [
+  { id: 'default', name: 'ノーマル', cls: 'skin-default', cost: 0 },
+  { id: 'neon', name: 'ネオン', cls: 'skin-neon', cost: 60 },
+  { id: 'gold', name: 'ゴールド', cls: 'skin-gold', cost: 120 },
+  { id: 'candy', name: 'キャンディ', cls: 'skin-candy', cost: 80 },
+  { id: 'pixel', name: 'ドット', cls: 'skin-pixel', cost: 100 },
+  { id: 'lava', name: 'マグマ', cls: 'skin-lava', cost: 150 },
+];
+
+// 道具（訓練をクリアするともらえる。ウェーブ中に1回ずつ使える）
+export const TOOLS = {
+  coins: { emoji: '💰', name: 'へそくり', desc: 'コイン +40' },
+  heal: { emoji: '🔑', name: '予備のカギ', desc: 'ライフ +1' },
+  freeze: { emoji: '🧊', name: 'こおりスプレー', desc: '敵が2ターン動けない' },
+  nuke: { emoji: '🧨', name: 'ハリセン爆弾', desc: '全部の敵に2ダメージ' },
+  sniper: { emoji: '🎯', name: 'スナイパー', desc: '先頭の敵に5ダメージ' },
+  double: { emoji: '⚡', name: 'ダブルパンチ', desc: '次の3回、正解のこうげきが2倍' },
+  rewind: { emoji: '⏪', name: 'まきもどし', desc: '全部の敵を2マス戻す' },
+  wall: { emoji: '🧱', name: 'バリケード', desc: '次に出口へ来た敵を2体ブロック' },
+  mega: { emoji: '🛠️', name: 'メガ改造', desc: '全部のタワーを1段階強化' },
+};
