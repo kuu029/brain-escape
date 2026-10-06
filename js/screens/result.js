@@ -5,6 +5,27 @@ import { CARDS } from '../game/content.js';
 import { go } from '../core/router.js';
 import { canBoss } from '../game/progress.js';
 import { answerLine } from '../ui/answer.js';
+import { cardSprite } from '../game/art.js';
+import { sfx } from '../core/sound.js';
+
+// 数字がカチカチ増えていく表示
+function countUp(to, fmt, delay) {
+  const b = h('b', { class: 'count' }, fmt(0));
+  const steps = Math.min(Math.max(to, 1), 20);
+  setTimeout(() => {
+    let i = 0;
+    const t = setInterval(() => {
+      i++;
+      b.textContent = fmt(Math.round((to * i) / steps));
+      sfx('count');
+      if (i >= steps) {
+        clearInterval(t);
+        b.classList.add('done');
+      }
+    }, 30);
+  }, delay + 300);
+  return b;
+}
 
 export function render(el, r) {
   const u = r.unitId ? UNIT[r.unitId] : null;
@@ -21,10 +42,10 @@ export function render(el, r) {
     h('h2', {}, head.t),
     h('p', {}, head.s),
     h('div', { class: 'stats' },
-      h('div', {}, h('b', {}, `${rate}%`), h('small', {}, `正答率（${r.firstCorrect}/${r.asked}）`)),
-      h('div', {}, h('b', {}, `💎${r.gems}`), h('small', {}, 'ゲット')),
-      h('div', {}, h('b', {}, `🔥${r.maxCombo}`), h('small', {}, '最大コンボ'))),
-    cards.length > 0 && h('div', { class: 'new-cards' }, h('h3', { class: 'sec' }, '🃏 新カード！'), cards.map((c) => h('div', { class: `card r${c.rarity}` }, h('div', { class: 'c-em' }, c.emoji), h('div', { class: 'c-name' }, c.name)))),
+      h('div', {}, countUp(rate, (v) => `${v}%`, 0), h('small', {}, `正答率（${r.firstCorrect}/${r.asked}）`)),
+      h('div', {}, countUp(r.gems, (v) => `💎${v}`, 450), h('small', {}, 'ゲット')),
+      h('div', {}, countUp(r.maxCombo, (v) => `🔥${v}`, 900), h('small', {}, '最大コンボ'))),
+    cards.length > 0 && h('div', { class: 'new-cards' }, h('h3', { class: 'sec' }, '🃏 新カード！'), cards.map((c) => h('div', { class: `card r${c.rarity} flip-in` }, h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name)))),
     r.opened.length > 0 && h('div', { class: 'opened' }, h('h3', { class: 'sec' }, '🚪 新しいエリアが開いた！'), r.opened.map((id) => h('div', {}, `${UNIT[id].emoji} ${UNIT[id].area}｜${UNIT[id].title}`))),
     wrong.length > 0 && h('div', { class: 'wrong-list' },
       h('h3', { class: 'sec' }, `👻 再襲来リスト（${wrong.length}問）`),

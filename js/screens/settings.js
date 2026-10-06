@@ -77,6 +77,8 @@ export function render(el) {
   el.append(topBar(() => go('home')),
     h('div', { class: 'settings' },
       h('section', { class: 'set-row' }, h('span', {}, '効果音'), sound),
+      h('section', { class: 'set-row' }, h('span', {}, '盤面の演出スピード'),
+        h('button', { class: `toggle ${s.settings.fxFast ? 'on' : ''}`, type: 'button', onclick: () => { s.settings.fxFast = !s.settings.fxFast; save(); go('settings'); } }, s.settings.fxFast ? '⚡ はやい' : '🐢 ふつう')),
       h('section', { class: 'set-row' }, h('span', {}, `ニックネーム: ${s.nickname}`), btn('変更', rename, 'small')),
       h('h3', { class: 'sec' }, '💾 バックアップ'),
       h('p', { class: 'note' }, 'データはこのスマホの中だけに保存されている。Safari の履歴・Webサイトデータを消すと消えちゃうので、ときどきバックアップしておこう。'),

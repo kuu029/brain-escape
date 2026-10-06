@@ -63,7 +63,7 @@ function spawn(st, s, ev) {
   const hp = s.hp ?? def.hp;
   const e = { id: st.nextId++, kind: s.kind, hp, maxHp: hp, pos: 0, review: s.review ? { ...s.review, answered: false } : null, look: s.look || null };
   st.enemies.push(e);
-  ev.push({ t: 'spawn', id: e.id, kind: e.kind });
+  ev.push({ t: 'spawn', id: e.id, kind: e.kind, hp, look: e.look, review: !!e.review });
 }
 function spawnDue(st, ev) {
   while (st.queue.length && st.queue[0].turn <= st.turn) spawn(st, st.queue.shift(), ev);
@@ -71,17 +71,30 @@ function spawnDue(st, ev) {
   if (!alive(st).length && st.queue.length) spawn(st, st.queue.shift(), ev);
 }
 
-function hit(st, e, dmg, ev, src) {
+function hit(st, e, dmg, ev, src, slot = null) {
   if (e.dead || dmg <= 0) return;
-  e.hp -= dmg;
-  ev.push({ t: 'hit', id: e.id, dmg, src });
+  e.hp = Math.max(0, e.hp - dmg);
+  ev.push({ t: 'hit', id: e.id, dmg, src, slot, hp: e.hp });
   if (e.hp <= 0) {
     e.dead = true;
     st.kills++;
     if (e.review) st.reviewKills++;
     st.coins += 3;
-    ev.push({ t: 'kill', id: e.id, kind: e.kind });
+    ev.push({ t: 'kill', id: e.id, kind: e.kind, src, coins: 3 });
   }
+}
+
+// 予測: 「正解なら」「まちがえたら」を本番と同じ計算で先にためす（エンジンは乱数なし）
+export function cloneState(st) {
+  return JSON.parse(JSON.stringify(st, (k, v) => (v === Infinity ? '__inf' : v)), (k, v) => (v === '__inf' ? Infinity : v));
+}
+export function predict(st, { targetId = null, retry = false } = {}) {
+  const run = (correct) => {
+    const c = cloneState(st);
+    const events = answer(c, { correct, retry, targetId });
+    return { events, st: c };
+  };
+  return { ok: run(true), ng: run(false) };
 }
 
 // 正解・不正解の処理。targetId があればその敵をねらう（復習の敵）
@@ -100,7 +113,10 @@ export function answer(st, { correct, retry = false, targetId = null }) {
     let dmg = retry ? 1 : st.combo >= 3 ? 3 : 2;
     if (target?.review && target.id === targetId) dmg = Math.max(dmg, target.hp);
     if (st.double > 0) { dmg *= 2; st.double--; }
-    if (target) hit(st, target, dmg, ev, 'zap');
+    if (target) {
+      ev.push({ t: 'zap', id: target.id, dmg });
+      hit(st, target, dmg, ev, 'zap');
+    }
   } else {
     st.combo = 0;
     ev.push({ t: 'miss' });
@@ -117,13 +133,10 @@ function endTurn(st, ev) {
     const inRange = alive(st).filter((e) => near(SLOTS[si], PATH[e.pos]));
     if (!inRange.length) return;
     const dmg = def.dmg[tw.lvl - 1];
-    ev.push({ t: 'fire', slot: si, type: tw.type });
-    if (def.splash) inRange.forEach((e) => hit(st, e, dmg, ev, 'tower'));
-    else {
-      if (def.slow) inRange.forEach((e) => { e.slowed = true; });
-      const e = inRange.sort((a, b) => b.pos - a.pos)[0];
-      hit(st, e, dmg, ev, 'tower');
-    }
+    const targets = def.splash ? inRange : [inRange.sort((a, b) => b.pos - a.pos)[0]];
+    if (def.slow) inRange.forEach((e) => { e.slowed = true; });
+    ev.push({ t: 'fire', slot: si, type: tw.type, lvl: tw.lvl, targets: targets.map((e) => e.id), slowed: def.slow ? inRange.map((e) => e.id) : [] });
+    targets.forEach((e) => hit(st, e, dmg, ev, 'tower', si));
   });
   // 敵の移動
   if (st.frozen > 0) {
@@ -137,8 +150,9 @@ function endTurn(st, ev) {
       if (e.slowed && st.turn % 2 === 0) steps = Math.max(0, steps - 1);
       e.slowed = false;
       if (!steps) continue;
+      const from = e.pos;
       e.pos = Math.min(EXIT, e.pos + steps);
-      ev.push({ t: 'move', id: e.id });
+      ev.push({ t: 'move', id: e.id, from, to: e.pos });
       if (e.pos >= EXIT) {
         e.dead = true;
         if (st.wall > 0) {
@@ -193,7 +207,13 @@ export function useTool(st, id) {
   else if (id === 'nuke') for (const e of alive(st)) hit(st, e, 2, ev, 'tool');
   else if (id === 'sniper') { const f = front(st); if (f) hit(st, f, 5, ev, 'tool'); }
   else if (id === 'double') st.double = 3;
-  else if (id === 'rewind') for (const e of alive(st)) e.pos = Math.max(0, e.pos - 2);
+  else if (id === 'rewind') {
+    for (const e of alive(st)) {
+      const from = e.pos;
+      e.pos = Math.max(0, e.pos - 2);
+      if (from !== e.pos) ev.push({ t: 'move', id: e.id, from, to: e.pos });
+    }
+  }
   else if (id === 'wall') st.wall = 2;
   else if (id === 'mega') st.slots.forEach((tw) => { if (tw && tw.lvl < 3) tw.lvl++; });
   ev.push({ t: 'tool', id });

@@ -47,6 +47,31 @@ export async function run(ROOT, { fail, note }) {
     if (!E.build(b, 0, 'beam') || !E.upgrade(b, 0) || b.slots[0].lvl !== 2) fail('engine', '建設・強化ができない');
     if (E.build(b, 0, 'beam')) fail('engine', '同じ場所に2つ建てられる');
 
+    // 予測表示 = 本当に起きること（正解・不正解の両方）
+    {
+      let mismatch = 0;
+      for (let k = 0; k < 300; k++) {
+        const st2 = E.createBattle({ schedule: W.practiceSchedule([{ generatorId: 'x', seed: 1 }]) });
+        for (let t = 0; t < 30 && !st2.over; t++) {
+          const target = E.pendingReview(st2);
+          const pred = E.predict(st2, { targetId: target?.id || null });
+          const ok = Math.random() < 0.6;
+          const evs = E.answer(st2, { correct: ok, targetId: target?.id || null });
+          const p = ok ? pred.ok : pred.ng;
+          if (JSON.stringify(p.events) !== JSON.stringify(evs) || JSON.stringify(E.cloneState(st2)) !== JSON.stringify(p.st)) mismatch++;
+          if (target && ok) target.review.answered = true;
+          E.autoSpend(st2);
+        }
+      }
+      checks++;
+      if (mismatch) fail('engine', `予測と実際がずれた: ${mismatch} 回`);
+      // 移動イベントには道の上の from/to がある
+      const st3 = E.createBattle({ schedule: [{ turn: 0, kind: 'runner' }] });
+      const mv = E.answer(st3, { correct: false }).find((e) => e.t === 'move');
+      checks++;
+      if (!mv || mv.from !== 0 || mv.to !== 2) fail('engine', `移動イベントの from/to がおかしい: ${JSON.stringify(mv)}`);
+    }
+
     // バランス（シミュレーション）
     const sim = (p, mode = 'practice', n = 3000) => {
       let wins = 0;
@@ -121,12 +146,33 @@ export async function run(ROOT, { fail, note }) {
     if (store.S().reviewQueue.length !== 0) fail('store', '復習の卒業が動かない');
   }
 
+  // ---------- ガチャ ----------
+  console.log('■ ガチャ');
+  {
+    const P = await import('../js/game/progress.js');
+    const { GACHA_RATES } = await import('../js/game/content.js');
+    const n = 40000;
+    const count = {};
+    for (let i = 0; i < n; i++) {
+      const r = P._rollOne();
+      checks++;
+      if (!r || !r.id) { fail('gacha', '空の結果'); break; }
+      count[r.rarity] = (count[r.rarity] || 0) + 1;
+    }
+    const total = GACHA_RATES.reduce((a, r) => a + r.weight, 0);
+    for (const r of GACHA_RATES) {
+      const got = (count[r.rarity] || 0) / n;
+      if (Math.abs(got - r.weight / total) > 0.01) fail('gacha', `★${r.rarity} の出る確率がずれている: ${got}`);
+    }
+    note(`排出率 ${GACHA_RATES.map((r) => `★${r.rarity} ${(((count[r.rarity] || 0) / n) * 100).toFixed(1)}%`).join(' / ')}`);
+  }
+
   // ---------- Service Worker / 外部通信 ----------
   console.log('■ オフライン対応と外部通信');
   {
     const sw = readFileSync(join(ROOT, 'sw.js'), 'utf8');
     const listed = new Set([...sw.matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]));
-    const served = ['index.html', 'manifest.webmanifest', ...['js', 'css', 'icons'].flatMap((d) => walk(join(ROOT, d)).map((p) => relative(ROOT, p).replace(/\\/g, '/')))];
+    const served = ['index.html', 'manifest.webmanifest', ...['js', 'css', 'icons', 'art'].filter((d) => { try { return statSync(join(ROOT, d)).isDirectory(); } catch { return false; } }).flatMap((d) => walk(join(ROOT, d)).map((p) => relative(ROOT, p).replace(/\\/g, '/')))];
     for (const f of served) {
       checks++;
       if (!listed.has(f)) fail('sw', `sw.js のプリキャッシュに無い: ${f}`);
@@ -144,6 +190,9 @@ export async function run(ROOT, { fail, note }) {
       const bad = urls.filter((u) => !/^http:\/\/www\.w3\.org\//.test(u));
       if (bad.length) fail('offline', `外部URLが含まれている: ${f}: ${bad.join(', ')}`);
       if (/\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket/.test(src) && f !== 'sw.js') fail('offline', `通信APIを使っている: ${f}`);
+      // 画面の文字列は rich()（HTMLをエスケープ）で表示するので、タグを書くとそのまま見えてしまう
+      //（modal/confirmBox/toast の文章、rich: に渡す文字列が対象。html: に渡す絵の HTML は対象外）
+      if (/^js\/(screens|game)\//.test(f) && /(\b(body|title|rich|msg|text)\s*:\s*|toast\(|confirmBox\()[`'"][^`'"]*<\/?(br|b|div|small|span)[\s>]/.test(src)) fail('ui', `文字列の中に HTML タグ（画面にそのまま出る）: ${f}`);
     }
     note(`プリキャッシュ ${listed.size} 件 / 配信ファイル ${served.length} 件`);
 

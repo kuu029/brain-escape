@@ -82,7 +82,13 @@ export function answerPad(p, onSubmit) {
     vals[key] = s;
     paint();
   };
-  const key = (label, k, cls = '') => h('button', { class: `key ${cls}`, type: 'button', onclick: () => { sfx('tap'); type(k); } }, label);
+  // 指が触れた瞬間に反応（離すのを待たない）。キーボード操作の click だけは別に受ける
+  const key = (label, k, cls = '') => h('button', {
+    class: `key ${cls}`,
+    type: 'button',
+    onpointerdown: (e) => { e.preventDefault(); sfx('tap'); type(k); },
+    onclick: (e) => { if (e.detail === 0) type(k); },
+  }, label);
   const fire = h('button', {
     class: 'key fire',
     type: 'button',

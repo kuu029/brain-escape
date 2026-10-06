@@ -30,10 +30,5 @@ const devHost = location.hostname === 'localhost' && !location.search.includes('
 if ('serviceWorker' in navigator && location.protocol !== 'file:' && !devHost) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
-// ダブルタップでの拡大を防ぐ（iOS）
-let lastTouch = 0;
-document.addEventListener('touchend', (e) => {
-  const now = Date.now();
-  if (now - lastTouch < 300 && !(e.target.closest && e.target.closest('input,textarea'))) e.preventDefault();
-  lastTouch = now;
-}, { passive: false });
+// ダブルタップ拡大は CSS の touch-action: manipulation で止める。
+// （touchend を preventDefault すると素早い連続タップが消えるので使わない）

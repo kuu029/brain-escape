@@ -65,14 +65,21 @@ export const TOWER_LOOK = {
   bomb: { emoji: '💣', name: 'ポップコーン爆弾', desc: '近くの敵ぜんぶに 1/1/2 ダメージ' },
 };
 
-// タワーのスキン（色・見た目）
+// タワーのスキン（ガチャで出る。かけらでも交換できる）
 export const SKINS = [
-  { id: 'default', name: 'ノーマル', cls: 'skin-default', cost: 0 },
-  { id: 'neon', name: 'ネオン', cls: 'skin-neon', cost: 60 },
-  { id: 'gold', name: 'ゴールド', cls: 'skin-gold', cost: 120 },
-  { id: 'candy', name: 'キャンディ', cls: 'skin-candy', cost: 80 },
-  { id: 'pixel', name: 'ドット', cls: 'skin-pixel', cost: 100 },
-  { id: 'lava', name: 'マグマ', cls: 'skin-lava', cost: 150 },
+  { id: 'default', name: 'ノーマル', cls: 'skin-default', rarity: 0, shards: 0, emoji: '⚪' },
+  { id: 'neon', name: 'ネオン', cls: 'skin-neon', rarity: 3, shards: 20, emoji: '🌈' },
+  { id: 'candy', name: 'キャンディ', cls: 'skin-candy', rarity: 3, shards: 20, emoji: '🍭' },
+  { id: 'pixel', name: 'ドット', cls: 'skin-pixel', rarity: 3, shards: 20, emoji: '👾' },
+  { id: 'gold', name: 'ゴールド', cls: 'skin-gold', rarity: 4, shards: 40, emoji: '👑' },
+  { id: 'lava', name: 'マグマ', cls: 'skin-lava', rarity: 4, shards: 40, emoji: '🌋' },
+];
+// ガチャの出やすさ（レア度ごと）と、ダブったときのかけら
+export const GACHA_RATES = [
+  { rarity: 1, weight: 52, shards: 1 },
+  { rarity: 2, weight: 30, shards: 2 },
+  { rarity: 3, weight: 14, shards: 5 },
+  { rarity: 4, weight: 4, shards: 10 },
 ];
 
 // 道具（訓練をクリアするともらえる。ウェーブ中に1回ずつ使える）

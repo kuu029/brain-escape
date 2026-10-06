@@ -101,7 +101,7 @@ export function render(el, { unit, lesson }) {
     bar.firstChild.style.width = '100%';
     const nextL = u.lessons.find((l) => !us.lessons[l.id]);
     if (tool) {
-      await modal({ title: '訓練コンプリート！', body: `道具ゲット: ${TOOLS[tool].emoji} <b>${TOOLS[tool].name}</b><br>${TOOLS[tool].desc}<br>（ウェーブ中に1回使える）` });
+      await modal({ title: '訓練コンプリート！', body: `道具ゲット: ${TOOLS[tool].emoji} ${TOOLS[tool].name}\n${TOOLS[tool].desc}\n（ウェーブ中に1回使える）` });
     }
     body.innerHTML = '';
     body.append(h('div', { class: 'center-col' },

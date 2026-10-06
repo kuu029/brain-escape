@@ -1,7 +1,7 @@
 // 進行と報酬（ロック判定・ウェーブ終了時の報酬・ガチャ）
 import { S, unitState, cleared, save, saveNow } from '../core/store.js';
 import { UNIT, GEN } from '../units/registry.js';
-import { BOSS_CARD, GACHA_CARDS, SKINS } from './content.js';
+import { BOSS_CARD, GACHA_CARDS, SKINS, CARDS, GACHA_RATES } from './content.js';
 import { bump } from './missions.js';
 
 export function isUnlocked(id) {
@@ -73,27 +73,54 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
   return out;
 }
 
+// ---------- ガチャ（カード＋スキン。ダブりはかけらに）----------
 export const GACHA_COST = 30;
-export function gacha() {
-  const s = S();
-  if (s.gems < GACHA_COST) return null;
-  s.gems -= GACHA_COST;
-  const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)];
-  const isNew = addCard(id);
-  if (!isNew) s.gems += 5; // ダブりは少し返す
-  save();
-  return { id, isNew };
+export const GACHA5_COST = 140;
+function rollOne(rand = Math.random) {
+  const total = GACHA_RATES.reduce((a, r) => a + r.weight, 0);
+  let x = rand() * total;
+  const tier = GACHA_RATES.find((r) => (x -= r.weight) < 0) || GACHA_RATES[0];
+  const pool = [
+    ...CARDS.filter((c) => GACHA_CARDS.includes(c.id) && c.rarity === tier.rarity).map((c) => ({ kind: 'card', id: c.id })),
+    ...SKINS.filter((sk) => sk.rarity === tier.rarity).map((sk) => ({ kind: 'skin', id: sk.id })),
+  ];
+  const item = pool[Math.floor(rand() * pool.length)];
+  return { ...item, rarity: tier.rarity, dupShards: tier.shards };
 }
-export function buySkin(id) {
+// n 回まわす。戻り値: [{ kind, id, rarity, isNew, shards }]（宝石が足りなければ null）
+export function gacha(n = 1) {
+  const s = S();
+  const cost = n === 5 ? GACHA5_COST : GACHA_COST * n;
+  if (s.gems < cost) return null;
+  s.gems -= cost;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const r = rollOne();
+    let isNew;
+    if (r.kind === 'card') isNew = addCard(r.id);
+    else {
+      isNew = !s.collection.skins.includes(r.id);
+      if (isNew) s.collection.skins.push(r.id);
+    }
+    const shards = isNew ? 0 : r.dupShards;
+    s.collection.shards = (s.collection.shards || 0) + shards;
+    out.push({ kind: r.kind, id: r.id, rarity: r.rarity, isNew, shards });
+  }
+  saveNow();
+  return out;
+}
+// かけらでスキンと交換
+export function exchangeSkin(id) {
   const s = S();
   const sk = SKINS.find((x) => x.id === id);
-  if (!sk || s.collection.skins.includes(id) || s.gems < sk.cost) return false;
-  s.gems -= sk.cost;
+  if (!sk || s.collection.skins.includes(id) || (s.collection.shards || 0) < sk.shards) return false;
+  s.collection.shards -= sk.shards;
   s.collection.skins.push(id);
   s.collection.skin = id;
   save();
   return true;
 }
+export const _rollOne = rollOne; // テスト用
 
 // 訓練で道具をもらう
 export function grantTool(unitId) {
