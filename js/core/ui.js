@@ -25,6 +25,22 @@ export function btn(label, onclick, cls = '') {
   return h('button', { class: `btn ${cls}`, type: 'button', onclick: (e) => { sfx('tap'); onclick(e); } }, label);
 }
 
+// 反射的に押して飛ばさないよう、画面に出てから ms のあいだ押せないボタン。
+// 待ち時間は小さな円のタイマーで見せる（画面に出た瞬間から数える）
+export function holdBtn(label, onclick, cls = '', ms = 1500) {
+  const ring = h('span', { class: 'hold-ring', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8"/></svg>' });
+  const b = btn(h('span', { class: 'hold-in' }, ring, h('span', {}, label)), onclick, `${cls} hold`);
+  b.disabled = true;
+  b.style.setProperty('--hold', `${ms}ms`);
+  const start = () => {
+    if (!b.isConnected) return requestAnimationFrame(start);
+    b.classList.add('counting');
+    setTimeout(() => { b.disabled = false; b.classList.remove('hold', 'counting'); ring.remove(); }, ms);
+  };
+  requestAnimationFrame(start);
+  return b;
+}
+
 // モーダル。buttons: [{label, value, cls}] → 押されたボタンの value で resolve
 export function modal({ title, body, buttons = [{ label: 'OK', value: true, cls: 'primary' }], dismissable = true, cls = '' }) {
   return new Promise((resolve) => {

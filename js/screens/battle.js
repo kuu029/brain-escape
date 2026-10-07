@@ -1,6 +1,6 @@
 // バトル画面（ウェーブ）: 盤面 + 予測 + 問題 + 入力 + タワー建設 + 道具
 // 答えたらエンジンの状態はすぐ確定。盤面の演出は裏で再生し、正解ならすぐ次の問題を出す（待たせない）
-import { h, btn, toast, floatText, sleep, confirmBox } from '../core/ui.js';
+import { h, btn, holdBtn, toast, floatText, sleep, confirmBox } from '../core/ui.js';
 import * as E from '../game/engine.js';
 import { practiceSchedule, bossSchedule, diagnosisSchedule, makePicker, practicePool, bossPoolOf } from '../game/waves.js';
 import { makeProblem, UNIT } from '../units/registry.js';
@@ -337,12 +337,12 @@ export function render(el, params) {
       box.append(stepsBox,
         h('div', { class: 'fb-btns' },
           btn('解き方を見る', (e) => { stepsBox.classList.toggle('hidden'); e.target.remove(); }, 'ghost small'),
-          btn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small')));
+          holdBtn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small')));
       box.append(h('p', { class: 'fb-sub' }, 'このまま下で答えを入れ直してもOK'));
     } else {
       // 2回まちがえたら、解き方と答えを見せて次へ（この問題はあとで再襲来する）
       box.append(h('div', { class: 'fb-sub' }, '解き方はこう👇 この問題はあとで「再襲来」してくるよ。'), stepsView(p), answerLine(p),
-        h('div', { class: 'fb-btns' }, btn('わかった！ 次へ', () => nextProblem(), 'primary small')));
+        h('div', { class: 'fb-btns' }, holdBtn('わかった！ 次へ', () => nextProblem(), 'primary small')));
       cur.pad.el.classList.add('done');
     }
     hintLayer.append(box);

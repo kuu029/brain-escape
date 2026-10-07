@@ -1,9 +1,11 @@
 // 英語 第1段階: 中1の単語（テーマごとに「意味を選ぶ／英語を選ぶ／つづる」）
 import { WORDS1, THEMES1, SYN } from './words1.js';
+import { SYN2 } from './words2.js';
 import { textChoice, spellAns } from './kit-en.js';
 
 const meanings = (w) => w.ja.split('、');
-const synOf = (w) => new Set(SYN.filter((g) => g.includes(w.w)).flat());
+const ALL_SYN = [...SYN, ...SYN2];
+const synOf = (w) => new Set(ALL_SYN.filter((g) => g.includes(w.w)).flat());
 // a と b を同じ選択肢に並べてもまぎらわしくないか
 export function distinct(a, b) {
   if (a.w.toLowerCase() === b.w.toLowerCase()) return false;
@@ -40,7 +42,7 @@ export function vocabProblem(rng, pool, mode) {
   const ds = pickDistractors(rng, w, pool);
   if (mode === 'e2j') {
     return {
-      stem: `この英単語の意味は？\n${w.w}`,
+      stem: `この${w.pos === 'idiom' ? '熟語' : '英単語'}の意味は？\n${w.w}`,
       ...textChoice(rng, w.ja, ds.map((d) => ({ t: d.ja, msg: `それは ${d.w} の意味。` }))),
       hint: '知っている英文の中で、この単語がどう使われていたか思い出してみよう。',
       steps: [`${w.w} ＝「${w.ja}」`],
@@ -48,7 +50,7 @@ export function vocabProblem(rng, pool, mode) {
     };
   }
   return {
-    stem: `「${w.ja}」を表す英単語は？`,
+    stem: `「${w.ja}」を表す${w.pos === 'idiom' ? '英語' : '英単語'}は？`,
     ...textChoice(rng, w.w, ds.map((d) => ({ t: d.w, msg: `${d.w} は「${d.ja}」。` }))),
     hint: '最初の音（文字）から思い出してみよう。',
     steps: [`「${w.ja}」＝ ${w.w}`],
@@ -102,7 +104,7 @@ export default {
         { text: `テーマ「${title}」の単語は ${pool.length} 語。まずは6つ、ながめてみよう👇`, en: sample.map((w) => `${w.w}　…　${w.ja}`).join('\n') },
         { text: `💡 ${TIPS[t][0]}` },
         { text: `💡 ${TIPS[t][1]}` },
-        { text: 'では小テスト。意味はどれ？', q: vocabProblem(rng, sample.length >= 4 ? pool : pool, 'e2j') },
+        { text: 'では小テスト。意味はどれ？', q: vocabProblem(rng, pool, 'e2j') },
         { text: '英語ではどれ？', q: vocabProblem(rng, pool, 'j2e') },
         { text: '最後はつづり。文字タイルをタップしてね。', q: vocabProblem(rng, pool, 'spell') },
       ];

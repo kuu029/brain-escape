@@ -70,3 +70,16 @@ export function plural(n) {
   return `${n}s`;
 }
 export const aOrAn = (w) => (VOWEL.test(w[0]) && !/^(uni|use|one|eu)/.test(w) ? 'an' : 'a');
+
+// 形容詞・副詞の比較変化: 原形 → [比較級, 最上級]（more / most 型は 'more'）
+export const COMPARE = {
+  tall: ['taller', 'tallest'], old: ['older', 'oldest'], young: ['younger', 'youngest'], long: ['longer', 'longest'],
+  short: ['shorter', 'shortest'], fast: ['faster', 'fastest'], small: ['smaller', 'smallest'], cold: ['colder', 'coldest'],
+  high: ['higher', 'highest'], new: ['newer', 'newest'], cheap: ['cheaper', 'cheapest'], strong: ['stronger', 'strongest'],
+  big: ['bigger', 'biggest'], hot: ['hotter', 'hottest'], large: ['larger', 'largest'], nice: ['nicer', 'nicest'],
+  easy: ['easier', 'easiest'], happy: ['happier', 'happiest'], busy: ['busier', 'busiest'], early: ['earlier', 'earliest'], heavy: ['heavier', 'heaviest'],
+  good: ['better', 'best'], well: ['better', 'best'], bad: ['worse', 'worst'], many: ['more', 'most'], much: ['more', 'most'],
+  beautiful: 'more', interesting: 'more', popular: 'more', important: 'more', famous: 'more', difficult: 'more', useful: 'more', exciting: 'more', expensive: 'more',
+};
+export const comparative = (a) => (COMPARE[a] === 'more' ? `more ${a}` : COMPARE[a][0]);
+export const superlative = (a) => (COMPARE[a] === 'more' ? `most ${a}` : COMPARE[a][1]);

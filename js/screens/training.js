@@ -1,5 +1,5 @@
 // 訓練（ステップ解説）: 1ステップ=1操作。小問に正解しないと次へ進めない（スキップ不可）
-import { h, btn, modal, confirmBox, sleep } from '../core/ui.js';
+import { h, btn, holdBtn, modal, confirmBox, sleep } from '../core/ui.js';
 import { tex, rich } from '../core/mathml.js';
 import { makeRng, newSeed } from '../core/rng.js';
 import { checkAnswer } from '../core/check.js';
@@ -49,7 +49,7 @@ export function render(el, { unit, lesson }) {
       st.en && h('div', { class: 'tr-en' }, st.en),
       st.q?.stem && h('div', { class: 'tr-qstem', rich: st.q.stem }));
     body.append(card);
-    const nextBtn = btn(i + 1 < steps.length ? '次へ ▶' : '訓練クリア！', next, 'primary big');
+    const nextBtn = holdBtn(i + 1 < steps.length ? '次へ ▶' : '訓練クリア！', next, 'primary big');
     if (!st.q) {
       body.append(nextBtn);
       return;
@@ -110,7 +110,7 @@ export function render(el, { unit, lesson }) {
       h('div', { class: 'big-em' }, '🎉'),
       h('h2', {}, `訓練${idx + 1} クリア！`),
       h('p', { rich: L.unlocks.length ? 'この型の問題が練習ウェーブに出るようになった。' : '' }),
-      btn('⚔️ 練習ウェーブで試す', () => go('battle', { mode: 'practice', unit }), 'primary big'),
+      holdBtn('⚔️ 練習ウェーブで試す', () => go('battle', { mode: 'practice', unit }), 'primary big'),
       nextL && btn(`📘 次の訓練へ: ${nextL.title.replace(/\$/g, '')}`, () => go('training', { unit, lesson: nextL.id }), 'ghost'),
       btn('マップへ', () => go('map', { focus: unit }), 'ghost')));
   }

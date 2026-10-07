@@ -28,6 +28,14 @@ export const BOSSES = {
   'en-prog': { emoji: '🐹', name: 'ハムスター・イングリング' },
   'en-wh': { emoji: '🦉', name: 'フクロウ・フーフー' },
   'en-past': { emoji: '🦖', name: 'パストサウルス' },
+  'en-words2': { emoji: '🐙', name: 'タコ・ジュクゴーノ' },
+  'en-future': { emoji: '🧙', name: 'ヨゲン・ウィルソン' },
+  'en-pastprog': { emoji: '🦥', name: 'ナマケモノ・ワズイング' },
+  'en-modal': { emoji: '🦅', name: 'ワシ・マストーノ' },
+  'en-there': { emoji: '🦔', name: 'ハリネズミ・ゼアリズ' },
+  'en-inf': { emoji: '🦘', name: 'カンガルー・トゥーイング' },
+  'en-compare': { emoji: '🦒', name: 'キリン・ハイヤーエスト' },
+  'en-conj': { emoji: '🐊', name: 'ワニ・ツナギーノ' },
 };
 
 // コレクション用カード
@@ -64,12 +72,21 @@ export const CARDS = [
   { id: 'hamster', emoji: '🐹', name: 'ハムスター・イングリング', rarity: 3, text: '今まさに回し車を回している最中（-ing）。' },
   { id: 'fukurou', emoji: '🦉', name: 'フクロウ・フーフー', rarity: 3, text: '鳴き声は「Who? Who?」。答えには Yes と言わせない。' },
   { id: 'pastosaurus', emoji: '🦖', name: 'パストサウルス', rarity: 3, text: '大昔（過去形）の恐竜。went と ate が好物。' },
+  { id: 'tako', emoji: '🐙', name: 'タコ・ジュクゴーノ', rarity: 3, text: '8本の足で熟語を8つ同時に持つ。look for と look after をよく取りちがえる。' },
+  { id: 'yogen', emoji: '🧙', name: 'ヨゲン・ウィルソン', rarity: 3, text: '水晶玉で明日を占う。「will のあとは原形」が口ぐせ。' },
+  { id: 'namakemono', emoji: '🦥', name: 'ナマケモノ・ワズイング', rarity: 3, text: 'そのとき何をしていたか聞くと「寝ていた（was sleeping）」としか答えない。' },
+  { id: 'washi', emoji: '🦅', name: 'ワシ・マストーノ', rarity: 3, text: 'ルールに厳しいワシ。must と must not を使い分ける。' },
+  { id: 'harinezumi', emoji: '🦔', name: 'ハリネズミ・ゼアリズ', rarity: 3, text: '背中の針の数を数えると There are になる。' },
+  { id: 'kangaroo', emoji: '🦘', name: 'カンガルー・トゥーイング', rarity: 3, text: 'おなかの袋に to と -ing を入れて、動詞によって出し分ける。' },
+  { id: 'kirin', emoji: '🦒', name: 'キリン・ハイヤーエスト', rarity: 3, text: 'だれよりも背が高い（the tallest）。比べられるのが大好き。' },
+  { id: 'wani', emoji: '🐊', name: 'ワニ・ツナギーノ', rarity: 3, text: '2つの文を口でくわえてつなぐ。because が好物。' },
 ];
 // ボス撃破でもらえるカード
 export const BOSS_CARD = {
   'signed-numbers': 'kani', 'fractions-decimals': 'donut', expressions: 'sponge', 'linear-equations': 'bucket',
   polynomials: 'consent', simultaneous: 'hamigaki', 'expand-factor': 'kanzume', 'square-roots': 'katatsumuri', quadratic: 'kaeru',
   'en-words1': 'inko', 'en-be': 'hachi', 'en-3sg': 'hebi', 'en-plural': 'hitsuji', 'en-prog': 'hamster', 'en-wh': 'fukurou', 'en-past': 'pastosaurus',
+  'en-words2': 'tako', 'en-future': 'yogen', 'en-pastprog': 'namakemono', 'en-modal': 'washi', 'en-there': 'harinezumi', 'en-inf': 'kangaroo', 'en-compare': 'kirin', 'en-conj': 'wani',
 };
 // ガチャに出るカード（ボス・称号以外）
 export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2).map((c) => c.id);

@@ -23,42 +23,43 @@ export const SUBJ_NON3 = SUBJ.filter((s) => !is3sg(s));
 // 疑問文の主語（I・Tom and I で「〜しますか」は不自然なので除く）
 export const SUBJ_Q = SUBJ.filter((s) => s.person !== 1);
 
-// 動作の動詞句。stem: 「〜ます」の前、te: 「〜て」の形
+// 動作の動詞句
+// dict: 辞書形（〜する）、stem: 「〜ます」の前、te: 「〜て」の形
 // habit: この動詞句に合う「いつも」の語（省略時は TIME.habit から）
-const A = (v, obj, stem, te, habit = null) => ({ v, obj, stem, te, habit, action: true });
+const A = (v, obj, dict, stem, te, habit = null) => ({ v, obj, dict, stem, te, habit, action: true });
 export const VP_ACTION = [
-  A('play', 'tennis', 'テニスをし', 'テニスをして'),
-  A('play', 'the piano', 'ピアノをひき', 'ピアノをひいて'),
-  A('play', 'soccer', 'サッカーをし', 'サッカーをして'),
-  A('study', 'English', '英語を勉強し', '英語を勉強して'),
-  A('study', 'math', '数学を勉強し', '数学を勉強して'),
-  A('watch', 'TV', 'テレビを見', 'テレビを見て'),
-  A('read', 'a book', '本を読み', '本を読んで'),
-  A('write', 'a letter', '手紙を書き', '手紙を書いて'),
-  A('cook', 'dinner', '夕食を作り', '夕食を作って'),
-  A('eat', 'breakfast', '朝食を食べ', '朝食を食べて'),
-  A('drink', 'milk', '牛乳を飲み', '牛乳を飲んで'),
-  A('go', 'to school', '学校へ行き', '学校へ行って'),
-  A('walk', 'to the station', '駅まで歩き', '駅まで歩いて'),
-  A('swim', 'in the river', '川で泳ぎ', '川で泳いで'),
-  A('listen', 'to music', '音楽を聞き', '音楽を聞いて'),
-  A('clean', 'the room', '部屋をそうじし', '部屋をそうじして'),
-  A('wash', 'the dishes', '皿を洗い', '皿を洗って'),
-  A('help', 'my mother', '母を手伝い', '母を手伝って'),
-  A('run', 'in the park', '公園で走り', '公園で走って'),
-  A('sing', 'a song', '歌を歌い', '歌を歌って'),
-  A('make', 'a cake', 'ケーキを作り', 'ケーキを作って'),
-  A('use', 'a computer', 'コンピューターを使い', 'コンピューターを使って'),
-  A('speak', 'English', '英語を話し', '英語を話して'),
-  A('teach', 'math', '数学を教え', '数学を教えて'),
-  A('carry', 'a box', '箱を運び', '箱を運んで'),
-  A('take', 'pictures', '写真をとり', '写真をとって'),
-  A('have', 'lunch', '昼食を食べ', '昼食を食べて'),
-  A('dance', '', '踊り', '踊って'),
-  A('visit', 'Kyoto', '京都を訪れ', '京都を訪れて', [['every summer', '毎年夏に']]),
-  A('buy', 'bread', 'パンを買い', 'パンを買って', [['every morning', '毎朝'], ['on Sundays', '日曜日に']]),
-  A('practice', 'the guitar', 'ギターを練習し', 'ギターを練習して'),
-  A('jog', 'in the park', '公園でジョギングし', '公園でジョギングして', [['every morning', '毎朝']]),
+  A('play', 'tennis', 'テニスをする', 'テニスをし', 'テニスをして'),
+  A('play', 'the piano', 'ピアノをひく', 'ピアノをひき', 'ピアノをひいて'),
+  A('play', 'soccer', 'サッカーをする', 'サッカーをし', 'サッカーをして'),
+  A('study', 'English', '英語を勉強する', '英語を勉強し', '英語を勉強して'),
+  A('study', 'math', '数学を勉強する', '数学を勉強し', '数学を勉強して'),
+  A('watch', 'TV', 'テレビを見る', 'テレビを見', 'テレビを見て'),
+  A('read', 'a book', '本を読む', '本を読み', '本を読んで'),
+  A('write', 'a letter', '手紙を書く', '手紙を書き', '手紙を書いて'),
+  A('cook', 'dinner', '夕食を作る', '夕食を作り', '夕食を作って'),
+  A('eat', 'breakfast', '朝食を食べる', '朝食を食べ', '朝食を食べて'),
+  A('drink', 'milk', '牛乳を飲む', '牛乳を飲み', '牛乳を飲んで'),
+  A('go', 'to school', '学校へ行く', '学校へ行き', '学校へ行って'),
+  A('walk', 'to the station', '駅まで歩く', '駅まで歩き', '駅まで歩いて'),
+  A('swim', 'in the river', '川で泳ぐ', '川で泳ぎ', '川で泳いで'),
+  A('listen', 'to music', '音楽を聞く', '音楽を聞き', '音楽を聞いて'),
+  A('clean', 'the room', '部屋をそうじする', '部屋をそうじし', '部屋をそうじして'),
+  A('wash', 'the dishes', '皿を洗う', '皿を洗い', '皿を洗って'),
+  A('help', 'the teacher', '先生を手伝う', '先生を手伝い', '先生を手伝って'),
+  A('run', 'in the park', '公園で走る', '公園で走り', '公園で走って'),
+  A('sing', 'a song', '歌を歌う', '歌を歌い', '歌を歌って'),
+  A('make', 'a cake', 'ケーキを作る', 'ケーキを作り', 'ケーキを作って'),
+  A('use', 'a computer', 'コンピューターを使う', 'コンピューターを使い', 'コンピューターを使って'),
+  A('speak', 'English', '英語を話す', '英語を話し', '英語を話して'),
+  A('teach', 'math', '数学を教える', '数学を教え', '数学を教えて'),
+  A('carry', 'a box', '箱を運ぶ', '箱を運び', '箱を運んで'),
+  A('take', 'pictures', '写真をとる', '写真をとり', '写真をとって'),
+  A('have', 'lunch', '昼食を食べる', '昼食を食べ', '昼食を食べて'),
+  A('dance', '', '踊る', '踊り', '踊って'),
+  A('visit', 'Kyoto', '京都を訪れる', '京都を訪れ', '京都を訪れて', [['every summer', '毎年夏に']]),
+  A('buy', 'bread', 'パンを買う', 'パンを買い', 'パンを買って', [['every morning', '毎朝'], ['on Sundays', '日曜日に']]),
+  A('practice', 'the guitar', 'ギターを練習する', 'ギターを練習し', 'ギターを練習して'),
+  A('jog', 'in the park', '公園でジョギングする', '公園でジョギングし', '公園でジョギングして', [['every morning', '毎朝']]),
 ];
 // 状態の動詞句（進行形にしない）。日本語は形ごとに持つ
 const ST = (v, obj, pres, neg, pastJ, pastNeg) => ({ v, obj, pres, neg, past: pastJ, pastNeg, action: false });
@@ -158,4 +159,44 @@ export function beClause(subj, c, tense, type) {
   if (type === 'neg') return [subj.en, be, 'not', comp];
   if (type === 'q') return [cap(be), subj.en, comp];
   return [subj.en, be, comp];
+}
+
+// ---------- 中2: 未来・過去進行形 ----------
+export const TIME_FUTURE = [['tomorrow', '明日'], ['next week', '来週'], ['next Sunday', '今度の日曜日'], ['this weekend', '今週末']];
+export const TIME_PASTPROG = [['at that time', 'そのとき'], ['at seven last night', '昨夜7時に']];
+
+// will の文
+export function willClause(subj, vp, type) {
+  const obj = vp.obj ? [vp.obj] : [];
+  if (type === 'neg') return [subj.en, 'will', 'not', vp.v, ...obj];
+  if (type === 'q') return ['Will', subj.en, vp.v, ...obj];
+  return [subj.en, 'will', vp.v, ...obj];
+}
+// be going to の文
+export function goingClause(subj, vp, type) {
+  const obj = vp.obj ? [vp.obj] : [];
+  const be = bePresent(subj);
+  if (type === 'neg') return [subj.en, be, 'not', 'going', 'to', vp.v, ...obj];
+  if (type === 'q') return [cap(be), subj.en, 'going', 'to', vp.v, ...obj];
+  return [subj.en, be, 'going', 'to', vp.v, ...obj];
+}
+export function jaFuture(subj, vp, kind, type, timeJa = '') {
+  const t = timeJa ? `${timeJa}、` : '';
+  let p;
+  if (kind === 'going') p = type === 'neg' ? `${vp.dict}つもりはありません` : type === 'q' ? `${vp.dict}つもりですか` : `${vp.dict}つもりです`;
+  else p = type === 'neg' ? `${vp.stem}ません` : type === 'q' ? `${vp.stem}ますか` : `${vp.stem}ます`;
+  return `${subj.ja}は${t}${p}${type === 'q' ? '？' : '。'}`;
+}
+// 過去進行形の文
+export function pastProgClause(subj, vp, type) {
+  const obj = vp.obj ? [vp.obj] : [];
+  const be = bePast(subj);
+  if (type === 'neg') return [subj.en, be, 'not', ing(vp.v), ...obj];
+  if (type === 'q') return [cap(be), subj.en, ing(vp.v), ...obj];
+  return [subj.en, be, ing(vp.v), ...obj];
+}
+export function jaPastProg(subj, vp, type, timeJa = '') {
+  const t = timeJa ? `${timeJa}、` : '';
+  const p = type === 'neg' ? `${vp.te}いませんでした` : type === 'q' ? `${vp.te}いましたか` : `${vp.te}いました`;
+  return `${subj.ja}は${t}${p}${type === 'q' ? '？' : '。'}`;
 }

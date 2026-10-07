@@ -17,6 +17,14 @@ import enPlural from './english/en-plural.js';
 import enProg from './english/en-prog.js';
 import enWh from './english/en-wh.js';
 import enPast from './english/en-past.js';
+import enWords2 from './english/en-words2.js';
+import enFuture from './english/en-future.js';
+import enPastProg from './english/en-pastprog.js';
+import enModal from './english/en-modal.js';
+import enThere from './english/en-there.js';
+import enInf from './english/en-inf.js';
+import enCompare from './english/en-compare.js';
+import enConj from './english/en-conj.js';
 import enSoon from './english/placeholders.js';
 
 export const UNITS = [
@@ -38,6 +46,14 @@ export const UNITS = [
   enProg,
   enWh,
   enPast,
+  enWords2,
+  enFuture,
+  enPastProg,
+  enModal,
+  enThere,
+  enInf,
+  enCompare,
+  enConj,
   ...enSoon,
 ];
 for (const u of UNITS) u.subject ||= 'math';

@@ -38,6 +38,7 @@ const CARD_ART = {
   kani: 'boss-signed-numbers', donut: 'boss-fractions-decimals', sponge: 'boss-expressions', bucket: 'boss-linear-equations',
   consent: 'boss-polynomials', hamigaki: 'boss-simultaneous', kanzume: 'boss-expand-factor', katatsumuri: 'boss-square-roots', kaeru: 'boss-quadratic',
   inko: 'boss-en-words1', hachi: 'boss-en-be', hebi: 'boss-en-3sg', hitsuji: 'boss-en-plural', hamster: 'boss-en-prog', fukurou: 'boss-en-wh', pastosaurus: 'boss-en-past',
+  tako: 'boss-en-words2', yogen: 'boss-en-future', namakemono: 'boss-en-pastprog', washi: 'boss-en-modal', harinezumi: 'boss-en-there', kangaroo: 'boss-en-inf', kirin: 'boss-en-compare', wani: 'boss-en-conj',
 };
 export function cardSprite(id) {
   const c = CARDS.find((x) => x.id === id);

@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = '447258f78c';
+const VERSION = '0962c3ab35';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -86,16 +86,25 @@ const ASSETS = [
   './js/ui/board.js',
   './js/units/english/en-3sg.js',
   './js/units/english/en-be.js',
+  './js/units/english/en-compare.js',
+  './js/units/english/en-conj.js',
+  './js/units/english/en-future.js',
+  './js/units/english/en-inf.js',
+  './js/units/english/en-modal.js',
   './js/units/english/en-past.js',
+  './js/units/english/en-pastprog.js',
   './js/units/english/en-plural.js',
   './js/units/english/en-prog.js',
+  './js/units/english/en-there.js',
   './js/units/english/en-wh.js',
   './js/units/english/en-words1.js',
+  './js/units/english/en-words2.js',
   './js/units/english/gram.js',
   './js/units/english/kit-en.js',
   './js/units/english/lex.js',
   './js/units/english/placeholders.js',
   './js/units/english/words1.js',
+  './js/units/english/words2.js',
   './js/units/kit.js',
   './js/units/registry.js',
   './js/units/stage1/expressions.js',
