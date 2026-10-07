@@ -32,7 +32,9 @@ function showValue(s) {
 }
 
 // onSubmit(input) は Promise を返してもよい（その間は入力を止める）
-export function answerPad(p, onSubmit) {
+// opts.fire: 決定ボタンの文字（模試では「決定」）
+export function answerPad(p, onSubmit, opts = {}) {
+  const fireLabel = opts.fire || '発射!';
   let locked = false;
   let root = null;
   const submit = async (val) => {
@@ -47,8 +49,13 @@ export function answerPad(p, onSubmit) {
     }
   };
 
+  if (p.input.kind === 'blanks') {
+    const pad = blanksPad(p, (v) => submit(v), fireLabel);
+    root = pad.el;
+    return pad;
+  }
   if (p.input.kind === 'order' || p.input.kind === 'spell') {
-    const pad = tilePad(p, (v) => submit(v));
+    const pad = tilePad(p, (v) => submit(v), fireLabel);
     root = pad.el;
     return pad;
   }
@@ -62,6 +69,8 @@ export function answerPad(p, onSubmit) {
       el: root,
       mark(i, ok) { grid.children[i]?.classList.add(ok ? 'right' : 'wrong'); },
       clearMarks() { [...grid.children].forEach((b) => b.classList.remove('wrong', 'right')); },
+      // 模試: いま選んでいる答えを示す（正誤は出さない）
+      select(i) { [...grid.children].forEach((b, j) => b.classList.toggle('picked', j === i)); },
       disable(i) { grid.children[i]?.setAttribute('disabled', ''); },
     };
   }
@@ -118,7 +127,7 @@ export function answerPad(p, onSubmit) {
       sfx('tap');
       submit({ ...vals });
     },
-  }, '発射!');
+  }, fireLabel);
   const nextKey = fields.length > 1
     ? h('button', { class: 'key fn', type: 'button', onclick: () => { sfx('tap'); active = (active + 1) % fields.length; paint(); } }, '次の欄')
     : h('button', { class: 'key fn', type: 'button', onclick: () => { sfx('tap'); vals[fields[0].key] = ''; paint(); } }, 'C');
@@ -139,7 +148,7 @@ export function answerPad(p, onSubmit) {
 
 // タイル入力（英語）: order = 単語タイルの並べかえ、spell = 文字タイルでつづる
 // タイルは指が触れた瞬間に反応。置いたタイルはタップで元にもどり、ドラッグで並びを入れかえられる
-function tilePad(p, onFire) {
+function tilePad(p, onFire, fireLabel = '発射!') {
   const spell = p.input.kind === 'spell';
   const tiles = spell ? p.input.letters : p.input.tiles;
   const need = p.input.answer.length;
@@ -256,7 +265,7 @@ function tilePad(p, onFire) {
       sfx('tap');
       onFire(spell ? picked.map((i) => tiles[i]).join('') : [...picked]);
     },
-  }, '発射!');
+  }, fireLabel);
   const ctrl = h('div', { class: 'tile-ctrl' },
     h('button', { class: 'key fn', type: 'button', ...press(() => { picked.pop(); paint(); }) }, '⌫'),
     h('button', { class: 'key fn', type: 'button', ...press(() => { picked = []; paint(); }) }, 'クリア'),
@@ -275,6 +284,60 @@ function tilePad(p, onFire) {
     disable() {},
   };
 }
+
+// 穴うめ（証明）: 文の中の【ア】をタップ → 下の候補から選ぶ
+// p.input = { kind: 'blanks', lines: ['…【ア】…'], blanks: [{ key: 'ア', options: [...], answer }] }
+function blanksPad(p, onFire, fireLabel) {
+  const bs = p.input.blanks;
+  const pick = {};
+  let cur = bs[0].key;
+  const textBox = h('div', { class: 'bl-text' });
+  const opts = h('div', { class: 'bl-opts' });
+  const lineHTML = (line) => rich(line).replace(/【(.)】/g, (_, k) => {
+    const b = bs.find((x) => x.key === k);
+    if (!b) return `【${k}】`;
+    const v = pick[k];
+    return `<button type="button" class="bl-slot${k === cur ? ' on' : ''}${v != null ? ' filled' : ''}" data-k="${k}"><small>${k}</small>${v != null ? escHTML(b.options[v]) : '　　'}</button>`;
+  });
+  function paint() {
+    textBox.innerHTML = p.input.lines.map((l) => `<div class="bl-line">${lineHTML(l)}</div>`).join('');
+    textBox.querySelectorAll('.bl-slot').forEach((el) => el.addEventListener('click', () => { sfx('tap'); cur = el.dataset.k; paint(); }));
+    const b = bs.find((x) => x.key === cur);
+    opts.replaceChildren(h('div', { class: 'bl-q' }, `【${b.key}】に入るのは？`), ...b.options.map((o, i) => h('button', {
+      class: `choice bl-opt${pick[b.key] === i ? ' picked' : ''}`,
+      type: 'button',
+      onclick: () => {
+        sfx('tap');
+        pick[b.key] = i;
+        const next = bs.find((x) => pick[x.key] == null);
+        if (next) cur = next.key;
+        paint();
+      },
+    }, o)));
+  }
+  const fire = h('button', {
+    class: 'key fire',
+    type: 'button',
+    onclick: () => {
+      const miss = bs.find((x) => pick[x.key] == null);
+      if (miss) { cur = miss.key; paint(); textBox.classList.remove('shake'); void textBox.offsetWidth; textBox.classList.add('shake'); return; }
+      sfx('tap');
+      onFire({ ...pick });
+    },
+  }, fireLabel);
+  paint();
+  const el = h('div', { class: 'pad blanks' }, textBox, opts, h('div', { class: 'bl-ctrl' }, fire));
+  return {
+    el,
+    clear() { for (const k of Object.keys(pick)) delete pick[k]; cur = bs[0].key; paint(); },
+    // 前に選んだ答えを入れておく（模試で見直すとき）
+    fill(v) { Object.assign(pick, v || {}); paint(); },
+    mark() {},
+    clearMarks() {},
+    disable() {},
+  };
+}
+const escHTML = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 // 解き方（ステップ）一覧
 export function stepsView(p) {

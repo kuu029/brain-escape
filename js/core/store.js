@@ -26,6 +26,9 @@ export function blank() {
     reviewQueue: [],
     log: {},
     sessions: [],
+    exams: [], // 模試の記録
+    examDraft: null, // とちゅうの模試（アプリを閉じても続きから）
+    memory: { cards: {}, mode: {}, day: null, course: 'standard', decks: {} }, // 暗号室（暗記）
     mistakes: [],
     streak: { count: 0, best: 0, last: null },
     gems: 0,
@@ -42,7 +45,7 @@ export function blank() {
 function migrate(d) {
   const b = blank();
   const out = { ...b, ...d };
-  for (const k of ['settings', 'streak', 'collection', 'missions', 'diagnosis', 'diagnosisEn', 'stats']) out[k] = { ...b[k], ...(d[k] || {}) };
+  for (const k of ['settings', 'streak', 'collection', 'missions', 'diagnosis', 'diagnosisEn', 'stats', 'memory']) out[k] = { ...b[k], ...(d[k] || {}) };
   out.version = VERSION;
   return out;
 }

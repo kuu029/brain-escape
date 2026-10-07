@@ -18,6 +18,7 @@ function sameList(got, exp, unordered) {
 //   nearly / invalid のときはターンを消費しない（打ち直してもらう）
 export function checkAnswer(p, input) {
   if (p.input.kind === 'order') return checkOrder(p, input);
+  if (p.input.kind === 'blanks') return checkBlanks(p, input);
   if (p.input.kind === 'spell') return checkSpell(p, input);
   if (p.input.kind === 'choice') {
     const ok = input === p.input.answer;
@@ -65,6 +66,13 @@ function checkOrder(p, input) {
   if (w) return { ok: false, msg: w.msg };
   if (extra.length) return { ok: false, msg: `「${extra[0]}」は使わない語。いらないタイルが1枚まざってるよ。` };
   return { ok: false, msg: '使う語は合ってる！ ならべる順番がちがうみたい。' };
+}
+// 穴うめ（証明など）: input = { ア: 選んだ番号, … }。part = 合っている穴の割合（模試の部分点）
+function checkBlanks(p, input) {
+  const bs = p.input.blanks;
+  if (!input || bs.some((b) => !Number.isInteger(input[b.key]))) return { ok: false, invalid: true, msg: 'まだうまっていない【　】があるよ' };
+  const right = bs.filter((b) => input[b.key] === b.answer).length;
+  return { ok: right === bs.length, part: right / bs.length, msg: right === bs.length ? null : `${bs.length} か所中 ${right} か所 正解` };
 }
 // つづり: input = 文字列
 function checkSpell(p, input) {

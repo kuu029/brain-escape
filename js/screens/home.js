@@ -9,6 +9,7 @@ import { backdrop } from '../ui/deco.js';
 import { go } from '../core/router.js';
 import { todayMissions, claim } from '../game/missions.js';
 import { sfx } from '../core/sound.js';
+import { dueList } from '../memory/engine.js';
 
 export function topBar(back = null) {
   const s = S();
@@ -53,7 +54,8 @@ export function render(el) {
           h('b', { class: 'em-pct' }, `${pct}%`))),
       gameCard('math', '数学棟', '数学', () => go('map')),
       gameCard('english', '英語棟', '英語', () => go('map', { subject: 'english' })),
-      h('div', { class: 'game-card soon' }, h('div', { class: 'gc-body' }, h('div', { class: 'gc-title' }, '？？？'), h('div', { class: 'gc-sub' }, '別のゲーム 準備中…')), h('div', { class: 'gc-em' }, '🔒')),
+      memoryCard(),
+      examCard(),
       h('div', { class: 'mboard' },
         h('h3', { class: 'mboard-title' }, '📋 今日の指令'),
         mlist,
@@ -63,6 +65,35 @@ export function render(el) {
       [['🃏', 'コレクション', 'collection'], ['📊', '記録', 'records'], ['⚙️', '設定', 'settings']].map(([em, label, to]) =>
         btn(h('span', { class: 'nav-in' }, h('span', { class: 'nav-em' }, em), h('span', {}, label)), () => go(to), 'nav'))),
   );
+}
+
+// 暗号室（暗記）のポスター: 復習どきの枚数
+function memoryCard() {
+  const M = S().memory;
+  const due = dueList(M, 'en', Date.now()).length;
+  const seen = Object.keys(M.cards || {}).length;
+  return h('button', { class: 'game-card memory', type: 'button', onclick: () => { sfx('tap'); go('memory'); } },
+    h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
+    h('div', { class: 'gc-body' },
+      h('div', { class: 'gc-sub' }, '暗記 ｜ 暗号ラッシュ'),
+      h('div', { class: 'gc-title' }, '暗号室'),
+      h('div', { class: 'gc-next' }, due ? `🔔 復習どき ${due} 枚` : seen ? `解読した暗号 ${seen} 枚` : '英単語から。1回2〜4分'),
+      h('span', { class: 'gc-go' }, 'START ▶')),
+    h('div', { class: 'gc-em' }, '🔐'));
+}
+
+// 入試本番モード（模試）のポスター: 前回の点数・とちゅうの模試
+function examCard() {
+  const s = S();
+  const last = (s.exams || []).filter((r) => r.kind === 'full').pop();
+  return h('button', { class: 'game-card exam', type: 'button', onclick: () => { sfx('tap'); go('exam'); } },
+    h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
+    h('div', { class: 'gc-body' },
+      h('div', { class: 'gc-sub' }, '入試本番モード ｜ 滋賀県型'),
+      h('div', { class: 'gc-title' }, '模試'),
+      h('div', { class: 'gc-next' }, s.examDraft ? '▶ とちゅうの模試があるよ' : last ? `前回のフル模試 ${last.got}点` : 'ミニ15分 ／ フル50分'),
+      h('span', { class: 'gc-go' }, s.examDraft ? 'つづき ▶' : 'START ▶')),
+    h('div', { class: 'gc-em' }, '📝'));
 }
 
 // ゲームのポスター: 次に戦うボスの顔・進み具合

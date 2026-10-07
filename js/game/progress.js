@@ -35,7 +35,7 @@ export function pickReviews(unitId, n, subject = UNIT[unitId]?.subject || 'math'
   return [...same, ...other].slice(0, n).map((r) => ({ generatorId: r.generatorId, seed: r.seed }));
 }
 
-function addCard(id) {
+export function addCard(id) {
   const c = S().collection.cards;
   const isNew = !c[id];
   c[id] = (c[id] || 0) + 1;

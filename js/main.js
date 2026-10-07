@@ -12,9 +12,11 @@ import * as result from './screens/result.js';
 import * as collection from './screens/collection.js';
 import * as records from './screens/records.js';
 import * as settings from './screens/settings.js';
+import * as exam from './screens/exam.js';
+import * as memory from './screens/memory.js';
 
 init();
-const screens = { onboarding, home, map, diagnosis, training, battle, result, collection, records, settings };
+const screens = { onboarding, home, map, diagnosis, training, battle, result, collection, records, settings, exam, memory };
 for (const [k, v] of Object.entries(screens)) register(k, v);
 mount(document.getElementById('app'));
 startTimer();

@@ -9,6 +9,7 @@ import { go } from '../core/router.js';
 import { topBar } from './home.js';
 import { backdrop } from '../ui/deco.js';
 import { rich } from '../core/mathml.js';
+import { histRow } from './exam.js';
 
 const GOAL_MIN = 15; // 1日の目安（グラフに点線で出す）
 // 称号: ウェーブ突破 + ボス撃破×3 のポイントで上がる
@@ -23,7 +24,7 @@ export function titleOf(stats) {
   return { name: TITLES[i][1], pt, next: next ? { name: next[1], need: next[0] - pt, ratio: (pt - TITLES[i][0]) / (next[0] - TITLES[i][0]) } : null };
 }
 const STARS = { new: 0, trained: 1, practicing: 2, mastered: 3 };
-const KIND = { training: ['📘', '訓練'], practice: ['⚔️', '練習ウェーブ'], boss: ['👑', 'ボスウェーブ'], review: ['👻', 'リベンジウェーブ'], diagnosis: ['🔦', '看守チェック'] };
+const KIND = { training: ['📘', '訓練'], practice: ['⚔️', '練習ウェーブ'], boss: ['👑', 'ボスウェーブ'], review: ['👻', 'リベンジウェーブ'], diagnosis: ['🔦', '看守チェック'], exam: ['📝', '模試'], memory: ['🔐', '暗号ラッシュ'], memtest: ['🏅', 'デッキ試験'] };
 const RESULT = { win: ['突破', 'good'], clear: ['クリア', 'good'], lose: ['つかまった', 'bad'], quit: ['とちゅうで終了', 'dim'], idle: ['放置で退出', 'dim'] };
 const hm = (t) => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
 const minText = (sec) => (sec < 60 ? `${sec}秒` : `${Math.round(sec / 60)}分`);
@@ -45,7 +46,7 @@ function dayDetail(s, date) {
         h('span', { class: 'dd-time' }, hm(x.at)),
         h('span', { class: 'dd-em' }, em),
         h('span', { class: 'dd-body' },
-          h('b', { html: `${u ? u.title : x.subject === 'english' ? '英語' : '数学'}${L ? `｜${rich(L.title)}` : ''}` }),
+          h('b', { html: `${u ? u.title : x.subject === 'english' ? '英語' : '数学'}${L ? `｜${rich(L.title)}` : ''}${x.kind === 'exam' ? (x.lesson === 'full' ? ' フル模試' : ' ミニ模試') : ''}` }),
           h('small', {}, `${kind}・${x.asked ? `${x.correct}/${x.asked}問 正解（${acc}%）` : '問題なし'}・${minText(x.seconds)}`)),
         h('span', { class: `dd-res ${rc}` }, res));
     }));
@@ -143,6 +144,8 @@ export function render(el) {
       chart,
       h('p', { class: 'note' }, '⏱ 問題や解説に向き合っていた時間だけを数えているよ（1問 最大3分。放置した時間は入らない）。棒をタップすると、その日の内訳が見られる。'),
       detailBox,
+      (s.exams || []).length > 0 && h('h3', { class: 'sec' }, '📝 模試の記録'),
+      (s.exams || []).length > 0 && h('div', { class: 'ex-hist' }, s.exams.slice(-6).reverse().map(histRow)),
       h('h3', { class: 'sec' }, '📚 単元ごと'),
       subjBlocks,
       h('h3', { class: 'sec' }, `👻 復習待ち ${s.reviewQueue.length} 問`),
