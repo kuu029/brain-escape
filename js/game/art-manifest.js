@@ -29,6 +29,21 @@ export const ART_KEYS = [
   "boss-en-prog",
   "boss-en-wh",
   "boss-en-past",
+  "boss-en-words2",
+  "boss-en-future",
+  "boss-en-pastprog",
+  "boss-en-modal",
+  "boss-en-there",
+  "boss-en-inf",
+  "boss-en-compare",
+  "boss-en-conj",
+  "boss-en-words3",
+  "boss-en-passive",
+  "boss-en-perfect",
+  "boss-en-participle",
+  "boss-en-relative",
+  "boss-en-indirect",
+  "boss-en-subjunctive",
   "skin-neon-beam",
   "skin-neon-frost",
   "skin-neon-bomb",
@@ -46,4 +61,14 @@ export const ART_KEYS = [
   "skin-lava-bomb",
   "gacha-machine"
 ];
-export const BG_KEYS = [];
+export const BG_KEYS = [
+  "bg-home",
+  "bg-math-1",
+  "bg-math-2",
+  "bg-math-3",
+  "bg-en-1",
+  "bg-en-2",
+  "bg-en-3",
+  "banner-math",
+  "banner-en"
+];
