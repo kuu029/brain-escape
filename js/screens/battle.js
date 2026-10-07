@@ -1,11 +1,12 @@
 // バトル画面（ウェーブ）: 盤面 + 予測 + 問題 + 入力 + タワー建設 + 道具
 // 答えたらエンジンの状態はすぐ確定。盤面の演出は裏で再生し、正解ならすぐ次の問題を出す（待たせない）
-import { h, btn, holdBtn, toast, floatText, sleep, confirmBox } from '../core/ui.js';
+import { h, btn, readBtn, modal, toast, floatText, sleep, confirmBox } from '../core/ui.js';
 import * as E from '../game/engine.js';
 import { practiceSchedule, bossSchedule, diagnosisSchedule, makePicker, practicePool, bossPoolOf } from '../game/waves.js';
 import { makeProblem, UNIT } from '../units/registry.js';
 import { checkAnswer } from '../core/check.js';
-import { S, recordAnswer, unitState, save } from '../core/store.js';
+import { S, recordAnswer, unitState, save, beginSession, closeSession } from '../core/store.js';
+import { studyBegin, studyEnd, studyPause, studyResume, idleFor } from '../core/timer.js';
 import { problemCard, answerPad, stepsView, answerLine } from '../ui/answer.js';
 import { boardView } from '../ui/board.js';
 import { TOOLS, TOWER_LOOK, SKINS } from '../game/content.js';
@@ -16,6 +17,9 @@ import { go } from '../core/router.js';
 import { finishWave, pickReviews } from '../game/progress.js';
 
 const MODE_LABEL = { practice: '練習ウェーブ', boss: 'ボスウェーブ', review: 'リベンジウェーブ', diagnosis: '看守チェック' };
+// 放置の見張り: この時間さわらないと「寝てない？」と聞き、さらに IDLE_GRACE 秒こたえがなければウェーブを抜ける
+const IDLE_WARN = 3 * 60 * 1000;
+const IDLE_GRACE = 60;
 const PRAISE = ['ナイス！', 'いいね！', 'その調子！', 'キレてる！', '天才か？', 'ドンピシャ！'];
 
 export function render(el, params) {
@@ -48,6 +52,7 @@ export function render(el, params) {
   }
   const st = E.createBattle({ mode, schedule, tools: mode === 'diagnosis' ? [] : s.tools });
   const diagMode = mode === 'diagnosis';
+  beginSession({ kind: mode, subject, unit: unitId });
 
   let asked = 0;
   let firstCorrect = 0;
@@ -259,6 +264,7 @@ export function render(el, params) {
     cur.pad = pad;
     const card = problemCard(p, { review: !!cur.target, label: mode !== 'practice' ? label : '' });
     qarea.append(card, feedback, pad.el);
+    studyBegin(180);
     card.animate([{ opacity: 0, transform: 'translateX(24px)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' });
   }
 
@@ -337,12 +343,12 @@ export function render(el, params) {
       box.append(stepsBox,
         h('div', { class: 'fb-btns' },
           btn('解き方を見る', (e) => { stepsBox.classList.toggle('hidden'); e.target.remove(); }, 'ghost small'),
-          holdBtn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small')));
+          readBtn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small', 1500)));
       box.append(h('p', { class: 'fb-sub' }, 'このまま下で答えを入れ直してもOK'));
     } else {
       // 2回まちがえたら、解き方と答えを見せて次へ（この問題はあとで再襲来する）
       box.append(h('div', { class: 'fb-sub' }, '解き方はこう👇 この問題はあとで「再襲来」してくるよ。'), stepsView(p), answerLine(p),
-        h('div', { class: 'fb-btns' }, holdBtn('わかった！ 次へ', () => nextProblem(), 'primary small')));
+        h('div', { class: 'fb-btns' }, readBtn('わかった！ 次へ', () => nextProblem(), 'primary small', 3000)));
       cur.pad.el.classList.add('done');
     }
     hintLayer.append(box);
@@ -356,6 +362,8 @@ export function render(el, params) {
     board.clearPrediction();
     predLine.innerHTML = '';
     if (diagMode) {
+      studyEnd();
+      closeSession('clear');
       go('diagnosis', { phase: 'result', results: diag, subject });
       return;
     }
@@ -364,9 +372,45 @@ export function render(el, params) {
     sfx(win ? 'win' : 'lose');
     floatText(board.el, win ? '🎉 ウェーブ突破！' : '💫 つかまった…', win ? 'combo' : 'bad');
     await sleep(1100);
+    studyEnd();
+    closeSession(diagMode ? 'clear' : win ? 'win' : 'lose');
     const summary = finishWave({ mode, unitId, st, asked, firstCorrect, wrongList });
     go('result', { ...summary, subject });
   }
+
+  // ---------- 放置の見張り ----------
+  let idleOpen = false;
+  const watch = setInterval(async () => {
+    if (!el.isConnected || finished) return clearInterval(watch);
+    if (idleOpen || document.visibilityState === 'hidden' || idleFor() < IDLE_WARN) return;
+    idleOpen = true;
+    studyPause();
+    let left = IDLE_GRACE;
+    const cnt = h('b', {}, String(left));
+    let closeIt = null;
+    const tick = setInterval(() => {
+      left--;
+      cnt.textContent = String(left);
+      if (left <= 0) closeIt?.('idle');
+    }, 1000);
+    const ans = await modal({
+      title: '😴 寝てない？',
+      body: h('div', { class: 'modal-body center' }, h('p', {}, 'しばらく操作がないよ。'), h('p', {}, cnt, ' 秒たつと、このウェーブを自動で抜けるよ。')),
+      buttons: [{ label: '抜ける', value: 'quit' }, { label: 'まだやる！', value: 'go', cls: 'primary' }],
+      dismissable: false,
+      ctl: (c) => { closeIt = c; },
+    });
+    clearInterval(tick);
+    idleOpen = false;
+    if (finished) return;
+    if (ans === 'go') return studyResume();
+    finished = true;
+    clearInterval(watch);
+    board.finish();
+    closeSession(ans === 'idle' ? 'idle' : 'quit');
+    if (ans === 'idle') toast('しばらく操作がなかったので、ウェーブを抜けたよ', 3200);
+    go(diagMode ? 'home' : 'map', { focus: unitId, subject });
+  }, 5000);
 
   // 開発用（localhost のときだけ）: 自動テストから現在の問題と盤面を見られるようにする
   if (location.hostname === 'localhost') window.__battle = { cur: () => cur, st, board, show: (p) => { cur = { p, target: null, attempts: 0 }; renderQ(); } };

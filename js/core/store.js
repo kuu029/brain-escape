@@ -25,6 +25,7 @@ export function blank() {
     units: {},
     reviewQueue: [],
     log: {},
+    sessions: [],
     mistakes: [],
     streak: { count: 0, best: 0, last: null },
     gems: 0,
@@ -82,9 +83,41 @@ export function dayLog(date = today()) {
   if (!state.log[date]) state.log[date] = { seconds: 0, byUnit: {} };
   return state.log[date];
 }
+// n がマイナスのときは取り消し（放置していたぶんを引く）
 export function addSeconds(n) {
-  if (!state || n <= 0) return;
-  dayLog().seconds += n;
+  if (!state || !n) return;
+  const lg = dayLog();
+  lg.seconds = Math.max(0, lg.seconds + n);
+  if (active) active.seconds = Math.max(0, active.seconds + n);
+  save();
+}
+
+// 挑戦の記録（ウェーブ1回・訓練1回ごと）。始めた時点で「中断」として残し、終わったら結果を書く
+// info: { kind: 'practice'|'boss'|'review'|'diagnosis'|'training', subject, unit, lesson }
+let active = null;
+export function beginSession(info) {
+  closeSession();
+  if (!Array.isArray(state.sessions)) state.sessions = [];
+  active = { at: Date.now(), date: today(), ...info, asked: 0, correct: 0, seconds: 0, result: 'quit' };
+  state.sessions.push(active);
+  if (state.sessions.length > 300) state.sessions.shift();
+  save();
+  return active;
+}
+// 1問の結果（最初の1回の答えだけ数える）
+export function tallySession(correct) {
+  if (!active) return;
+  active.asked++;
+  if (correct) active.correct++;
+}
+// result: 'win' | 'lose' | 'clear' | 'quit' | 'idle'
+export function closeSession(result) {
+  if (!active) return;
+  if (result) active.result = result;
+  // 1問も解かずにやめたものは残さない
+  const at = state.sessions.indexOf(active);
+  if (active.result === 'quit' && active.asked === 0 && active.seconds < 30 && at >= 0) state.sessions.splice(at, 1);
+  active = null;
   save();
 }
 
@@ -107,6 +140,7 @@ export function streakAlive() {
 export function recordAnswer({ unit, generatorId, seed, correct, firstTry, review = false }) {
   touchStreak();
   if (firstTry) {
+    tallySession(correct);
     const lg = dayLog();
     const bu = (lg.byUnit[unit] ||= { asked: 0, correct: 0 });
     bu.asked++;

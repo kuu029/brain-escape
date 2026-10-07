@@ -131,15 +131,27 @@ function openUnit(id) {
     return h('div', { class: 'unit-panel' },
       h('div', { class: 'up-head' }, h('span', { class: 'up-em' }, u.emoji), h('div', {}, h('div', { class: 'a-area' }, u.area), h('h2', {}, u.title)), h('span', { class: `badge b-${mastery(id)}` }, MASTERY_LABEL[mastery(id)])),
       recent !== null && h('p', { class: 'note' }, `直近の正答率 ${recent}%（${us.recent.length}問）／ 練習 ${us.practiced}回${us.bossCleared ? ' ／ ボス撃破済み' : ''}`),
+      flowBar(us, practiceOk, bossOk),
       h('h3', { class: 'sec' }, '📘 訓練（ステップ解説）'),
+      h('p', { class: 'up-why' }, '解き方を1ステップずつ教わる。初めての単元や、やり方を忘れたときに。敵は出ないので、じっくりでOK。'),
       h('div', { class: 'lessons' }, u.lessons.map((l, i) => h('button', { class: `lesson ${us.lessons[l.id] ? 'done' : ''} ${l === nextLesson ? 'next' : ''}`, type: 'button', onclick: nav('training', { unit: id, lesson: l.id }) },
         h('span', { class: 'l-no' }, us.lessons[l.id] ? '✔' : i + 1), h('span', { html: rich(l.title) })))),
       us.trainingDone ? h('p', { class: 'note' }, `訓練クリア報酬: ${TOOLS[u.tool].emoji} ${TOOLS[u.tool].name}（ウェーブで使える道具）`) : h('p', { class: 'note' }, `全部の訓練をクリアすると道具「${TOOLS[u.tool].emoji} ${TOOLS[u.tool].name}」がもらえる`),
+      h('h3', { class: 'sec' }, '⚔️ 練習ウェーブ ／ 👑 ボス'),
+      h('p', { class: 'up-why' }, '練習＝覚えた解き方を看守とのバトルで使って、手になじませる。何回でもOK。ボス＝単元の総仕上げ。倒すと次のエリアが開く。'),
       h('div', { class: 'up-btns' },
         (Object.keys(us.lessons).length || us.diagPassed) ? btn('🃏 思い出しカード', () => { close(); recallCard(id); }, 'ghost') : null,
         practiceOk ? btn('⚔️ 練習ウェーブ', nav('battle', { mode: 'practice', unit: id }), 'primary') : h('p', { class: 'note' }, '👆 まずは訓練1から！ クリアすると練習ウェーブが開くよ'),
         bossOk ? btn(`👑 ボスウェーブ${us.bossCleared ? '（再戦）' : ''}`, nav('battle', { mode: 'boss', unit: id }), 'boss') : h('p', { class: 'note' }, '👑 ボスは「訓練を全部クリア＋練習ウェーブ1回」で出現')));
   });
+}
+
+// 訓練 → 練習 → ボス の3段の道。いまどこにいるかを光らせる
+function flowBar(us, practiceOk, bossOk) {
+  const at = !practiceOk ? 0 : !us.practiced ? 1 : !us.bossCleared ? (bossOk ? 2 : 0) : 3;
+  const stepsDef = [['📘', '訓練', '解き方を覚える'], ['⚔️', '練習', 'バトルで慣れる'], ['👑', 'ボス', '力だめし']];
+  return h('div', { class: 'up-flow' }, stepsDef.map(([em, name, what], j) => h('div', { class: `uf-step${j < at || at === 3 ? ' done' : ''}${j === at ? ' now' : ''}` },
+    h('span', { class: 'uf-em' }, j < at || at === 3 ? '✔' : em), h('b', {}, name), h('small', {}, what))));
 }
 
 // 思い出しモード: 要点だけのカード → すぐ演習へ

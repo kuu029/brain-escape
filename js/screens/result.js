@@ -1,5 +1,5 @@
 // 結果画面: ランク・正答率・報酬・新しく開いたエリア・復習行きの問題
-import { h, btn, holdBtn } from '../core/ui.js';
+import { h, btn } from '../core/ui.js';
 import { UNIT, makeProblem } from '../units/registry.js';
 import { CARDS, BOSSES } from '../game/content.js';
 import { go } from '../core/router.js';
@@ -77,7 +77,7 @@ export function render(el, r) {
       h('p', { class: 'note' }, 'まちがえた問題は、あとのウェーブに「リベンジおばけ」として戻ってくる。2回正解で成仏。'),
       wrong.map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), answerLine(p)))),
     h('div', { class: 'up-btns' },
-      holdBtn(r.win ? 'もう1回' : 'リベンジ！', again, 'primary big'),
+      btn(r.win ? 'もう1回' : 'リベンジ！', again, 'primary big'),
       r.mode === 'practice' && r.unitId && canBoss(r.unitId) && btn('👑 ボスウェーブへ', () => go('battle', { mode: 'boss', unit: r.unitId }), 'boss'),
       btn('マップへ', () => go('map', { focus: r.unitId, subject: r.subject }), 'ghost')),
     u && h('p', { class: 'note center' }, `${u.area}｜${u.title}`)));

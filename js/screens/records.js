@@ -1,13 +1,14 @@
-// 記録（脱獄日誌）: 称号、日別の勉強時間、単元別の進み具合と理解度、復習の件数
+// 記録（脱獄日誌）: 称号、日別の勉強時間とその日の挑戦の内訳、単元別の進み具合と理解度、復習の件数
 import { h, btn } from '../core/ui.js';
 import { S, today, streakAlive, mastery, MASTERY_LABEL, cleared } from '../core/store.js';
-import { UNIT, makeProblem, SUBJECTS, unitsOf } from '../units/registry.js';
+import { UNIT, makeProblem, SUBJECTS, unitsOf, lessonOf } from '../units/registry.js';
 import { BOSSES } from '../game/content.js';
 import { isUnlocked } from '../game/progress.js';
 import { spriteHTML } from '../game/art.js';
 import { go } from '../core/router.js';
 import { topBar } from './home.js';
 import { backdrop } from '../ui/deco.js';
+import { rich } from '../core/mathml.js';
 
 const GOAL_MIN = 15; // 1日の目安（グラフに点線で出す）
 // 称号: ウェーブ突破 + ボス撃破×3 のポイントで上がる
@@ -22,6 +23,41 @@ export function titleOf(stats) {
   return { name: TITLES[i][1], pt, next: next ? { name: next[1], need: next[0] - pt, ratio: (pt - TITLES[i][0]) / (next[0] - TITLES[i][0]) } : null };
 }
 const STARS = { new: 0, trained: 1, practicing: 2, mastered: 3 };
+const KIND = { training: ['📘', '訓練'], practice: ['⚔️', '練習ウェーブ'], boss: ['👑', 'ボスウェーブ'], review: ['👻', 'リベンジウェーブ'], diagnosis: ['🔦', '看守チェック'] };
+const RESULT = { win: ['突破', 'good'], clear: ['クリア', 'good'], lose: ['つかまった', 'bad'], quit: ['とちゅうで終了', 'dim'], idle: ['放置で退出', 'dim'] };
+const hm = (t) => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const minText = (sec) => (sec < 60 ? `${sec}秒` : `${Math.round(sec / 60)}分`);
+
+// その日の挑戦の一覧（新しい順）。記録の仕組みができる前の日は、単元ごとの問題数だけ出す
+function dayDetail(s, date) {
+  const lg = s.log[date];
+  const list = (s.sessions || []).filter((x) => x.date === date).reverse();
+  const [, m, d] = date.split('-');
+  const head = h('div', { class: 'dd-head' }, h('b', {}, `${+m}月${+d}日`), h('small', {}, `勉強 ${minText(lg?.seconds || 0)}${list.length ? `・挑戦 ${list.length}回` : ''}`));
+  if (list.length) {
+    return h('div', { class: 'day-detail' }, head, list.map((x) => {
+      const u = UNIT[x.unit];
+      const [em, kind] = KIND[x.kind] || ['📝', x.kind];
+      const [res, rc] = RESULT[x.result] || ['', 'dim'];
+      const L = x.kind === 'training' && u ? lessonOf(u, x.lesson) : null;
+      const acc = x.asked ? Math.round((x.correct / x.asked) * 100) : null;
+      return h('div', { class: 'dd-row' },
+        h('span', { class: 'dd-time' }, hm(x.at)),
+        h('span', { class: 'dd-em' }, em),
+        h('span', { class: 'dd-body' },
+          h('b', { html: `${u ? u.title : x.subject === 'english' ? '英語' : '数学'}${L ? `｜${rich(L.title)}` : ''}` }),
+          h('small', {}, `${kind}・${x.asked ? `${x.correct}/${x.asked}問 正解（${acc}%）` : '問題なし'}・${minText(x.seconds)}`)),
+        h('span', { class: `dd-res ${rc}` }, res));
+    }));
+  }
+  const by = Object.entries(lg?.byUnit || {});
+  if (by.length) {
+    return h('div', { class: 'day-detail' }, head, by.map(([id, v]) => h('div', { class: 'dd-row' },
+      h('span', { class: 'dd-em' }, '📝'),
+      h('span', { class: 'dd-body' }, h('b', {}, UNIT[id]?.title || id), h('small', {}, `${v.correct}/${v.asked}問 正解`)))));
+  }
+  return h('div', { class: 'day-detail' }, head, h('p', { class: 'note' }, 'この日の記録はないよ。'));
+}
 
 function lastDays(n) {
   const out = [];
@@ -55,10 +91,17 @@ export function render(el) {
   const chart = h('div', { class: 'chart', role: 'img', 'aria-label': '直近14日の勉強時間' },
     // 目安の点線（グラフの中身 136px、下の日付ラベル＋余白 約20px。css の .chart と合わせる）
     h('span', { class: 'goal', style: { bottom: `${Math.round(20 + (GOAL_MIN / maxM) * 0.86 * 136)}px` } }, h('small', {}, `目安${GOAL_MIN}分`)),
-    days.map((d, i) => h('div', { class: `col ${d === t ? 'today' : ''} ${mins[i] >= GOAL_MIN ? 'met' : ''}` },
+    days.map((d, i) => h('button', { class: `col ${d === t ? 'today' : ''} ${mins[i] >= GOAL_MIN ? 'met' : ''} ${d === t ? 'sel' : ''}`, type: 'button', 'data-day': d, onclick: () => pickDay(d) },
       h('span', { class: 'v' }, mins[i] ? `${mins[i]}` : ''),
       h('div', { class: 'bar', style: { height: `${(mins[i] / maxM) * 86}%` }, title: `${d}: ${mins[i]}分 / ${asked[i]}問` }),
       h('span', { class: 'd' }, d.slice(8).replace(/^0/, '')))));
+
+  // 棒をタップすると、その日の内訳を下に出す
+  const detailBox = h('div', {}, dayDetail(s, t));
+  function pickDay(d) {
+    chart.querySelectorAll('.col').forEach((c) => c.classList.toggle('sel', c.dataset.day === d));
+    detailBox.replaceChildren(dayDetail(s, d));
+  }
 
   // 単元ごと（ボスの顔・正答率のバー・★）
   const unitRow = (u) => {
@@ -98,6 +141,8 @@ export function render(el) {
         h('div', {}, h('b', {}, `${totalMin}分`), h('small', {}, '合計'))),
       h('h3', { class: 'sec' }, '📅 直近14日（分）'),
       chart,
+      h('p', { class: 'note' }, '⏱ 問題や解説に向き合っていた時間だけを数えているよ（1問 最大3分。放置した時間は入らない）。棒をタップすると、その日の内訳が見られる。'),
+      detailBox,
       h('h3', { class: 'sec' }, '📚 単元ごと'),
       subjBlocks,
       h('h3', { class: 'sec' }, `👻 復習待ち ${s.reviewQueue.length} 問`),

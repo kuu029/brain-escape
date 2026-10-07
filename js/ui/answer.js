@@ -138,7 +138,7 @@ export function answerPad(p, onSubmit) {
 }
 
 // タイル入力（英語）: order = 単語タイルの並べかえ、spell = 文字タイルでつづる
-// タイルは指が触れた瞬間に反応。置いたタイルをタップすると元にもどる
+// タイルは指が触れた瞬間に反応。置いたタイルはタップで元にもどり、ドラッグで並びを入れかえられる
 function tilePad(p, onFire) {
   const spell = p.input.kind === 'spell';
   const tiles = spell ? p.input.letters : p.input.tiles;
@@ -174,11 +174,79 @@ function tilePad(p, onFire) {
       line.append(h('span', { class: 'spell-word' }, word || h('span', { class: 'ph' }, '？')));
     } else {
       if (p.input.prefix) line.append(h('span', { class: 'tile-tail' }, p.input.prefix));
-      picked.forEach((i, k) => line.append(h('button', { class: 'tile placed', type: 'button', ...press(() => unpick(k)) }, tiles[i])));
+      picked.forEach((i, k) => line.append(placedTile(i, k)));
       for (let k = picked.length; k < need; k++) line.append(h('span', { class: 'tile-slot' }));
       line.append(h('span', { class: 'tile-tail' }, p.input.suffix || ''));
     }
     btns.forEach((b, i) => b.classList.toggle('used', picked.includes(i)));
+  }
+  // 置いたタイル: さわってすぐ離す＝もどす ／ 指を動かす＝つかんで好きな位置へ
+  function placedTile(i, k) {
+    const b = h('button', { class: 'tile placed', type: 'button', onclick: (e) => { if (e.detail === 0) unpick(k); } }, tiles[i]);
+    b.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const sx = e.clientX;
+      const sy = e.clientY;
+      let drag = null;
+      try { b.setPointerCapture(e.pointerId); } catch { /* 古いブラウザ */ }
+      const move = (ev) => {
+        if (!drag) {
+          if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 8) return;
+          drag = startDrag(b, k);
+        }
+        drag.move(ev.clientX - sx, ev.clientY - sy, ev.clientX, ev.clientY);
+      };
+      const up = (ev) => {
+        b.removeEventListener('pointermove', move);
+        b.removeEventListener('pointerup', up);
+        b.removeEventListener('pointercancel', up);
+        if (drag) drag.drop(ev.type === 'pointercancel', ev.clientX, ev.clientY);
+        else { sfx('tap'); unpick(k); }
+      };
+      b.addEventListener('pointermove', move);
+      b.addEventListener('pointerup', up);
+      b.addEventListener('pointercancel', up);
+    });
+    return b;
+  }
+  function startDrag(b, k) {
+    sfx('tap');
+    const others = [...line.querySelectorAll('.tile.placed')].filter((x) => x !== b);
+    const rects = others.map((x) => x.getBoundingClientRect());
+    const lineRect = line.getBoundingClientRect();
+    b.classList.add('dragging');
+    let to = k; // 入れる位置（others の何番目の前か）
+    const mark = () => {
+      others.forEach((x, j) => { x.classList.toggle('drop-before', j === to); x.classList.toggle('drop-after', to === others.length && j === others.length - 1); });
+    };
+    const out = (x, y) => y > lineRect.bottom + 30 || y < lineRect.top - 40;
+    return {
+      move(dx, dy, x, y) {
+        b.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+        if (out(x, y)) { to = -1; mark(); line.classList.add('drop-out'); return; }
+        line.classList.remove('drop-out');
+        // 指にいちばん近いタイルの、左半分なら前・右半分なら後ろへ
+        let best = -1;
+        let bd = Infinity;
+        rects.forEach((r, j) => {
+          const d = Math.hypot((r.left + r.right) / 2 - x, ((r.top + r.bottom) / 2 - y) * 1.6);
+          if (d < bd) { bd = d; best = j; }
+        });
+        if (best < 0) to = 0;
+        else to = x < (rects[best].left + rects[best].right) / 2 ? best : best + 1;
+        mark();
+      },
+      drop(cancel) {
+        line.classList.remove('drop-out');
+        if (cancel) return paint();
+        const id = picked[k];
+        if (to === -1) { picked.splice(k, 1); return paint(); } // 枠の外に出したら、元にもどす
+        const rest = picked.filter((_, j) => j !== k);
+        rest.splice(to, 0, id);
+        picked = rest;
+        paint();
+      },
+    };
   }
   const fire = h('button', {
     class: 'key fire',

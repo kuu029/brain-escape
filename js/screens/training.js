@@ -1,9 +1,10 @@
 // 訓練（ステップ解説）: 1ステップ=1操作。小問に正解しないと次へ進めない（スキップ不可）
-import { h, btn, holdBtn, modal, confirmBox, sleep } from '../core/ui.js';
+import { h, btn, readBtn, readMs, modal, confirmBox, sleep } from '../core/ui.js';
 import { tex, rich } from '../core/mathml.js';
 import { makeRng, newSeed } from '../core/rng.js';
 import { checkAnswer } from '../core/check.js';
-import { unitState, saveNow } from '../core/store.js';
+import { unitState, saveNow, beginSession, tallySession, closeSession } from '../core/store.js';
+import { studyBegin, studyEnd } from '../core/timer.js';
 import { UNIT, lessonOf } from '../units/registry.js';
 import { answerPad, answerLine } from '../ui/answer.js';
 import { go } from '../core/router.js';
@@ -18,6 +19,7 @@ export function render(el, { unit, lesson }) {
   const steps = L.build(makeRng(newSeed()));
   const idx = u.lessons.indexOf(L);
   let i = 0;
+  beginSession({ kind: 'training', subject: u.subject || 'math', unit, lesson: L.id });
 
   const bar = h('div', { class: 'tr-bar' }, h('i'));
   const body = h('div', { class: 'tr-body' });
@@ -52,11 +54,15 @@ export function render(el, { unit, lesson }) {
       st.en && h('div', { class: 'tr-en' }, st.en),
       st.q?.stem && h('div', { class: 'tr-qstem', rich: st.q.stem }));
     body.append(card);
-    const nextBtn = holdBtn(i + 1 < steps.length ? '次へ ▶' : '訓練クリア！', next, 'primary big');
+    studyBegin(150); // 1ステップ 最大2分半
+    const nextLabel = i + 1 < steps.length ? '次へ ▶' : '訓練クリア！';
     if (!st.q) {
-      body.append(nextBtn);
+      // 説明だけのステップ: 読む量に対して早すぎるタップのときだけ「ほんとに読んだ？」
+      body.append(readBtn(nextLabel, next, 'primary big', readMs(`${st.text || ''}${st.en || ''}`), '説明'));
       return;
     }
+    // 例題に正解したあとは、すぐ次へ進んでOK
+    const nextBtn = btn(nextLabel, next, 'primary big');
     let wrongs = 0;
     const fb = h('div', { class: 'feedback' });
     const q = { ...st.q, stem: st.q.stem || st.text };
@@ -68,6 +74,7 @@ export function render(el, { unit, lesson }) {
         return;
       }
       fb.innerHTML = '';
+      if (!wrongs) tallySession(r.ok);
       if (r.ok) {
         sfx('ok');
         bump('trainQ');
@@ -101,6 +108,8 @@ export function render(el, { unit, lesson }) {
       us.trainingDone = true;
       tool = grantTool(unit);
     }
+    studyEnd();
+    closeSession('clear');
     saveNow();
     sfx('win');
     bar.firstChild.style.width = '100%';
@@ -113,7 +122,8 @@ export function render(el, { unit, lesson }) {
       h('div', { class: 'big-em' }, '🎉'),
       h('h2', {}, `訓練${idx + 1} クリア！`),
       h('p', { rich: L.unlocks.length ? 'この型の問題が練習ウェーブに出るようになった。' : '' }),
-      holdBtn('⚔️ 練習ウェーブで試す', () => go('battle', { mode: 'practice', unit }), 'primary big'),
+      btn('⚔️ 練習ウェーブで試す', () => go('battle', { mode: 'practice', unit }), 'primary big'),
+      h('p', { class: 'note' }, '練習ウェーブ＝覚えた解き方を、看守とのバトルで使ってみる場所。'),
       nextL && btn(`📘 次の訓練へ: ${nextL.title.replace(/\$/g, '')}`, () => go('training', { unit, lesson: nextL.id }), 'ghost'),
       btn('マップへ', () => go('map', { focus: unit }), 'ghost')));
   }

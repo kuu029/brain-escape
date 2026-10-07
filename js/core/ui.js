@@ -25,26 +25,38 @@ export function btn(label, onclick, cls = '') {
   return h('button', { class: `btn ${cls}`, type: 'button', onclick: (e) => { sfx('tap'); onclick(e); } }, label);
 }
 
-// 反射的に押して飛ばさないよう、画面に出てから ms のあいだ押せないボタン。
-// 待ち時間は小さな円のタイマーで見せる（画面に出た瞬間から数える）
-export function holdBtn(label, onclick, cls = '', ms = 1500) {
-  const ring = h('span', { class: 'hold-ring', html: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8"/></svg>' });
-  const b = btn(h('span', { class: 'hold-in' }, ring, h('span', {}, label)), onclick, `${cls} hold`);
-  b.disabled = true;
-  b.style.setProperty('--hold', `${ms}ms`);
-  const start = () => {
-    if (!b.isConnected) return requestAnimationFrame(start);
-    b.classList.add('counting');
-    setTimeout(() => { b.disabled = false; b.classList.remove('hold', 'counting'); ring.remove(); }, ms);
-  };
+// 解説を読んでほしい場面のボタン。すぐ押せるが、画面に出てから ms 以内に押すと
+// 「ほんとに読んだ？」と一度だけ聞く（読まずに連打で飛ばす対策。正解のあとなどは普通の btn を使う）
+export function readBtn(label, onclick, cls = '', ms = 2500, what = '解説') {
+  let shown = Infinity;
+  let asked = false;
+  const b = btn(label, async (e) => {
+    if (!asked && Date.now() - shown < ms) {
+      asked = true;
+      const ok = await modal({
+        title: `ほんとに${what}をよく読んだ？`,
+        body: what === '解説' ? 'まちがえた所をここで読んでおくと、次に同じミスをしにくくなるよ。' : 'ここを読んでおくと、このあとの問題がぐっと楽になるよ。',
+        buttons: [{ label: '読んだ！ 進む', value: true }, { label: 'もう一度読む', value: false, cls: 'primary' }],
+      });
+      if (!ok) return;
+    }
+    onclick(e);
+  }, cls);
+  const start = () => { if (!b.isConnected) return requestAnimationFrame(start); shown = Date.now(); };
   requestAnimationFrame(start);
   return b;
 }
+// 読む量に合わせた「早すぎ」の目安（1秒に約8文字。1.2〜5秒）
+export const readMs = (text) => Math.max(1200, Math.min(5000, String(text || '').replace(/<[^>]+>|\$|\\[a-z]+/g, '').length * 125));
 
 // モーダル。buttons: [{label, value, cls}] → 押されたボタンの value で resolve
-export function modal({ title, body, buttons = [{ label: 'OK', value: true, cls: 'primary' }], dismissable = true, cls = '' }) {
+// ctl(close): 外から閉じたいとき用に close を受け取る
+export function modal({ title, body, buttons = [{ label: 'OK', value: true, cls: 'primary' }], dismissable = true, cls = '', ctl = null }) {
   return new Promise((resolve) => {
+    let closed = false;
     const close = (v) => {
+      if (closed) return;
+      closed = true;
       back.classList.add('out');
       setTimeout(() => back.remove(), 160);
       resolve(v);
@@ -56,6 +68,7 @@ export function modal({ title, body, buttons = [{ label: 'OK', value: true, cls:
     );
     const back = h('div', { class: 'modal-back', onclick: (e) => { if (dismissable && e.target === back) close(null); } }, box);
     document.body.append(back);
+    ctl?.(close);
   });
 }
 export const confirmBox = (title, body, yes = 'OK', no = 'やめる', danger = false) =>

@@ -545,6 +545,11 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
 .tile:active { transform: scale(.95); }
 .tile.used { visibility: hidden; }
 .tile.placed { min-height: 36px; padding: 2px 10px; font-size: 17px; background: #3a2d6e; border-color: #8f7ff0; }
+.tile.placed { touch-action: none; position: relative; }
+.tile.placed.dragging { z-index: 5; box-shadow: 0 8px 18px #000a; border-color: var(--accent); transition: none; }
+.tile.placed.drop-before { box-shadow: -5px 0 0 -1px var(--accent); }
+.tile.placed.drop-after { box-shadow: 5px 0 0 -1px var(--accent); }
+.tile-line.drop-out { border-style: dashed; border-color: var(--bad); }
 .tile-pool.spell .tile { min-width: 48px; font-size: 22px; }
 .tile-ctrl { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 6px; }
 @media (max-height: 700px) {
@@ -553,14 +558,6 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
 }
 
 /* 押せるまで少し待つボタン（反射的に飛ばさないため） */
-.btn.hold { opacity: .6; pointer-events: none; }
-.btn.hold.primary { box-shadow: 0 4px 0 #8a6f14; }
-.hold-in { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.hold-ring { display: inline-flex; width: 16px; height: 16px; }
-.hold-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.hold-ring circle { fill: none; stroke: currentColor; stroke-width: 3; stroke-dasharray: 50.27; stroke-dashoffset: 0; }
-.btn.counting .hold-ring circle { animation: holdRing var(--hold) linear forwards; }
-@keyframes holdRing { to { stroke-dashoffset: 50.27; } }
 .q-inst { display: inline-block; font-size: 12px; font-weight: 800; color: var(--accent-ink); background: var(--accent); border-radius: 999px; padding: 0 8px; margin-right: 6px; vertical-align: 2px; }
 .pad.tiles.compact .tile { min-height: 38px; padding: 2px 9px; font-size: 16px; }
 .pad.tiles.compact .tile.placed { min-height: 32px; padding: 1px 7px; font-size: 15px; }
@@ -822,3 +819,33 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
 @keyframes holo { from { background-position: 130% 0; } to { background-position: -130% 0; } }
 @media (prefers-reduced-motion: reduce) { .rays, .rain i, .card.r3::after, .card.r4::after, .rs-face { animation: none; } .confetti { display: none; } }
 .bg-deco.has-img { background-size: cover; background-position: center top; background-repeat: no-repeat; }
+
+/* 単元パネル: 訓練 → 練習 → ボス の道しるべ */
+.up-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 2px; }
+.uf-step { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; border-radius: 12px; background: #0003; border: 2px solid transparent; color: var(--dim); }
+.uf-step:not(:last-child)::after { content: "▶"; position: absolute; right: -9px; top: 50%; transform: translateY(-50%); font-size: 9px; color: var(--dim); }
+.uf-em { font-size: 18px; line-height: 1.2; }
+.uf-step b { font-size: 13px; color: var(--text); }
+.uf-step small { font-size: 10px; }
+.uf-step.done { color: #a7e8c4; }
+.uf-step.done .uf-em { color: var(--good); font-weight: 900; }
+.uf-step.now { border-color: var(--accent); background: #ffd6401a; color: var(--accent); box-shadow: 0 0 12px #ffd64044; }
+.up-why { margin: -2px 0 4px; font-size: 12px; line-height: 1.5; color: var(--dim); }
+
+/* 記録: その日の内訳 */
+.chart button.col { min-width: 0; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.chart .col.sel .d { color: var(--accent); font-weight: 900; }
+.chart .col.sel .bar { outline: 2px solid #fff; outline-offset: 1px; }
+.day-detail { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; overflow: hidden; }
+.dd-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #0003; }
+.dd-head small { color: var(--dim); font-size: 12px; }
+.dd-row { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-top: 1px solid #ffffff12; }
+.dd-time { width: 38px; flex-shrink: 0; font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.dd-em { font-size: 18px; flex-shrink: 0; }
+.dd-body { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.35; }
+.dd-body b { font-size: 14px; }
+.dd-body small { font-size: 11px; color: var(--dim); }
+.dd-res { flex-shrink: 0; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 10px; background: #0004; }
+.dd-res.good { color: var(--good); }
+.dd-res.bad { color: var(--bad); }
+.dd-res.dim { color: var(--dim); }

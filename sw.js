@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = '267491e6b4';
+const VERSION = '5c4aed8f25';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -12,6 +12,10 @@ const ASSETS = [
   './art/bg-math-1.jpg',
   './art/bg-math-2.jpg',
   './art/bg-math-3.jpg',
+  './art/boss-angles.png',
+  './art/boss-circle-angle.png',
+  './art/boss-congruence.png',
+  './art/boss-data.png',
   './art/boss-en-3sg.png',
   './art/boss-en-be.png',
   './art/boss-en-compare.png',
@@ -38,11 +42,19 @@ const ASSETS = [
   './art/boss-expressions.png',
   './art/boss-fractions-decimals.png',
   './art/boss-linear-equations.png',
+  './art/boss-linear-function.png',
   './art/boss-polynomials.png',
+  './art/boss-probability.png',
+  './art/boss-proportion.png',
+  './art/boss-pythagoras.png',
+  './art/boss-quadratic-function.png',
   './art/boss-quadratic.png',
   './art/boss-signed-numbers.png',
+  './art/boss-similarity.png',
   './art/boss-simultaneous.png',
+  './art/boss-solids.png',
   './art/boss-square-roots.png',
+  './art/boss-word-mix.png',
   './art/enemy-grunt.png',
   './art/enemy-review.png',
   './art/enemy-runner.png',
