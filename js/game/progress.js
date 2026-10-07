@@ -1,6 +1,6 @@
 // 進行と報酬（ロック判定・ウェーブ終了時の報酬・ガチャ）
 import { S, unitState, cleared, save, saveNow } from '../core/store.js';
-import { UNIT, GEN } from '../units/registry.js';
+import { UNIT, GEN, SUBJECTS, unitsOf } from '../units/registry.js';
 import { BOSS_CARD, GACHA_CARDS, SKINS, CARDS, GACHA_RATES } from './content.js';
 import { bump } from './missions.js';
 
@@ -8,6 +8,12 @@ export function isUnlocked(id) {
   const u = UNIT[id];
   if (!u || u.comingSoon) return false;
   return (u.prereqs || []).every((p) => cleared(p));
+}
+// 次に挑む単元（下の段階から順に、開いていてまだ突破していない最初のもの）
+export function nextUnit(subject) {
+  const stages = SUBJECTS[subject].stages.map((x) => x.n);
+  const list = unitsOf(subject).slice().sort((a, b) => stages.indexOf(a.stage) - stages.indexOf(b.stage));
+  return list.find((u) => isUnlocked(u.id) && !cleared(u.id)) || null;
 }
 export const missingPrereqs = (id) => (UNIT[id].prereqs || []).filter((p) => !cleared(p));
 

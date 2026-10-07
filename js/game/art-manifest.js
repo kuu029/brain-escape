@@ -46,3 +46,4 @@ export const ART_KEYS = [
   "skin-lava-bomb",
   "gacha-machine"
 ];
+export const BG_KEYS = [];

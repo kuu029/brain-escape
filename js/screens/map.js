@@ -1,46 +1,120 @@
-// マップ（単元選択）: エリア・ロック・理解度。タップで単元パネル
+// マップ（単元選択）: 下から上へ登る「すごろく」。マス＝単元（ボスの顔）。タップで単元パネル
 import { h, btn, sheet, toast } from '../core/ui.js';
-import { S, unitState, mastery, MASTERY_LABEL } from '../core/store.js';
+import { S, unitState, mastery, MASTERY_LABEL, cleared } from '../core/store.js';
 import { UNIT, SUBJECTS, unitsOf } from '../units/registry.js';
 import { go } from '../core/router.js';
-import { isUnlocked, missingPrereqs, canPractice, canBoss } from '../game/progress.js';
+import { isUnlocked, missingPrereqs, canPractice, canBoss, nextUnit } from '../game/progress.js';
 import { topBar } from './home.js';
 import { rich } from '../core/mathml.js';
-import { TOOLS } from '../game/content.js';
+import { TOOLS, BOSSES } from '../game/content.js';
+import { spriteHTML, bgUrl } from '../game/art.js';
+import { sfx } from '../core/sound.js';
+
+const GAP = 128; // マスとマスの縦の間かく
+const FLOOR_TOP = 92; // 階の看板のぶん
+const FLOOR_BOTTOM = 40;
+const GOAL_H = 150;
+const START_H = 70;
+const ZIG = [50, 24, 50, 76]; // マスの横位置（%）。くねくね道になる
+const GOAL = { math: ['🌅', '外の世界（脱出口）'], english: ['🗽', '自由の屋上（脱出口）'] };
+const SUBJ_KEY = { math: 'math', english: 'en' };
+const STARS = { new: 0, trained: 1, practicing: 2, mastered: 3 };
 
 export function render(el, { focus = null, subject = null } = {}) {
   const s = S();
   const subj = subject || UNIT[focus]?.subject || 'math';
   // 英語棟に初めて来たら、英語の看守チェックから
   if (subj === 'english' && !s.diagnosisEn?.done) return go('diagnosis', { phase: 'intro', subject: 'english' });
-  const list = h('div', { class: 'map' });
-  for (const stg of SUBJECTS[subj].stages) {
-    list.append(h('h3', { class: 'stage-title' }, stg.title));
-    for (const u of unitsOf(subj).filter((x) => x.stage === stg.n)) {
-      const unlocked = isUnlocked(u.id);
-      const ms = u.comingSoon ? 'soon' : mastery(u.id);
-      const us = s.units[u.id];
-      const cls = ['area', u.comingSoon ? 'soon' : unlocked ? 'open' : 'locked', `m-${ms}`, us?.bossCleared || us?.diagPassed ? 'cleared' : ''].join(' ');
-      const card = h('button', { class: cls, type: 'button', 'data-unit': u.id, onclick: () => openUnit(u.id) },
-        h('span', { class: 'a-em' }, u.comingSoon ? '🚧' : unlocked ? u.emoji : '🔒'),
-        h('span', { class: 'a-body' },
-          h('span', { class: 'a-area' }, u.area),
-          h('span', { class: 'a-title' }, u.title),
-          !unlocked && !u.comingSoon && h('span', { class: 'a-need' }, `必要: ${missingPrereqs(u.id).map((p) => UNIT[p].title).join('・')}`)),
-        h('span', { class: `badge b-${ms}` }, u.comingSoon ? '工事中' : unlocked ? (us?.bossCleared ? '突破✔' : us?.diagPassed && ms !== 'mastered' ? '突破✔' : MASTERY_LABEL[ms]) : 'ロック'));
-      list.append(card);
+  const stages = SUBJECTS[subj].stages;
+  const all = stages.flatMap((stg) => unitsOf(subj).filter((u) => u.stage === stg.n)); // 下から上の順
+  const nextId = nextUnit(subj)?.id;
+
+  // 上の階から順に、座標を決める（y は塔の上からの px）
+  let y = GOAL_H;
+  const floors = [];
+  const pos = {};
+  for (const stg of [...stages].reverse()) {
+    const us = all.filter((u) => u.stage === stg.n);
+    const top = y;
+    y += FLOOR_TOP;
+    for (const u of [...us].reverse()) {
+      pos[u.id] = { x: ZIG[all.indexOf(u) % ZIG.length], y: y + GAP / 2 };
+      y += GAP;
     }
+    y += FLOOR_BOTTOM;
+    floors.push({ stg, top, height: y - top, soon: us.every((u) => u.comingSoon) });
   }
+  floors[floors.length - 1].height += START_H; // 1階はスタート地点まで
+  const H = y + START_H;
+  const goalPt = { x: 50, y: 70 };
+
+  // 道（下のマスから上のマスへ、なめらかに）
+  const pts = [...all.map((u) => pos[u.id]), goalPt];
+  const seg = (a, b) => `C ${a.x} ${(a.y + b.y) / 2}, ${b.x} ${(a.y + b.y) / 2}, ${b.x} ${b.y}`;
+  const startPt = { x: 50, y: H - 20 };
+  const pathD = (list) => `M ${startPt.x} ${startPt.y} ${list.map((p, i) => seg(i ? list[i - 1] : startPt, p)).join(' ')}`;
+  const litUpTo = nextId ? all.findIndex((u) => u.id === nextId) : all.every((u) => u.comingSoon || cleared(u.id)) ? pts.length - 1 : -1;
+  const svg = `<svg class="road" viewBox="0 0 100 ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <path class="road-bed" d="${pathD(pts)}"/>
+    <path class="road-dash" d="${pathD(pts)}"/>
+    ${litUpTo >= 0 ? `<path class="road-lit" d="${pathD(pts.slice(0, litUpTo + 1))}"/>` : ''}
+  </svg>`;
+
+  const tower = h('div', { class: `tower t-${subj}`, style: { height: `${H}px` } });
+  for (const f of floors) {
+    const key = `bg-${SUBJ_KEY[subj]}-${f.stg.n}`;
+    const img = bgUrl(key);
+    tower.append(h('div', {
+      class: `floor fl-${SUBJ_KEY[subj]}-${f.stg.n}${f.soon ? ' fl-soon' : ''}${img ? ' has-img' : ''}`,
+      style: { top: `${f.top}px`, height: `${f.height}px`, ...(img ? { backgroundImage: `url(${img})` } : {}) },
+    }, h('div', { class: 'floor-sign' }, h('span', { class: 'fs-n' }, `${f.stg.n}F`), h('span', { class: 'fs-t' }, f.stg.title.replace(/^第\d段階\s*/, '')))));
+  }
+  tower.append(h('div', { class: 'tower-goal', style: { height: `${GOAL_H}px` } },
+    h('span', { class: 'tg-em' }, GOAL[subj][0]), h('span', { class: 'tg-t' }, GOAL[subj][1])));
+  tower.insertAdjacentHTML('beforeend', svg);
+  // ただよう火の粉（飾り）
+  const embers = h('div', { class: 'embers', 'aria-hidden': 'true' });
+  for (let i = 0; i < 16; i++) embers.append(h('i', { style: { left: `${(i * 37) % 100}%`, top: `${(i * 53) % 100}%`, animationDelay: `${-(i * 1.7) % 9}s`, animationDuration: `${7 + (i % 5)}s` } }));
+  tower.append(embers);
+
+  for (const u of all) {
+    const st = u.comingSoon ? 'soon' : cleared(u.id) ? 'cleared' : u.id === nextId ? 'next' : isUnlocked(u.id) ? 'open' : 'locked';
+    const ms = u.comingSoon ? 'new' : mastery(u.id);
+    const boss = BOSSES[u.id];
+    const face = u.comingSoon ? `<span class="spr emo">${u.emoji}</span>` : spriteHTML(`boss-${u.id}`, boss?.emoji || u.emoji, boss?.name || u.title);
+    const p = pos[u.id];
+    const node = h('button', {
+      class: `node st-${st}`, type: 'button', 'data-unit': u.id,
+      style: { left: `${p.x}%`, top: `${p.y}px` },
+      onclick: () => { sfx('tap'); openUnit(u.id); },
+    },
+      st === 'next' && h('span', { class: 'n-flag' }, 'NEXT!'),
+      h('span', { class: 'n-ring', html: face }),
+      h('span', { class: 'n-badge' }, { cleared: '✔', locked: '🔒', soon: '🚧' }[st] || ''),
+      h('span', { class: 'n-label' },
+        h('small', {}, u.area),
+        h('b', {}, u.title),
+        !u.comingSoon && h('span', { class: 'n-stars', 'aria-label': MASTERY_LABEL[ms] }, '★★★'.slice(0, STARS[ms]) + '☆☆☆'.slice(0, 3 - STARS[ms]))));
+    tower.append(node);
+  }
+  tower.append(h('div', { class: 'tower-start' }, '🚪 ここからスタート'));
+
   const rq = s.reviewQueue.filter((r) => (UNIT[r.unit]?.subject || 'math') === subj).length;
+  const done = all.filter((u) => !u.comingSoon && cleared(u.id)).length;
+  const total = all.filter((u) => !u.comingSoon).length;
   el.append(
-    topBar(() => go('home')),
     h('div', { class: 'map-head' },
-      h('h2', {}, SUBJECTS[subj].map),
-      rq > 0 && btn(`👻 リベンジウェーブ（${rq}体待ち）`, () => go('battle', { mode: 'review', subject: subj }), 'warn'),
-      btn('🔦 看守チェック（診断）をやり直す', () => go('diagnosis', { phase: 'intro', subject: subj }), 'ghost small')),
-    list,
+      topBar(() => go('home')),
+      h('div', { class: 'mh-row' },
+        h('h2', {}, SUBJECTS[subj].map.replace(/^🗺️\s*/, '')),
+        h('span', { class: 'mh-prog' }, `突破 ${done}/${total}`),
+        btn('🔦', () => go('diagnosis', { phase: 'intro', subject: subj }), 'ghost small mh-diag')),
+      rq > 0 && btn(`👻 リベンジウェーブ（${rq}体待ち）`, () => go('battle', { mode: 'review', subject: subj }), 'warn small')),
+    tower,
   );
-  if (focus) setTimeout(() => el.querySelector(`[data-unit="${focus}"]`)?.scrollIntoView({ block: 'center' }), 50);
+  // 次に挑むマス（または指定のマス）が画面の真ん中に来るように
+  const target = focus || nextId || all.filter((u) => cleared(u.id)).pop()?.id || all[0].id;
+  setTimeout(() => el.querySelector(`[data-unit="${target}"]`)?.scrollIntoView({ block: 'center' }), 30);
 }
 
 function openUnit(id) {

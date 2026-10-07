@@ -1,10 +1,14 @@
 // キャラ・タワーの絵。art/ に画像があれば画像、なければ絵文字で表示する
-import { ART_KEYS } from './art-manifest.js';
+import { ART_KEYS, BG_KEYS } from './art-manifest.js';
 import { ENEMY_LOOK, BOSSES, TOWER_LOOK, CARDS } from './content.js';
 
 const HAS = new Set(ART_KEYS);
 export const hasArt = (key) => HAS.has(key);
 const url = (key) => `art/${key}.png`;
+
+// 背景・バナー（縦長の絵。art/<key>.jpg）。なければ null → CSS で描いた背景のまま
+const HAS_BG = new Set(BG_KEYS || []);
+export const bgUrl = (key) => (HAS_BG.has(key) ? `art/${key}.jpg` : null);
 
 // 画像 or 絵文字の HTML（alt はスクリーンリーダー用）
 export function spriteHTML(key, emoji, alt = '', cls = '') {
