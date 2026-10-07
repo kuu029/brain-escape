@@ -4,7 +4,7 @@ import { tex, rich } from '../core/mathml.js';
 import { sfx } from '../core/sound.js';
 
 export function problemCard(p, { review = false, label = '' } = {}) {
-  return h('div', { class: `qcard${review ? ' review' : ''}` },
+  return h('div', { class: `qcard${review ? ' review' : ''}${p.lang === 'english' ? ' lang-en' : ''}` },
     h('div', { class: 'qcard-tags' },
       review && h('span', { class: 'tag tag-review' }, '👻 再襲来'),
       p.source === 'past-exam' && h('span', { class: 'tag' }, `過去問 ${p.origin || ''}`),
@@ -41,9 +41,16 @@ export function answerPad(p, onSubmit) {
     }
   };
 
+  if (p.input.kind === 'order' || p.input.kind === 'spell') {
+    const pad = tilePad(p, (v) => submit(v));
+    root = pad.el;
+    return pad;
+  }
+
   if (p.input.kind === 'choice') {
-    const grid = h('div', { class: `choices n${p.input.choices.length}` },
-      p.input.choices.map((c, i) => h('button', { class: 'choice', type: 'button', onclick: () => { sfx('tap'); submit(i); } }, h('span', { class: 'math', html: tex(c) }))));
+    const label = (c) => (p.input.text ? h('span', { class: 'en' }, c) : h('span', { class: 'math', html: tex(c) }));
+    const grid = h('div', { class: `choices n${p.input.choices.length}${p.input.text ? ' text' : ''}` },
+      p.input.choices.map((c, i) => h('button', { class: 'choice', type: 'button', onclick: () => { sfx('tap'); submit(i); } }, label(c))));
     root = h('div', { class: 'pad' }, grid);
     return {
       el: root,
@@ -121,6 +128,74 @@ export function answerPad(p, onSubmit) {
     clear() { for (const f of fields) vals[f.key] = ''; active = 0; paint(); },
     mark() {},
     clearMarks() {},
+  };
+}
+
+// タイル入力（英語）: order = 単語タイルの並べかえ、spell = 文字タイルでつづる
+// タイルは指が触れた瞬間に反応。置いたタイルをタップすると元にもどる
+function tilePad(p, onFire) {
+  const spell = p.input.kind === 'spell';
+  const tiles = spell ? p.input.letters : p.input.tiles;
+  const need = p.input.answer.length;
+  let picked = [];
+  const press = (fn) => ({
+    onpointerdown: (e) => { e.preventDefault(); sfx('tap'); fn(); },
+    onclick: (e) => { if (e.detail === 0) fn(); },
+  });
+  const line = h('div', { class: `tile-line${spell ? ' spell' : ''}` });
+  const pool = h('div', { class: `tile-pool${spell ? ' spell' : ''}` });
+  const btns = tiles.map((t, i) => h('button', { class: 'tile', type: 'button', ...press(() => pick(i)) }, t));
+  pool.append(...btns);
+  function pick(i) {
+    if (picked.includes(i)) return;
+    if (!spell && picked.length >= need) return shakeLine();
+    picked.push(i);
+    paint();
+  }
+  function unpick(k) {
+    picked.splice(k, 1);
+    paint();
+  }
+  function shakeLine() {
+    line.classList.remove('shake');
+    void line.offsetWidth;
+    line.classList.add('shake');
+  }
+  function paint() {
+    line.innerHTML = '';
+    if (spell) {
+      const word = picked.map((i) => tiles[i]).join('');
+      line.append(h('span', { class: 'spell-word' }, word || h('span', { class: 'ph' }, '？')));
+    } else {
+      picked.forEach((i, k) => line.append(h('button', { class: 'tile placed', type: 'button', ...press(() => unpick(k)) }, tiles[i])));
+      for (let k = picked.length; k < need; k++) line.append(h('span', { class: 'tile-slot' }));
+      line.append(h('span', { class: 'tile-tail' }, p.input.suffix || ''));
+    }
+    btns.forEach((b, i) => b.classList.toggle('used', picked.includes(i)));
+  }
+  const fire = h('button', {
+    class: 'key fire',
+    type: 'button',
+    onclick: () => {
+      if (spell ? picked.length === 0 : picked.length !== need) return shakeLine();
+      sfx('tap');
+      onFire(spell ? picked.map((i) => tiles[i]).join('') : [...picked]);
+    },
+  }, '発射!');
+  const ctrl = h('div', { class: 'tile-ctrl' },
+    h('button', { class: 'key fn', type: 'button', ...press(() => { picked.pop(); paint(); }) }, '⌫'),
+    h('button', { class: 'key fn', type: 'button', ...press(() => { picked = []; paint(); }) }, 'クリア'),
+    fire);
+  const el = h('div', { class: 'pad tiles' },
+    !spell && p.input.extra ? h('div', { class: 'tile-note' }, `※ 使わないタイルが ${p.input.extra} 枚まざっている`) : null,
+    line, pool, ctrl);
+  paint();
+  return {
+    el,
+    clear() { picked = []; paint(); },
+    mark() {},
+    clearMarks() { picked = []; paint(); },
+    disable() {},
   };
 }
 

@@ -32,6 +32,7 @@ export function blank() {
     tools: [],
     missions: { date: null, list: [] },
     diagnosis: { done: false, at: null, results: {} },
+    diagnosisEn: { done: false, at: null, results: {} },
     stats: { correct: 0, asked: 0, bestCombo: 0, waves: 0, bosses: 0 },
   };
 }
@@ -40,7 +41,7 @@ export function blank() {
 function migrate(d) {
   const b = blank();
   const out = { ...b, ...d };
-  for (const k of ['settings', 'streak', 'collection', 'missions', 'diagnosis', 'stats']) out[k] = { ...b[k], ...(d[k] || {}) };
+  for (const k of ['settings', 'streak', 'collection', 'missions', 'diagnosis', 'diagnosisEn', 'stats']) out[k] = { ...b[k], ...(d[k] || {}) };
   out.version = VERSION;
   return out;
 }

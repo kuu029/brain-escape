@@ -21,9 +21,9 @@ export function canBoss(id) {
   return (us.trainingDone || us.diagPassed) && us.practiced > 0;
 }
 
-// 復習キューから、このウェーブに出す問題を選ぶ（同じ単元を優先）
-export function pickReviews(unitId, n) {
-  const q = S().reviewQueue.filter((r) => GEN[r.generatorId]);
+// 復習キューから、このウェーブに出す問題を選ぶ（同じ単元を優先・同じ教科だけ）
+export function pickReviews(unitId, n, subject = UNIT[unitId]?.subject || 'math') {
+  const q = S().reviewQueue.filter((r) => GEN[r.generatorId] && UNIT[r.unit]?.subject === subject);
   const same = unitId ? q.filter((r) => r.unit === unitId) : [];
   const other = q.filter((r) => r.unit !== unitId && (isUnlocked(r.unit) || cleared(r.unit)));
   return [...same, ...other].slice(0, n).map((r) => ({ generatorId: r.generatorId, seed: r.seed }));
@@ -60,7 +60,9 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
       gems += first ? 40 : 15;
       if (BOSS_CARD[unitId] && addCard(BOSS_CARD[unitId])) out.cards.push(BOSS_CARD[unitId]);
       out.opened = Object.keys(UNIT).filter((id) => isUnlocked(id) && !before.includes(id));
-      if (Object.values(BOSS_CARD).every((c) => s.collection.cards[c]) && addCard('crown')) out.cards.push('crown');
+      // 脱獄王: 数学の全ボス撃破
+      const mathBoss = Object.entries(BOSS_CARD).filter(([u]) => UNIT[u]?.subject === 'math').map(([, c]) => c);
+      if (mathBoss.every((c) => s.collection.cards[c]) && addCard('crown')) out.cards.push('crown');
     } else if (Math.random() < 0.35) {
       const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)];
       if (addCard(id)) out.cards.push(id);

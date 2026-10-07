@@ -539,3 +539,35 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
   .key { min-height: 46px; }
   .choice { min-height: 56px; }
 }
+
+/* ---------- 英語 ---------- */
+.game-card.english { background: linear-gradient(135deg, #0f7a6b, #2b5bd6); border-color: #8ff0de; box-shadow: 0 8px 30px rgba(43, 91, 214, .35); cursor: pointer; }
+.lang-en .qstem { font-size: 17px; line-height: 1.55; }
+.choices.text .choice { min-height: 54px; padding: 6px 8px; font-size: 17px; font-weight: 800; line-height: 1.2; }
+.choices.text .en { word-break: break-word; }
+.tr-en { white-space: pre-line; font-size: 17px; line-height: 1.6; font-weight: 700; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.tr-qstem { white-space: normal; font-size: 17px; font-weight: 700; margin-top: 6px; }
+.subj-row td { color: var(--accent); font-weight: 900; padding-top: 10px; }
+
+/* タイル入力（並べかえ・つづり） */
+.pad.tiles { gap: 6px; }
+.tile-note { font-size: 12px; color: var(--dim); text-align: center; }
+.tile-line { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 5px; min-height: 96px; padding: 6px 8px; border-radius: var(--r); border: 2px solid var(--accent); background: var(--bg2); }
+.tile-line.shake { animation: shake .3s; border-color: var(--bad); }
+.tile-line.spell { justify-content: center; align-content: center; min-height: 56px; }
+.spell-word { font-size: 26px; font-weight: 900; letter-spacing: .06em; }
+.spell-word .ph { color: #6f62b5; }
+.tile-slot { width: 34px; height: 30px; border-bottom: 2px dashed #6f62b5; }
+.tile-tail { font-size: 17px; font-weight: 700; color: var(--dim); }
+.tile-pool { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-height: 96px; align-content: flex-start; }
+.tile-pool.spell { min-height: 0; }
+.tile { min-height: 44px; min-width: 44px; padding: 4px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); font-size: 18px; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+.tile:active { transform: scale(.95); }
+.tile.used { visibility: hidden; }
+.tile.placed { min-height: 36px; padding: 2px 10px; font-size: 17px; background: #3a2d6e; border-color: #8f7ff0; }
+.tile-pool.spell .tile { min-width: 48px; font-size: 22px; }
+.tile-ctrl { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 6px; }
+@media (max-height: 700px) {
+  .tile { min-height: 40px; font-size: 17px; }
+  .tile-pool { min-height: 86px; }
+}

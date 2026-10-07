@@ -1,7 +1,7 @@
 // 記録: 日別の勉強時間、単元別の進み具合と理解度、復習の件数
 import { h, btn } from '../core/ui.js';
 import { S, today, streakAlive, mastery, MASTERY_LABEL } from '../core/store.js';
-import { UNITS, UNIT, makeProblem } from '../units/registry.js';
+import { UNIT, makeProblem, SUBJECTS, unitsOf } from '../units/registry.js';
 import { go } from '../core/router.js';
 import { topBar } from './home.js';
 
@@ -39,7 +39,7 @@ export function render(el) {
       h('div', { class: 'bar', style: { height: `${(mins[i] / maxM) * 100}%` }, title: `${d}: ${mins[i]}分 / ${asked[i]}問` }),
       h('span', { class: 'd' }, d.slice(8).replace(/^0/, '')))));
 
-  const unitRows = UNITS.filter((u) => !u.comingSoon).map((u) => {
+  const unitRow = (u) => {
     const p = per[u.id] || { asked: 0, correct: 0 };
     const ms = mastery(u.id);
     return h('tr', {},
@@ -47,7 +47,11 @@ export function render(el) {
       h('td', {}, h('span', { class: `badge b-${ms}` }, MASTERY_LABEL[ms])),
       h('td', { class: 'num' }, p.asked ? `${Math.round((p.correct / p.asked) * 100)}%` : '–'),
       h('td', { class: 'num' }, `${p.correct}/${p.asked}`));
-  });
+  };
+  const unitRows = Object.entries(SUBJECTS).flatMap(([id, sj]) => [
+    h('tr', { class: 'subj-row' }, h('td', { colspan: '4' }, sj.sub)),
+    ...unitsOf(id).filter((u) => !u.comingSoon).map(unitRow),
+  ]);
 
   const recent = s.mistakes.slice(-8).reverse().map((m) => ({ m, p: makeProblem(m.generatorId, m.seed) })).filter((x) => x.p);
 

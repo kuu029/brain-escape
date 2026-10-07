@@ -17,6 +17,8 @@ function sameList(got, exp, unordered) {
 // 戻り値: { ok, msg?, nearly?, invalid? }
 //   nearly / invalid のときはターンを消費しない（打ち直してもらう）
 export function checkAnswer(p, input) {
+  if (p.input.kind === 'order') return checkOrder(p, input);
+  if (p.input.kind === 'spell') return checkSpell(p, input);
   if (p.input.kind === 'choice') {
     const ok = input === p.input.answer;
     const w = (p.wrong || []).find((x) => x.choice === input);
@@ -49,6 +51,28 @@ export function checkAnswer(p, input) {
   if (exp.some((e) => !e.isZero()) && sameList(got, exp.map((e) => e.neg()), unordered)) {
     return { ok: false, msg: '符号（＋とー）が逆になってるっぽい！' };
   }
+  return { ok: false, msg: null };
+}
+
+// 並べかえ: input = 選んだタイルの番号の配列
+function checkOrder(p, input) {
+  const { tiles, answer } = p.input;
+  if (!Array.isArray(input) || input.length !== answer.length) return { ok: false, invalid: true, msg: `タイルを ${answer.length} 枚ならべてね` };
+  const got = input.map((i) => tiles[i]);
+  if (got.join(' ') === answer.join(' ')) return { ok: true };
+  const extra = got.filter((t) => !answer.includes(t));
+  const w = (p.wrong || []).find((x) => x.uses && got.includes(x.uses));
+  if (w) return { ok: false, msg: w.msg };
+  if (extra.length) return { ok: false, msg: `「${extra[0]}」は使わない語。いらないタイルが1枚まざってるよ。` };
+  return { ok: false, msg: '使う語は合ってる！ ならべる順番がちがうみたい。' };
+}
+// つづり: input = 文字列
+function checkSpell(p, input) {
+  const s = String(input || '');
+  if (!s) return { ok: false, invalid: true, msg: '文字をタップしてつづってね' };
+  if (s === p.input.answer) return { ok: true };
+  const sort = (x) => x.split('').sort().join('');
+  if (sort(s) === sort(p.input.answer)) return { ok: false, msg: '使う文字は合ってる！ 順番をチェック。' };
   return { ok: false, msg: null };
 }
 

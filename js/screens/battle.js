@@ -23,6 +23,7 @@ export function render(el, params) {
   const unitId = params.unit || null;
   const u = unitId ? UNIT[unitId] : null;
   const s = S();
+  const subject = params.subject || u?.subject || 'math';
   let schedule;
   let picker = null;
   const problems = params.problems || [];
@@ -34,12 +35,12 @@ export function render(el, params) {
     schedule = bossSchedule(unitId, pickReviews(unitId, 1));
     picker = makePicker(bossPoolOf(unitId));
   } else if (mode === 'review') {
-    const rv = pickReviews(null, 6);
+    const rv = pickReviews(null, 6, subject);
     schedule = [
       ...rv.map((r, i) => ({ turn: i * 2, kind: 'review', review: r })),
       { turn: 1, kind: 'grunt' }, { turn: 4, kind: 'grunt' }, { turn: 7, kind: 'runner' },
     ];
-    const units = [...new Set(s.reviewQueue.map((r) => r.unit))].filter((id) => UNIT[id]?.generators);
+    const units = [...new Set(s.reviewQueue.map((r) => r.unit))].filter((id) => UNIT[id]?.generators && UNIT[id].subject === subject);
     picker = makePicker(units.flatMap((id) => practicePool(id, unitState(id).lessons)));
   } else {
     schedule = practiceSchedule(pickReviews(unitId, 2));
@@ -227,7 +228,7 @@ export function render(el, params) {
     if (ok) {
       finished = true;
       board.finish();
-      go(diagMode ? 'home' : 'map', { focus: unitId });
+      go(diagMode ? 'home' : 'map', { focus: unitId, subject });
     }
   }
 
@@ -355,7 +356,7 @@ export function render(el, params) {
     board.clearPrediction();
     predLine.innerHTML = '';
     if (diagMode) {
-      go('diagnosis', { phase: 'result', results: diag });
+      go('diagnosis', { phase: 'result', results: diag, subject });
       return;
     }
     qarea.classList.add('done');
@@ -364,7 +365,7 @@ export function render(el, params) {
     floatText(board.el, win ? '🎉 ウェーブ突破！' : '💫 つかまった…', win ? 'combo' : 'bad');
     await sleep(1100);
     const summary = finishWave({ mode, unitId, st, asked, firstCorrect, wrongList });
-    go('result', summary);
+    go('result', { ...summary, subject });
   }
 
   // 開発用（localhost のときだけ）: 自動テストから現在の問題と盤面を見られるようにする

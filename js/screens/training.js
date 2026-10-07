@@ -45,7 +45,9 @@ export function render(el, { unit, lesson }) {
       h('div', { class: 'tr-step' }, `STEP ${i + 1} / ${steps.length}`),
       cm && cm.carried && h('div', { class: 'tr-math carried' }, h('small', {}, 'いまの式'), h('span', { class: 'math', html: tex(cm.math) })),
       h('div', { class: 'tr-text', rich: st.text }),
-      cm && !cm.carried && h('div', { class: 'tr-math math', html: tex(cm.math) }));
+      cm && !cm.carried && h('div', { class: 'tr-math math', html: tex(cm.math) }),
+      st.en && h('div', { class: 'tr-en' }, st.en),
+      st.q?.stem && h('div', { class: 'tr-qstem', rich: st.q.stem }));
     body.append(card);
     const nextBtn = btn(i + 1 < steps.length ? '次へ ▶' : '訓練クリア！', next, 'primary big');
     if (!st.q) {
@@ -54,7 +56,7 @@ export function render(el, { unit, lesson }) {
     }
     let wrongs = 0;
     const fb = h('div', { class: 'feedback' });
-    const q = { ...st.q, stem: st.text };
+    const q = { ...st.q, stem: st.q.stem || st.text };
     const pad = answerPad(q, async (input) => {
       const r = checkAnswer(q, input);
       if (r.invalid || r.nearly) {

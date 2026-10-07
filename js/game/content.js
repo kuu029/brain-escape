@@ -20,6 +20,14 @@ export const BOSSES = {
   'expand-factor': { emoji: '🥫', name: 'カンヅメ・カイゾク' },
   'square-roots': { emoji: '🐌', name: 'カタツムリ・ターボ' },
   quadratic: { emoji: '🐸', name: 'カエル・ネクタイーノ総長' },
+  // 英語棟
+  'en-words1': { emoji: '🦜', name: 'インコ・ジショリーノ' },
+  'en-be': { emoji: '🐝', name: 'ハチ・ビードウシ' },
+  'en-3sg': { emoji: '🐍', name: 'ヘビ・エスエスエス' },
+  'en-plural': { emoji: '🐑', name: 'ヒツジ・フクスウケーノ' },
+  'en-prog': { emoji: '🐹', name: 'ハムスター・イングリング' },
+  'en-wh': { emoji: '🦉', name: 'フクロウ・フーフー' },
+  'en-past': { emoji: '🦖', name: 'パストサウルス' },
 };
 
 // コレクション用カード
@@ -49,11 +57,19 @@ export const CARDS = [
   { id: 'banana-car', emoji: '🛺', name: 'サンリン・バクソーノ', rarity: 2, text: '三輪車でドリフトする看守。' },
   { id: 'cheese', emoji: '🧀', name: 'チーズ・ホールズ', rarity: 1, text: '穴の数をいつも数えている。' },
   { id: 'crown', emoji: '👑', name: '脱獄王', rarity: 4, text: 'ブレイン監獄を完全制覇した者だけが持つ称号。' },
+  { id: 'inko', emoji: '🦜', name: 'インコ・ジショリーノ', rarity: 3, text: '辞書を丸のみしたインコ。意味は言えるがつづりはあやしい。' },
+  { id: 'hachi', emoji: '🐝', name: 'ハチ・ビードウシ', rarity: 3, text: 'am・is・are の3本の針を持つ。' },
+  { id: 'hebi', emoji: '🐍', name: 'ヘビ・エスエスエス', rarity: 3, text: '3人称単数を見つけると「スー」と s をつけにくる。' },
+  { id: 'hitsuji', emoji: '🐑', name: 'ヒツジ・フクスウケーノ', rarity: 3, text: '何匹いても sheep。数えると眠くなる。' },
+  { id: 'hamster', emoji: '🐹', name: 'ハムスター・イングリング', rarity: 3, text: '今まさに回し車を回している最中（-ing）。' },
+  { id: 'fukurou', emoji: '🦉', name: 'フクロウ・フーフー', rarity: 3, text: '鳴き声は「Who? Who?」。答えには Yes と言わせない。' },
+  { id: 'pastosaurus', emoji: '🦖', name: 'パストサウルス', rarity: 3, text: '大昔（過去形）の恐竜。went と ate が好物。' },
 ];
 // ボス撃破でもらえるカード
 export const BOSS_CARD = {
   'signed-numbers': 'kani', 'fractions-decimals': 'donut', expressions: 'sponge', 'linear-equations': 'bucket',
   polynomials: 'consent', simultaneous: 'hamigaki', 'expand-factor': 'kanzume', 'square-roots': 'katatsumuri', quadratic: 'kaeru',
+  'en-words1': 'inko', 'en-be': 'hachi', 'en-3sg': 'hebi', 'en-plural': 'hitsuji', 'en-prog': 'hamster', 'en-wh': 'fukurou', 'en-past': 'pastosaurus',
 };
 // ガチャに出るカード（ボス・称号以外）
 export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2).map((c) => c.id);

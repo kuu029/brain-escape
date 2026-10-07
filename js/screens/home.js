@@ -1,4 +1,4 @@
-// ホーム: ゲームを選ぶ入口（今は数学だけ）＋ デイリーミッション
+// ホーム: ゲームを選ぶ入口（数学・英語）＋ デイリーミッション
 import { h, btn, toast } from '../core/ui.js';
 import { S, streakAlive, dayLog } from '../core/store.js';
 import { go } from '../core/router.js';
@@ -37,6 +37,9 @@ export function render(el) {
       h('button', { class: 'game-card math', type: 'button', onclick: () => { sfx('tap'); go('map'); } },
         h('div', { class: 'gc-em' }, '🧠⛓️'),
         h('div', { class: 'gc-body' }, h('div', { class: 'gc-title' }, 'ブレイン脱獄'), h('div', { class: 'gc-sub' }, '数学 ｜ タワーディフェンス'), h('span', { class: 'gc-go' }, 'PLAY ▶'))),
+      h('button', { class: 'game-card english', type: 'button', onclick: () => { sfx('tap'); go('map', { subject: 'english' }); } },
+        h('div', { class: 'gc-em' }, '🔤⛓️'),
+        h('div', { class: 'gc-body' }, h('div', { class: 'gc-title' }, 'ブレイン脱獄 英語棟'), h('div', { class: 'gc-sub' }, '英語 ｜ タワーディフェンス'), h('span', { class: 'gc-go' }, 'PLAY ▶'))),
       h('div', { class: 'game-card soon' }, h('div', { class: 'gc-em' }, '❔'), h('div', { class: 'gc-body' }, h('div', { class: 'gc-title' }, '？？？'), h('div', { class: 'gc-sub' }, '別のゲーム 準備中…'))),
       h('h3', { class: 'sec' }, '今日のミッション'),
       mlist,

@@ -49,18 +49,18 @@ export function practicePool(unitId, lessonsDone) {
 }
 export const bossPoolOf = (unitId) => bossPool(UNIT[unitId]);
 
-// 診断: 第1段階の各単元から3問
-export function diagnosisProblems(unitIds) {
+// 診断: 第1段階の各単元から per 問（易しい生成器から）
+export function diagnosisProblems(unitIds, per = 3) {
   const out = [];
   for (const id of unitIds) {
     const u = UNIT[id];
     const gens = Object.entries(u.generators).sort((a, b) => a[1].difficulty - b[1].difficulty).map(([g]) => g);
-    const chosen = [gens[0], gens[1] || gens[0], gens[Math.min(2, gens.length - 1)]];
+    const chosen = Array.from({ length: per }, (_, k) => gens[Math.min(k, gens.length - 1)]);
     for (const g of chosen) out.push(makeProblem(g, newSeed()));
   }
   // 単元をまぜすぎず、易しい順に（単元ごとに1問ずつ回す）
-  const per = unitIds.map((_, i) => out.slice(i * 3, i * 3 + 3));
+  const byUnit = unitIds.map((_, i) => out.slice(i * per, i * per + per));
   const mixed = [];
-  for (let k = 0; k < 3; k++) for (const p of per) mixed.push(p[k]);
+  for (let k = 0; k < per; k++) for (const p of byUnit) mixed.push(p[k]);
   return mixed;
 }

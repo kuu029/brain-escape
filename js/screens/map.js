@@ -1,19 +1,22 @@
 // マップ（単元選択）: エリア・ロック・理解度。タップで単元パネル
 import { h, btn, sheet, toast } from '../core/ui.js';
 import { S, unitState, mastery, MASTERY_LABEL } from '../core/store.js';
-import { UNITS, UNIT, STAGES } from '../units/registry.js';
+import { UNIT, SUBJECTS, unitsOf } from '../units/registry.js';
 import { go } from '../core/router.js';
 import { isUnlocked, missingPrereqs, canPractice, canBoss } from '../game/progress.js';
 import { topBar } from './home.js';
 import { rich } from '../core/mathml.js';
 import { TOOLS } from '../game/content.js';
 
-export function render(el, { focus = null } = {}) {
+export function render(el, { focus = null, subject = null } = {}) {
   const s = S();
+  const subj = subject || UNIT[focus]?.subject || 'math';
+  // 英語棟に初めて来たら、英語の看守チェックから
+  if (subj === 'english' && !s.diagnosisEn?.done) return go('diagnosis', { phase: 'intro', subject: 'english' });
   const list = h('div', { class: 'map' });
-  for (const stg of STAGES) {
+  for (const stg of SUBJECTS[subj].stages) {
     list.append(h('h3', { class: 'stage-title' }, stg.title));
-    for (const u of UNITS.filter((x) => x.stage === stg.n)) {
+    for (const u of unitsOf(subj).filter((x) => x.stage === stg.n)) {
       const unlocked = isUnlocked(u.id);
       const ms = u.comingSoon ? 'soon' : mastery(u.id);
       const us = s.units[u.id];
@@ -28,13 +31,13 @@ export function render(el, { focus = null } = {}) {
       list.append(card);
     }
   }
-  const rq = s.reviewQueue.length;
+  const rq = s.reviewQueue.filter((r) => (UNIT[r.unit]?.subject || 'math') === subj).length;
   el.append(
     topBar(() => go('home')),
     h('div', { class: 'map-head' },
-      h('h2', {}, '🗺️ ブレイン監獄 マップ'),
-      rq > 0 && btn(`👻 リベンジウェーブ（${rq}体待ち）`, () => go('battle', { mode: 'review' }), 'warn'),
-      btn('🔦 看守チェック（診断）をやり直す', () => go('diagnosis', { phase: 'intro' }), 'ghost small')),
+      h('h2', {}, SUBJECTS[subj].map),
+      rq > 0 && btn(`👻 リベンジウェーブ（${rq}体待ち）`, () => go('battle', { mode: 'review', subject: subj }), 'warn'),
+      btn('🔦 看守チェック（診断）をやり直す', () => go('diagnosis', { phase: 'intro', subject: subj }), 'ghost small')),
     list,
   );
   if (focus) setTimeout(() => el.querySelector(`[data-unit="${focus}"]`)?.scrollIntoView({ block: 'center' }), 50);

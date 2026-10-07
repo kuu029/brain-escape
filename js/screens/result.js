@@ -35,7 +35,7 @@ export function render(el, r) {
     : { em: '💫', t: 'つかまった…', s: 'でも記録とコインは残ってる。すぐリベンジできるぞ。' };
   const cards = r.cards.map((id) => CARDS.find((c) => c.id === id)).filter(Boolean);
   const wrong = r.wrongList.map((w) => makeProblem(w.generatorId, w.seed)).filter(Boolean);
-  const again = () => go('battle', { mode: r.mode, unit: r.unitId });
+  const again = () => go('battle', { mode: r.mode, unit: r.unitId, subject: r.subject });
 
   el.append(h('div', { class: `result ${r.win ? 'win' : 'lose'}` },
     h('div', { class: 'big-em' }, head.em),
@@ -54,6 +54,6 @@ export function render(el, r) {
     h('div', { class: 'up-btns' },
       btn(r.win ? 'もう1回' : 'リベンジ！', again, 'primary big'),
       r.mode === 'practice' && r.unitId && canBoss(r.unitId) && btn('👑 ボスウェーブへ', () => go('battle', { mode: 'boss', unit: r.unitId }), 'boss'),
-      btn('マップへ', () => go('map', { focus: r.unitId }), 'ghost')),
+      btn('マップへ', () => go('map', { focus: r.unitId, subject: r.subject }), 'ghost')),
     u && h('p', { class: 'note center' }, `${u.emoji} ${u.title}`)));
 }
