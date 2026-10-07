@@ -36,6 +36,13 @@ export const BOSSES = {
   'en-inf': { emoji: '🦘', name: 'カンガルー・トゥーイング' },
   'en-compare': { emoji: '🦒', name: 'キリン・ハイヤーエスト' },
   'en-conj': { emoji: '🐊', name: 'ワニ・ツナギーノ' },
+  'en-words3': { emoji: '🐘', name: 'ゾウ・キオクーノ' },
+  'en-passive': { emoji: '🦚', name: 'クジャク・ミラレーノ' },
+  'en-perfect': { emoji: '🐢', name: 'カメ・ズットイーノ' },
+  'en-participle': { emoji: '🦎', name: 'カメレオン・ブンシーノ' },
+  'en-relative': { emoji: '🦑', name: 'イカ・カンケーイ' },
+  'en-indirect': { emoji: '🦊', name: 'キツネ・シッテルカ' },
+  'en-subjunctive': { emoji: '🦄', name: 'ユニコーン・イフイフ' },
 };
 
 // コレクション用カード
@@ -79,6 +86,13 @@ export const CARDS = [
   { id: 'harinezumi', emoji: '🦔', name: 'ハリネズミ・ゼアリズ', rarity: 3, text: '背中の針の数を数えると There are になる。' },
   { id: 'kangaroo', emoji: '🦘', name: 'カンガルー・トゥーイング', rarity: 3, text: 'おなかの袋に to と -ing を入れて、動詞によって出し分ける。' },
   { id: 'kirin', emoji: '🦒', name: 'キリン・ハイヤーエスト', rarity: 3, text: 'だれよりも背が高い（the tallest）。比べられるのが大好き。' },
+  { id: 'zou', emoji: '🐘', name: 'ゾウ・キオクーノ', rarity: 3, text: '一度覚えた単語は二度と忘れない…と言っているが、よく鼻で辞書を引いている。' },
+  { id: 'kujaku', emoji: '🦚', name: 'クジャク・ミラレーノ', rarity: 3, text: 'いつも「見られている（is seen）」ことを気にしている。' },
+  { id: 'kame', emoji: '🐢', name: 'カメ・ズットイーノ', rarity: 3, text: '300年前からずっとここに住んでいる（has lived）。' },
+  { id: 'chameleon', emoji: '🦎', name: 'カメレオン・ブンシーノ', rarity: 3, text: '-ing になったり過去分詞になったり、体の色といっしょに変わる。' },
+  { id: 'ika', emoji: '🦑', name: 'イカ・カンケーイ', rarity: 3, text: '10本の足で who と which を使い分けて、名詞と文をつなぐ。' },
+  { id: 'kitsune', emoji: '🦊', name: 'キツネ・シッテルカ', rarity: 3, text: '「どこに住んでいるか知ってる？」が口ぐせ。語順にうるさい。' },
+  { id: 'unicorn', emoji: '🦄', name: 'ユニコーン・イフイフ', rarity: 3, text: '「もし私が鳥なら」が口ぐせ。本当はユニコーン。' },
   { id: 'wani', emoji: '🐊', name: 'ワニ・ツナギーノ', rarity: 3, text: '2つの文を口でくわえてつなぐ。because が好物。' },
 ];
 // ボス撃破でもらえるカード
@@ -87,6 +101,7 @@ export const BOSS_CARD = {
   polynomials: 'consent', simultaneous: 'hamigaki', 'expand-factor': 'kanzume', 'square-roots': 'katatsumuri', quadratic: 'kaeru',
   'en-words1': 'inko', 'en-be': 'hachi', 'en-3sg': 'hebi', 'en-plural': 'hitsuji', 'en-prog': 'hamster', 'en-wh': 'fukurou', 'en-past': 'pastosaurus',
   'en-words2': 'tako', 'en-future': 'yogen', 'en-pastprog': 'namakemono', 'en-modal': 'washi', 'en-there': 'harinezumi', 'en-inf': 'kangaroo', 'en-compare': 'kirin', 'en-conj': 'wani',
+  'en-words3': 'zou', 'en-passive': 'kujaku', 'en-perfect': 'kame', 'en-participle': 'chameleon', 'en-relative': 'ika', 'en-indirect': 'kitsune', 'en-subjunctive': 'unicorn',
 };
 // ガチャに出るカード（ボス・称号以外）
 export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2).map((c) => c.id);

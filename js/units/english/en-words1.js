@@ -1,10 +1,11 @@
 // 英語 第1段階: 中1の単語（テーマごとに「意味を選ぶ／英語を選ぶ／つづる」）
 import { WORDS1, THEMES1, SYN } from './words1.js';
 import { SYN2 } from './words2.js';
+import { SYN3 } from './words3.js';
 import { textChoice, spellAns } from './kit-en.js';
 
 const meanings = (w) => w.ja.split('、');
-const ALL_SYN = [...SYN, ...SYN2];
+const ALL_SYN = [...SYN, ...SYN2, ...SYN3];
 const synOf = (w) => new Set(ALL_SYN.filter((g) => g.includes(w.w)).flat());
 // a と b を同じ選択肢に並べてもまぎらわしくないか
 export function distinct(a, b) {

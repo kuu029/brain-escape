@@ -41,13 +41,14 @@ export function tileText(chunk) {
 
 // 並べかえ。chunks: 正しい順のかたまり。tail: 最後に固定で付ける語（時を表す語など）。
 // decoys: [{t, msg}] 使わないタイル（入試の「1語不要」）
-export function orderAns(rng, chunks, { tail = '', end = '.', decoys = [] } = {}) {
+// prefix: 最初に固定で付ける語（This is など。並べかえの答えが1つに決まるように）
+export function orderAns(rng, chunks, { tail = '', end = '.', decoys = [], prefix = '' } = {}) {
   const answer = chunks.map(tileText);
   const ds = decoys.filter((d) => d && !answer.includes(d.t));
   const tiles = rng.shuffle([...answer, ...ds.map((d) => d.t)]);
   return {
-    input: { kind: 'order', tiles, answer, suffix: `${tail ? ` ${tail}`.replace(' ,', ',') : ''}${end}`, extra: ds.length },
-    answerText: sentence([...chunks, tail], end),
+    input: { kind: 'order', tiles, answer, prefix, suffix: `${tail ? ` ${tail}`.replace(' ,', ',') : ''}${end}`, extra: ds.length },
+    answerText: sentence([prefix, ...chunks, tail], end),
     wrong: ds.map((d) => ({ uses: d.t, msg: d.msg })).filter((w) => w.msg),
   };
 }

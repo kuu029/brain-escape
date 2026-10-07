@@ -39,6 +39,7 @@ const CARD_ART = {
   consent: 'boss-polynomials', hamigaki: 'boss-simultaneous', kanzume: 'boss-expand-factor', katatsumuri: 'boss-square-roots', kaeru: 'boss-quadratic',
   inko: 'boss-en-words1', hachi: 'boss-en-be', hebi: 'boss-en-3sg', hitsuji: 'boss-en-plural', hamster: 'boss-en-prog', fukurou: 'boss-en-wh', pastosaurus: 'boss-en-past',
   tako: 'boss-en-words2', yogen: 'boss-en-future', namakemono: 'boss-en-pastprog', washi: 'boss-en-modal', harinezumi: 'boss-en-there', kangaroo: 'boss-en-inf', kirin: 'boss-en-compare', wani: 'boss-en-conj',
+  zou: 'boss-en-words3', kujaku: 'boss-en-passive', kame: 'boss-en-perfect', chameleon: 'boss-en-participle', ika: 'boss-en-relative', kitsune: 'boss-en-indirect', unicorn: 'boss-en-subjunctive',
 };
 export function cardSprite(id) {
   const c = CARDS.find((x) => x.id === id);

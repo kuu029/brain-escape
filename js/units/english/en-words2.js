@@ -11,10 +11,11 @@ const themeGen = (theme) => (rng) => {
 };
 
 // 熟語の前置詞・副詞を選ぶ（look （ ）＝〜を探す）
-export const PARTICLES = ['for', 'at', 'after', 'to', 'up', 'off', 'on', 'of', 'in', 'from', 'with', 'down', 'back'];
-const IDIOMS = WORDS2.filter((w) => w.theme === 'idiom');
-const blankable = IDIOMS.filter((w) => w.w.split(' ').some((x, i) => i > 0 && PARTICLES.includes(x)));
-function genParticle(rng) {
+export const PARTICLES = ['for', 'at', 'after', 'to', 'up', 'off', 'on', 'of', 'in', 'from', 'with', 'down', 'back', 'about', 'away', 'out'];
+// IDIOMS（熟語のリスト）から「前置詞を選ぶ」問題を作る関数を返す（中3でも使う）
+export function particleGen(IDIOMS) {
+  const blankable = IDIOMS.filter((w) => w.w.split(' ').some((x, i) => i > 0 && PARTICLES.includes(x)));
+  return (rng) => {
   const w = rng.pick(blankable);
   const parts = w.w.split(' ');
   const at = parts.findLastIndex((x, i) => i > 0 && PARTICLES.includes(x));
@@ -38,7 +39,9 @@ function genParticle(rng) {
     steps: [`「${w.ja}」＝ ${w.w}`],
     check: { kind: 'en-particle', idiom: w.w, at },
   };
+  };
 }
+const genParticle = particleGen(WORDS2.filter((w) => w.theme === 'idiom'));
 
 const TIPS = {
   people: ['職業は -er / -ist で終わるものが多い（farmer, scientist, artist）。', 'glass は「コップ」も「ガラス」も。'],

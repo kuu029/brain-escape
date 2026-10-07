@@ -581,3 +581,9 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
 .hold-ring circle { fill: none; stroke: currentColor; stroke-width: 3; stroke-dasharray: 50.27; stroke-dashoffset: 0; }
 .btn.counting .hold-ring circle { animation: holdRing var(--hold) linear forwards; }
 @keyframes holdRing { to { stroke-dashoffset: 50.27; } }
+.q-inst { display: inline-block; font-size: 12px; font-weight: 800; color: var(--accent-ink); background: var(--accent); border-radius: 999px; padding: 0 8px; margin-right: 6px; vertical-align: 2px; }
+.pad.tiles.compact .tile { min-height: 38px; padding: 2px 9px; font-size: 16px; }
+.pad.tiles.compact .tile.placed { min-height: 32px; padding: 1px 7px; font-size: 15px; }
+.pad.tiles.compact .tile-line { min-height: 84px; gap: 4px; }
+.pad.tiles.compact .tile-pool { min-height: 84px; gap: 5px; }
+.pad.tiles.compact .tile-tail { font-size: 15px; }

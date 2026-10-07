@@ -25,7 +25,13 @@ import enThere from './english/en-there.js';
 import enInf from './english/en-inf.js';
 import enCompare from './english/en-compare.js';
 import enConj from './english/en-conj.js';
-import enSoon from './english/placeholders.js';
+import enWords3 from './english/en-words3.js';
+import enPassive from './english/en-passive.js';
+import enPerfect from './english/en-perfect.js';
+import enParticiple from './english/en-participle.js';
+import enRelative from './english/en-relative.js';
+import enIndirect from './english/en-indirect.js';
+import enSubjunctive from './english/en-subjunctive.js';
 
 export const UNITS = [
   signedNumbers,
@@ -54,7 +60,13 @@ export const UNITS = [
   enInf,
   enCompare,
   enConj,
-  ...enSoon,
+  enWords3,
+  enPassive,
+  enPerfect,
+  enParticiple,
+  enRelative,
+  enIndirect,
+  enSubjunctive,
 ];
 for (const u of UNITS) u.subject ||= 'math';
 

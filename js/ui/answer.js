@@ -3,13 +3,17 @@ import { h } from '../core/ui.js';
 import { tex, rich } from '../core/mathml.js';
 import { sfx } from '../core/sound.js';
 
+const ORDER_INST = '日本語に合うように並べかえよう\n';
 export function problemCard(p, { review = false, label = '' } = {}) {
   return h('div', { class: `qcard${review ? ' review' : ''}${p.lang === 'english' ? ' lang-en' : ''}` },
     h('div', { class: 'qcard-tags' },
       review && h('span', { class: 'tag tag-review' }, '👻 再襲来'),
       p.source === 'past-exam' && h('span', { class: 'tag' }, `過去問 ${p.origin || ''}`),
       label && h('span', { class: 'tag tag-dim' }, label)),
-    h('div', { class: 'qstem', rich: p.stem }));
+    // 並べかえの「日本語に合うように並べかえよう」は小さなラベルにして、行を節約する
+    p.input.kind === 'order' && p.stem.startsWith(ORDER_INST)
+      ? h('div', { class: 'qstem' }, h('small', { class: 'q-inst' }, '並べかえ'), h('span', { rich: p.stem.slice(ORDER_INST.length) }))
+      : h('div', { class: 'qstem', rich: p.stem }));
 }
 
 // 入力中の文字列をそれっぽく表示
@@ -167,6 +171,7 @@ function tilePad(p, onFire) {
       const word = picked.map((i) => tiles[i]).join('');
       line.append(h('span', { class: 'spell-word' }, word || h('span', { class: 'ph' }, '？')));
     } else {
+      if (p.input.prefix) line.append(h('span', { class: 'tile-tail' }, p.input.prefix));
       picked.forEach((i, k) => line.append(h('button', { class: 'tile placed', type: 'button', ...press(() => unpick(k)) }, tiles[i])));
       for (let k = picked.length; k < need; k++) line.append(h('span', { class: 'tile-slot' }));
       line.append(h('span', { class: 'tile-tail' }, p.input.suffix || ''));
@@ -186,7 +191,9 @@ function tilePad(p, onFire) {
     h('button', { class: 'key fn', type: 'button', ...press(() => { picked.pop(); paint(); }) }, '⌫'),
     h('button', { class: 'key fn', type: 'button', ...press(() => { picked = []; paint(); }) }, 'クリア'),
     fire);
-  const el = h('div', { class: 'pad tiles' },
+  // タイルが多い・長いときは小さめにして、画面からはみ出さないようにする
+  const compact = !spell && tiles.join(' ').length + (p.input.suffix || '').length + (p.input.prefix || '').length > 34;
+  const el = h('div', { class: `pad tiles${compact ? ' compact' : ''}` },
     !spell && p.input.extra ? h('div', { class: 'tile-note' }, `※ 使わないタイルが ${p.input.extra} 枚まざっている`) : null,
     line, pool, ctrl);
   paint();
