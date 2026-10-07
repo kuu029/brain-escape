@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = 'cff9feff07';
+const VERSION = '6e738c2b3d';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -84,6 +84,7 @@ const ASSETS = [
   './js/screens/training.js',
   './js/ui/answer.js',
   './js/ui/board.js',
+  './js/ui/deco.js',
   './js/units/english/en-3sg.js',
   './js/units/english/en-be.js',
   './js/units/english/en-compare.js',
@@ -123,7 +124,20 @@ const ASSETS = [
   './js/units/stage2/quadratic.js',
   './js/units/stage2/simultaneous.js',
   './js/units/stage2/square-roots.js',
-  './js/units/stage3/placeholders.js',
+  './js/units/stage3/angles.js',
+  './js/units/stage3/circle-angle.js',
+  './js/units/stage3/congruence.js',
+  './js/units/stage3/data.js',
+  './js/units/stage3/fig.js',
+  './js/units/stage3/kit3.js',
+  './js/units/stage3/linear-function.js',
+  './js/units/stage3/probability.js',
+  './js/units/stage3/proportion.js',
+  './js/units/stage3/pythagoras.js',
+  './js/units/stage3/quadratic-function.js',
+  './js/units/stage3/similarity.js',
+  './js/units/stage3/solids.js',
+  './js/units/stage3/word-mix.js',
   './manifest.webmanifest',
 ];
 

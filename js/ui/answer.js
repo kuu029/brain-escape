@@ -5,7 +5,7 @@ import { sfx } from '../core/sound.js';
 
 const ORDER_INST = '日本語に合うように並べかえよう\n';
 export function problemCard(p, { review = false, label = '' } = {}) {
-  return h('div', { class: `qcard${review ? ' review' : ''}${p.lang === 'english' ? ' lang-en' : ''}` },
+  return h('div', { class: `qcard${review ? ' review' : ''}${p.lang === 'english' ? ' lang-en' : ''}${p.fig ? (p.fig.startsWith('<svg') ? ' has-fig' : ' has-table') : ''}` },
     h('div', { class: 'qcard-tags' },
       review && h('span', { class: 'tag tag-review' }, '👻 再襲来'),
       p.source === 'past-exam' && h('span', { class: 'tag' }, `過去問 ${p.origin || ''}`),
@@ -13,7 +13,9 @@ export function problemCard(p, { review = false, label = '' } = {}) {
     // 並べかえの「日本語に合うように並べかえよう」は小さなラベルにして、行を節約する
     p.input.kind === 'order' && p.stem.startsWith(ORDER_INST)
       ? h('div', { class: 'qstem' }, h('small', { class: 'q-inst' }, '並べかえ'), h('span', { rich: p.stem.slice(ORDER_INST.length) }))
-      : h('div', { class: 'qstem', rich: p.stem }));
+      : h('div', { class: 'qstem', rich: p.stem }),
+    // 図（第3段階の関数・図形・データ）
+    p.fig && h('div', { class: 'qfig', html: p.fig }));
 }
 
 // 入力中の文字列をそれっぽく表示

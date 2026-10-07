@@ -43,6 +43,18 @@ export const BOSSES = {
   'en-relative': { emoji: '🦑', name: 'イカ・カンケーイ' },
   'en-indirect': { emoji: '🦊', name: 'キツネ・シッテルカ' },
   'en-subjunctive': { emoji: '🦄', name: 'ユニコーン・イフイフ' },
+  'proportion': { emoji: '🪜', name: 'ハシゴ・ヒレイーノ' },
+  'linear-function': { emoji: '🎢', name: 'コースター・カタムキーノ' },
+  'quadratic-function': { emoji: '🏀', name: 'バスケ・ホウブツセン' },
+  'angles': { emoji: '✂️', name: 'ハサミ・カクドーニ' },
+  'congruence': { emoji: '🧩', name: 'パズル・ゴウドーン' },
+  'circle-angle': { emoji: '⏰', name: 'メザマシ・エンシュー' },
+  'similarity': { emoji: '🪆', name: 'マトリョーシカ・ソージ' },
+  'pythagoras': { emoji: '⛺', name: 'テント・ピタゴラーノ' },
+  'solids': { emoji: '📦', name: 'ハコ・タイセキング' },
+  'probability': { emoji: '🪙', name: 'コイン・ウラオモテ' },
+  'data': { emoji: '🐿️', name: 'リス・トーケイ' },
+  'word-mix': { emoji: '🐳', name: 'クジラ・ブンショーダイ' },
 };
 
 // コレクション用カード
@@ -93,6 +105,18 @@ export const CARDS = [
   { id: 'ika', emoji: '🦑', name: 'イカ・カンケーイ', rarity: 3, text: '10本の足で who と which を使い分けて、名詞と文をつなぐ。' },
   { id: 'kitsune', emoji: '🦊', name: 'キツネ・シッテルカ', rarity: 3, text: '「どこに住んでいるか知ってる？」が口ぐせ。語順にうるさい。' },
   { id: 'unicorn', emoji: '🦄', name: 'ユニコーン・イフイフ', rarity: 3, text: '「もし私が鳥なら」が口ぐせ。本当はユニコーン。' },
+  { id: 'hashigo', emoji: '🪜', name: 'ハシゴ・ヒレイーノ', rarity: 3, text: '1段のぼるごとに、同じだけ高くなる。反比例の日は縮む。' },
+  { id: 'coaster', emoji: '🎢', name: 'コースター・カタムキーノ', rarity: 3, text: 'いつも同じ傾きで走る。カーブは苦手。' },
+  { id: 'basket', emoji: '🏀', name: 'バスケ・ホウブツセン', rarity: 3, text: '投げると必ず放物線をえがく。ゴールには入らない。' },
+  { id: 'hasami', emoji: '✂️', name: 'ハサミ・カクドーニ', rarity: 3, text: '開いた角度を、いつも分度器で測っている。' },
+  { id: 'puzzle', emoji: '🧩', name: 'パズル・ゴウドーン', rarity: 3, text: 'ぴったり重なる相手をさがしている。' },
+  { id: 'mezamashi', emoji: '⏰', name: 'メザマシ・エンシュー', rarity: 3, text: '針の角度で朝を知らせる。円周上ならどこでも鳴る。' },
+  { id: 'matryoshka', emoji: '🪆', name: 'マトリョーシカ・ソージ', rarity: 3, text: '中から同じ形の小さい自分が出てくる。何人いるかは不明。' },
+  { id: 'tent', emoji: '⛺', name: 'テント・ピタゴラーノ', rarity: 3, text: '直角にこだわるキャンパー。ペグは3本。' },
+  { id: 'hako', emoji: '📦', name: 'ハコ・タイセキング', rarity: 3, text: '中身より自分の体積が気になる。' },
+  { id: 'coin', emoji: '🪙', name: 'コイン・ウラオモテ', rarity: 3, text: '表が出るか裏が出るかは、本人にもわからない。' },
+  { id: 'risu', emoji: '🐿️', name: 'リス・トーケイ', rarity: 3, text: 'どんぐりを集めて、箱ひげ図にしている。' },
+  { id: 'kujira', emoji: '🐳', name: 'クジラ・ブンショーダイ', rarity: 3, text: '自由の海の門番。問題文がとにかく長い。' },
   { id: 'wani', emoji: '🐊', name: 'ワニ・ツナギーノ', rarity: 3, text: '2つの文を口でくわえてつなぐ。because が好物。' },
 ];
 // ボス撃破でもらえるカード
@@ -102,6 +126,7 @@ export const BOSS_CARD = {
   'en-words1': 'inko', 'en-be': 'hachi', 'en-3sg': 'hebi', 'en-plural': 'hitsuji', 'en-prog': 'hamster', 'en-wh': 'fukurou', 'en-past': 'pastosaurus',
   'en-words2': 'tako', 'en-future': 'yogen', 'en-pastprog': 'namakemono', 'en-modal': 'washi', 'en-there': 'harinezumi', 'en-inf': 'kangaroo', 'en-compare': 'kirin', 'en-conj': 'wani',
   'en-words3': 'zou', 'en-passive': 'kujaku', 'en-perfect': 'kame', 'en-participle': 'chameleon', 'en-relative': 'ika', 'en-indirect': 'kitsune', 'en-subjunctive': 'unicorn',
+  'proportion': 'hashigo', 'linear-function': 'coaster', 'quadratic-function': 'basket', 'angles': 'hasami', 'congruence': 'puzzle', 'circle-angle': 'mezamashi', 'similarity': 'matryoshka', 'pythagoras': 'tent', 'solids': 'hako', 'probability': 'coin', 'data': 'risu', 'word-mix': 'kujira',
 };
 // ガチャに出るカード（ボス・称号以外）
 export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2).map((c) => c.id);

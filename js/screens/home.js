@@ -5,6 +5,7 @@ import { UNITS, unitsOf } from '../units/registry.js';
 import { nextUnit } from '../game/progress.js';
 import { BOSSES } from '../game/content.js';
 import { spriteHTML, bgUrl } from '../game/art.js';
+import { backdrop } from '../ui/deco.js';
 import { go } from '../core/router.js';
 import { todayMissions, claim } from '../game/missions.js';
 import { sfx } from '../core/sound.js';
@@ -38,16 +39,13 @@ export function render(el) {
   // 全体の脱獄進捗（工事中をのぞく全単元のうち、突破した数）
   const real = UNITS.filter((u) => !u.comingSoon);
   const pct = Math.round((real.filter((u) => cleared(u.id)).length / real.length) * 100);
-  const bg = bgUrl('bg-home');
-  el.classList.toggle('has-bg', !!bg);
+  backdrop(el, 'cell', 'bg-home');
 
   el.append(
-    // 背景の絵は CSS 変数だと css/ からの相対パスになるので、ここで直接指定する
-    h('div', { class: 'home-deco', 'aria-hidden': 'true', style: bg ? { backgroundImage: `linear-gradient(#0b071699, #0b0716cc 55%, #0b0716f2), url(${bg})` } : {} }, h('span', { class: 'moon' }), embers(10)),
     topBar(),
     h('div', { class: 'home' },
       h('div', { class: 'home-hero' },
-        h('div', { class: 'logo' }, h('span', { class: 'logo-a' }, 'ブレイン'), h('span', { class: 'logo-b' }, '脱獄')),
+        h('div', { class: 'hlogo' }, h('span', { class: 'hlogo-a' }, 'ブレイン'), h('span', { class: 'hlogo-b' }, '脱獄')),
         h('p', { class: 'hello' }, `よう、${s.nickname}。今日も脱獄の時間だ。`),
         h('div', { class: 'escape-meter' },
           h('span', { class: 'em-label' }, '🔓 脱獄進捗'),
@@ -56,8 +54,8 @@ export function render(el) {
       gameCard('math', '数学棟', '数学', () => go('map')),
       gameCard('english', '英語棟', '英語', () => go('map', { subject: 'english' })),
       h('div', { class: 'game-card soon' }, h('div', { class: 'gc-body' }, h('div', { class: 'gc-title' }, '？？？'), h('div', { class: 'gc-sub' }, '別のゲーム 準備中…')), h('div', { class: 'gc-em' }, '🔒')),
-      h('div', { class: 'board' },
-        h('h3', { class: 'board-title' }, '📋 今日の指令'),
+      h('div', { class: 'mboard' },
+        h('h3', { class: 'mboard-title' }, '📋 今日の指令'),
         mlist,
         h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ 再襲来待ち 👻${s.reviewQueue.length}`)),
     ),
@@ -89,8 +87,3 @@ function gameCard(subj, title, sub, onPlay) {
     next && h('div', { class: 'gc-boss', html: spriteHTML(`boss-${next.id}`, boss?.emoji || next.emoji, boss?.name || '') }));
 }
 
-function embers(n) {
-  const box = h('div', { class: 'embers' });
-  for (let i = 0; i < n; i++) box.append(h('i', { style: { left: `${(i * 41) % 100}%`, top: `${40 + ((i * 29) % 60)}%`, animationDelay: `${-(i * 1.3) % 8}s`, animationDuration: `${8 + (i % 4)}s` } }));
-  return box;
-}

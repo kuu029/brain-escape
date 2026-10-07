@@ -9,7 +9,18 @@ import simultaneous from './stage2/simultaneous.js';
 import expandFactor from './stage2/expand-factor.js';
 import squareRoots from './stage2/square-roots.js';
 import quadratic from './stage2/quadratic.js';
-import stage3 from './stage3/placeholders.js';
+import proportion from './stage3/proportion.js';
+import linearFunction from './stage3/linear-function.js';
+import quadraticFunction from './stage3/quadratic-function.js';
+import angles from './stage3/angles.js';
+import congruence from './stage3/congruence.js';
+import circleAngle from './stage3/circle-angle.js';
+import similarity from './stage3/similarity.js';
+import pythagoras from './stage3/pythagoras.js';
+import solids from './stage3/solids.js';
+import probability from './stage3/probability.js';
+import data from './stage3/data.js';
+import wordMix from './stage3/word-mix.js';
 import enWords1 from './english/en-words1.js';
 import enBe from './english/en-be.js';
 import en3sg from './english/en-3sg.js';
@@ -43,7 +54,19 @@ export const UNITS = [
   expandFactor,
   squareRoots,
   quadratic,
-  ...stage3,
+  // 第3段階
+  proportion,
+  linearFunction,
+  quadraticFunction,
+  angles,
+  congruence,
+  circleAngle,
+  similarity,
+  pythagoras,
+  solids,
+  probability,
+  data,
+  wordMix,
   // 英語
   enWords1,
   enBe,

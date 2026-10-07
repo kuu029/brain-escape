@@ -1,7 +1,9 @@
 // コレクション: カード図鑑・ガチャ（カード＋スキン）・スキン・道具
 import { h, btn, modal, toast, sleep } from '../core/ui.js';
 import { S, save } from '../core/store.js';
-import { CARDS, SKINS, TOOLS } from '../game/content.js';
+import { CARDS, SKINS, TOOLS, BOSS_CARD } from '../game/content.js';
+import { UNIT } from '../units/registry.js';
+import { backdrop } from '../ui/deco.js';
 import { gacha, GACHA_COST, GACHA5_COST, exchangeSkin } from '../game/progress.js';
 import { cardSprite, towerSprite, spriteHTML } from '../game/art.js';
 import { go } from '../core/router.js';
@@ -76,14 +78,27 @@ export function render(el, { tab = 'cards' } = {}) {
   const shards = s.collection.shards || 0;
   const content = h('div', { class: 'coll' });
   if (tab === 'cards') {
-    content.append(h('p', { class: 'note' }, `集めたカード ${owned} / ${CARDS.length}`),
-      h('div', { class: 'card-grid' }, CARDS.map((c) => {
-        const n = s.collection.cards[c.id];
-        return n
-          ? h('button', { class: `card r${c.rarity}`, type: 'button', onclick: () => modal({ title: `${c.name}`, body: h('div', { class: 'modal-body center' }, h('div', { class: 'card-big', html: cardSprite(c.id) }), h('div', { class: 'stars' }, '★'.repeat(c.rarity)), h('p', {}, c.text), h('small', { class: 'note' }, `所持 ${n}枚`)) }) },
-            h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name))
-          : h('div', { class: 'card unknown' }, h('div', { class: 'c-art' }, '❓'), h('div', { class: 'c-name' }, '？？？'));
-      })));
+    // ボスのカードは教科ごと、それ以外は「看守・なかま」
+    const bossOf = Object.fromEntries(Object.entries(BOSS_CARD).map(([unit, card]) => [card, unit]));
+    const groups = [
+      ['看守・なかま', CARDS.filter((c) => !bossOf[c.id])],
+      ['数学のボス', CARDS.filter((c) => bossOf[c.id] && (UNIT[bossOf[c.id]]?.subject || 'math') === 'math')],
+      ['英語棟のボス', CARDS.filter((c) => bossOf[c.id] && UNIT[bossOf[c.id]]?.subject === 'english')],
+    ];
+    const cardView = (c) => {
+      const n = s.collection.cards[c.id];
+      // まだ持っていないカードはシルエットで見せる（正体はお楽しみ）
+      return n
+        ? h('button', { class: `card r${c.rarity}`, type: 'button', onclick: () => modal({ title: `${c.name}`, body: h('div', { class: 'modal-body center' }, h('div', { class: 'card-big', html: cardSprite(c.id) }), h('div', { class: 'stars' }, '★'.repeat(c.rarity)), h('p', {}, c.text), h('small', { class: 'note' }, `所持 ${n}枚`)) }) },
+          h('span', { class: 'c-stars' }, '★'.repeat(c.rarity)), h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name))
+        : h('div', { class: `card unknown r${c.rarity}` }, h('span', { class: 'c-stars' }, '★'.repeat(c.rarity)), h('div', { class: 'c-art sil', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, '？？？'));
+    };
+    content.append(
+      h('div', { class: 'coll-prog' }, h('span', {}, `図鑑 ${owned} / ${CARDS.length}`), h('span', { class: 'cp-bar' }, h('i', { style: { width: `${(owned / CARDS.length) * 100}%` } })), h('b', {}, `${Math.round((owned / CARDS.length) * 100)}%`)),
+      ...groups.flatMap(([name, list]) => [
+        h('h3', { class: 'sec' }, `${name}（${list.filter((c) => s.collection.cards[c.id]).length}/${list.length}）`),
+        h('div', { class: 'card-grid' }, list.map(cardView)),
+      ]));
   } else if (tab === 'gacha') {
     const pull = async (n) => {
       const res = gacha(n);
@@ -119,6 +134,7 @@ export function render(el, { tab = 'cards' } = {}) {
       h('div', { class: 'tool-list' }, Object.entries(TOOLS).map(([id, t]) => h('div', { class: `tool-row ${s.tools.includes(id) ? '' : 'locked'}` },
         h('span', { class: 'c-em' }, s.tools.includes(id) ? t.emoji : '🔒'), h('div', {}, h('b', {}, t.name), h('small', {}, t.desc))))));
   }
+  backdrop(el, 'cell');
   el.append(topBar(() => go('home')),
     h('div', { class: 'tabs' }, tabs.map(([id, label]) => h('button', { class: `tab ${id === tab ? 'on' : ''}`, type: 'button', onclick: () => go('collection', { tab: id }) }, label))),
     content);

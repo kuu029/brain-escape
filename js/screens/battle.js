@@ -369,6 +369,6 @@ export function render(el, params) {
   }
 
   // 開発用（localhost のときだけ）: 自動テストから現在の問題と盤面を見られるようにする
-  if (location.hostname === 'localhost') window.__battle = { cur: () => cur, st, board };
+  if (location.hostname === 'localhost') window.__battle = { cur: () => cur, st, board, show: (p) => { cur = { p, target: null, attempts: 0 }; renderQ(); } };
   nextProblem();
 }

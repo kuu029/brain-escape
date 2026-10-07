@@ -35,6 +35,8 @@ export function render(el, { unit, lesson }) {
 
   // 直前に出した式は、次のステップでも見えるように残す
   const mathAt = (k) => { for (let j = k; j >= 0; j--) if (steps[j].math) return { math: steps[j].math, carried: j !== k }; return null; };
+  // 図も同じく、次に新しい図が出るまで残す
+  const figAt = (k) => { for (let j = k; j >= 0; j--) if (steps[j].fig) return steps[j].fig; return null; };
 
   function show() {
     const st = steps[i];
@@ -46,6 +48,7 @@ export function render(el, { unit, lesson }) {
       cm && cm.carried && h('div', { class: 'tr-math carried' }, h('small', {}, 'いまの式'), h('span', { class: 'math', html: tex(cm.math) })),
       h('div', { class: 'tr-text', rich: st.text }),
       cm && !cm.carried && h('div', { class: 'tr-math math', html: tex(cm.math) }),
+      figAt(i) && h('div', { class: 'qfig', html: figAt(i) }),
       st.en && h('div', { class: 'tr-en' }, st.en),
       st.q?.stem && h('div', { class: 'tr-qstem', rich: st.q.stem }));
     body.append(card);

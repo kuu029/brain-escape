@@ -3,8 +3,8 @@
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ESC[c]);
 
-const SYM = { pm: '±', mp: '∓', times: '×', div: '÷', cdot: '·', le: '≦', ge: '≧', ne: '≠', lt: '&lt;', gt: '&gt;', to: '→', square: '□', fallingdotseq: '≒' };
-const OP = new Set(['±', '∓', '×', '÷', '≦', '≧', '≠', '&lt;', '&gt;', '→', '=', '+', '−', '·', '≒']);
+const SYM = { pm: '±', mp: '∓', times: '×', div: '÷', cdot: '·', le: '≦', ge: '≧', ne: '≠', lt: '&lt;', gt: '&gt;', to: '→', square: '□', fallingdotseq: '≒', pi: 'π', circ: '°', angle: '∠', triangle: '△', parallel: '∥', perp: '⊥', equiv: '≡', sim: '∽', cdots: '…' };
+const OP = new Set(['±', '∓', '×', '÷', '≦', '≧', '≠', '&lt;', '&gt;', '→', '=', '+', '−', '·', '≒', '∥', '⊥', '≡', '∽']);
 const op = (c) => `<span class="mo">${c}</span>`;
 
 function atom(c) {
