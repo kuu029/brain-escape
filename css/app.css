@@ -1133,6 +1133,29 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
 .ally-gauge i { display: block; height: 100%; background: linear-gradient(90deg, #c77dff, #ffd640); }
 .tool.ally.ready { border-color: var(--accent); box-shadow: 0 0 10px #ffd64088; animation: glow 1s infinite alternate; }
 .tool.ally.ready small { color: var(--accent); font-weight: 900; }
+/* 盤面の横の縦ならび: なかまのボタンも列の幅に合わせる（広いと右はしが切れる）。光る影が切れないよう少し余白 */
+.board-row .toolbar { padding: 4px 3px; width: 64px; box-sizing: border-box; }
+.board-row .tool.ally { min-width: 0; width: 58px; }
+.board-row .ally-gauge { width: 44px; }
+
+/* 仲間・道具を使ったときの演出 */
+.cast-fx { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; pointer-events: none; overflow: hidden; }
+.cast-fx > * { grid-area: 1 / 1; }
+.cf-art, .cf-em { width: 46%; max-width: 170px; aspect-ratio: 1; display: grid; place-items: center; animation: cfPop 1.5s cubic-bezier(.2, 1.4, .4, 1) forwards; filter: drop-shadow(0 0 14px #ffd640aa); }
+.cf-art .spr { width: 100%; height: 100%; object-fit: contain; font-size: 96px; line-height: 1; }
+.cf-em { font-size: 96px; line-height: 1; }
+.cf-name { align-self: end; margin-bottom: 14%; padding: 4px 14px; border-radius: 999px; background: #000b; border: 2px solid var(--accent); color: var(--accent); font-size: 15px; font-weight: 900; max-width: 92%; text-align: center; line-height: 1.3; animation: cfName 1.5s ease forwards; }
+.cf-ring { width: 30%; aspect-ratio: 1; border-radius: 50%; border: 4px solid #ffd640; animation: cfRing 1s ease-out forwards; }
+.cf-ring.r2 { animation-delay: .18s; border-color: #c77dff; opacity: 0; }
+.cf-tool .cf-ring { border-color: #6be4ff; }
+.cf-tool .cf-ring.r2 { border-color: #ffffff; }
+.cf-spark { width: 10px; height: 10px; border-radius: 50%; background: #fff6b0; box-shadow: 0 0 8px #ffd640; animation: cfSpark .9s ease-out forwards; }
+.cf-tool .cf-spark { background: #c8f6ff; box-shadow: 0 0 8px #6be4ff; }
+@keyframes cfPop { 0% { transform: scale(.2) rotate(-12deg); opacity: 0; } 18% { transform: scale(1.15) rotate(4deg); opacity: 1; } 30% { transform: scale(1) rotate(0); } 75% { transform: scale(1); opacity: 1; } 100% { transform: scale(.6) translateY(-30px); opacity: 0; } }
+@keyframes cfName { 0%, 15% { transform: translateY(16px); opacity: 0; } 30%, 80% { transform: none; opacity: 1; } 100% { opacity: 0; } }
+@keyframes cfRing { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(3.2); opacity: 0; } }
+@keyframes cfSpark { 0% { transform: rotate(var(--a)) translateX(0) scale(1.4); opacity: 1; } 100% { transform: rotate(var(--a)) translateX(150px) scale(.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cast-fx * { animation-duration: .01s !important; } }
 
 /* なかま（コレクション） */
 .party-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 12px; border-radius: 14px; background: #c77dff1a; border: 2px solid #c77dff66; }
@@ -1193,3 +1216,10 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
 .btn.nav-gacha .nav-bubble { left: 0; transform: none; animation-name: bubbleL; }
 .btn.nav-gacha .nav-bubble::after { left: 26px; }
 @keyframes bubbleL { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+/* 道具えらび（持っていけるのは1つ） */
+button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+.tool-row.on { border-color: var(--accent); background: #4a3b10; }
+.tool-row .tr-on { margin-left: auto; white-space: nowrap; }
+/* 暗号室・模試の入り口にバナー画像があるとき */
+.game-card.memory.has-img, .game-card.exam.has-img { background-size: cover; background-position: center; }
+.game-card.memory.has-img .gc-em, .game-card.exam.has-img .gc-em { display: none; }

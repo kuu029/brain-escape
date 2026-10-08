@@ -14,7 +14,7 @@ import { towerSprite, enemyLook, cardSprite } from '../game/art.js';
 import { sfx } from '../core/sound.js';
 import { bump } from '../game/missions.js';
 import { go } from '../core/router.js';
-import { finishWave, pickReviews, towerSkin, party, tickets, useTicket } from '../game/progress.js';
+import { finishWave, pickReviews, towerSkin, party, tickets, useTicket, equippedTool } from '../game/progress.js';
 
 const MODE_LABEL = { practice: '練習ウェーブ', boss: 'ボスウェーブ', review: 'リベンジウェーブ', diagnosis: '看守チェック' };
 // 放置の見張り: この時間さわらないと「寝てない？」と聞き、さらに IDLE_GRACE 秒こたえがなければウェーブを抜ける
@@ -50,7 +50,9 @@ export function render(el, params) {
     schedule = practiceSchedule(pickReviews(unitId, 2));
     picker = makePicker(practicePool(unitId, unitState(unitId).lessons));
   }
-  const st = E.createBattle({ mode, schedule, tools: mode === 'diagnosis' ? [] : s.tools });
+  // 道具は1つだけ持っていける（コレクションでえらんだもの）
+  const tool = equippedTool();
+  const st = E.createBattle({ mode, schedule, tools: mode === 'diagnosis' || !tool ? [] : [tool] });
   const diagMode = mode === 'diagnosis';
   beginSession({ kind: mode, subject, unit: unitId });
 
@@ -157,6 +159,7 @@ export function render(el, params) {
     board.finish();
     const evs = E.useTool(st, id);
     sfx('tool');
+    castFx(board.el, { em: TOOLS[id].emoji, name: TOOLS[id].name, kind: 'tool' });
     paintHud();
     board.play(evs, { after: afterPlayback });
   }
@@ -179,7 +182,7 @@ export function render(el, params) {
     board.finish();
     const evs = E.summon(st, id);
     sfx('combo');
-    floatText(board.el, `${c.emoji} ${c.name} 参上！`, 'combo');
+    castFx(board.el, { art: cardSprite(id), name: `${c.name} 参上！`, kind: 'ally' });
     paintHud();
     board.play(evs, { after: afterPlayback });
   }
@@ -447,4 +450,15 @@ export function render(el, params) {
   // 開発用（localhost のときだけ）: 自動テストから現在の問題と盤面を見られるようにする
   if (location.hostname === 'localhost') window.__battle = { cur: () => cur, st, board, show: (p) => { cur = { p, target: null, attempts: 0 }; renderQ(); } };
   nextProblem();
+}
+
+// 仲間・道具を使ったときの演出: 盤面の上に大きく出して、光の輪とキラキラ
+function castFx(boardEl, { art = '', em = '', name, kind }) {
+  const fx = h('div', { class: `cast-fx cf-${kind}`, 'aria-hidden': 'true' },
+    h('i', { class: 'cf-ring' }), h('i', { class: 'cf-ring r2' }),
+    ...Array.from({ length: 8 }, (_, k) => h('i', { class: 'cf-spark', style: { '--a': `${k * 45}deg` } })),
+    art ? h('span', { class: 'cf-art', html: art }) : h('span', { class: 'cf-em' }, em),
+    h('b', { class: 'cf-name' }, name));
+  boardEl.append(fx);
+  setTimeout(() => fx.remove(), 1500);
 }

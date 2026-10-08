@@ -220,6 +220,22 @@ export function grantTool(unitId) {
   const s = S();
   if (!t || s.tools.includes(t)) return null;
   s.tools.push(t);
+  if (!s.toolOn) s.toolOn = t;
   save();
   return t;
+}
+// ウェーブに持っていける道具は1つだけ（コレクションの「道具」でえらぶ）。えらんでいなければ最後にもらった道具
+export const TOOL_MAX = 1;
+export function equippedTool() {
+  const s = S();
+  if (!s.tools.length) return null;
+  if (!s.tools.includes(s.toolOn)) s.toolOn = s.tools[s.tools.length - 1];
+  return s.toolOn;
+}
+export function equipTool(id) {
+  const s = S();
+  if (!s.tools.includes(id)) return false;
+  s.toolOn = id;
+  save();
+  return true;
 }

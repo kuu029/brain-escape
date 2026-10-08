@@ -4,7 +4,7 @@ import { S, save } from '../core/store.js';
 import { CARDS, SKINS, TOOLS, BOSS_CARD, SKIN_ITEMS, TOWER_TYPES, TOWER_LOOK, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from '../game/content.js';
 import { UNIT } from '../units/registry.js';
 import { backdrop } from '../ui/deco.js';
-import { gacha, gachaCost, GACHA_COST, GACHA5_COST, GACHA10_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX } from '../game/progress.js';
+import { gacha, gachaCost, GACHA_COST, GACHA5_COST, GACHA10_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX, equippedTool, equipTool } from '../game/progress.js';
 import { SUMMON, GAUGE_NEED } from '../game/engine.js';
 import { cardSprite, towerSprite, spriteHTML } from '../game/art.js';
 import { go } from '../core/router.js';
@@ -157,9 +157,15 @@ export function render(el, { tab = 'cards' } = {}) {
               it && have && star < SKIN_MAX_STAR && btn(`★UP 🧩${skinStarCost(it, star)}`, () => { if (starUpSkin(itemId)) { sfx('reveal', Math.min(4, star + 1)); toast(`★${star + 1} に強化！`); redo(); } else toast(`かけらが足りない（あと ${skinStarCost(it, star) - shards}）`); }, 'small ghost')));
         })))));
   } else {
-    content.append(h('p', { class: 'note' }, '単元の訓練を全部クリアすると1つずつもらえる。ウェーブ中に各1回使える。'),
-      h('div', { class: 'tool-list' }, Object.entries(TOOLS).map(([id, t]) => h('div', { class: `tool-row ${s.tools.includes(id) ? '' : 'locked'}` },
-        h('span', { class: 'c-em' }, s.tools.includes(id) ? t.emoji : '🔒'), h('div', {}, h('b', {}, t.name), h('small', {}, t.desc))))));
+    // ウェーブに持っていけるのは1つだけ。タップでえらぶ
+    const on = equippedTool();
+    content.append(h('p', { class: 'note' }, '単元の訓練を全部クリアすると1つずつもらえる。ウェーブに持っていけるのは 1つだけ（1回使える）。タップでえらぼう。'),
+      h('div', { class: 'tool-list' }, Object.entries(TOOLS).map(([id, t]) => {
+        const have = s.tools.includes(id);
+        return h(have ? 'button' : 'div', { class: `tool-row ${have ? '' : 'locked'}${on === id ? ' on' : ''}`, ...(have ? { type: 'button', onclick: () => { equipTool(id); sfx('build'); go('collection', { tab: 'tools' }); } } : {}) },
+          h('span', { class: 'c-em' }, have ? t.emoji : '🔒'), h('div', {}, h('b', {}, t.name), h('small', {}, t.desc)),
+          on === id && h('span', { class: 'm-ok tr-on' }, '🎒 持っていく'));
+      })));
   }
   backdrop(el, 'cell');
   el.append(topBar(() => go('home')),

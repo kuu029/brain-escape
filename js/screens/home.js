@@ -90,12 +90,18 @@ function hourLine() {
     : h('p', { class: 'hour-line open' }, `⏰ ${hr}時台のボーナス 💎+${HOUR_GEMS}：何か1つクリアでゲット！`);
 }
 
+// バナー画像（art に入っていれば）を背景に。左側を暗くして文字を読みやすく
+function bannerAttrs(key, cls) {
+  const url = bgUrl(key);
+  return url ? { class: `game-card ${cls} has-img`, style: { backgroundImage: `linear-gradient(90deg, #0b0716e6 30%, #0b071640), url(${url})` } } : {};
+}
+
 // 暗号室（暗記）のポスター: 復習どきの枚数
 function memoryCard() {
   const M = S().memory;
   const due = dueList(M, 'en', Date.now()).length;
   const seen = Object.keys(M.cards || {}).length;
-  return h('button', { class: 'game-card memory', type: 'button', onclick: () => { sfx('tap'); go('memory'); } },
+  return h('button', { class: 'game-card memory', type: 'button', ...bannerAttrs('banner-memory', 'memory'), onclick: () => { sfx('tap'); go('memory'); } },
     h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
     h('div', { class: 'gc-body' },
       h('div', { class: 'gc-sub' }, '暗記 ｜ 暗号ラッシュ'),
@@ -109,7 +115,7 @@ function memoryCard() {
 function examCard() {
   const s = S();
   const last = (s.exams || []).filter((r) => r.kind === 'full').pop();
-  return h('button', { class: 'game-card exam', type: 'button', onclick: () => { sfx('tap'); go('exam'); } },
+  return h('button', { class: 'game-card exam', type: 'button', ...bannerAttrs('banner-exam', 'exam'), onclick: () => { sfx('tap'); go('exam'); } },
     h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
     h('div', { class: 'gc-body' },
       h('div', { class: 'gc-sub' }, '入試本番モード ｜ 滋賀県型'),
