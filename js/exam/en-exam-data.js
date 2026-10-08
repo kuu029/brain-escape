@@ -93,6 +93,122 @@ export const DIALOGS = [
       { ask: '対話とメニューの内容に合うものはどれですか。', correct: 'スミス先生は、次はパンケーキを食べてみたい。', wrongs: ['アオイはカレーライスを注文した。', 'ランチセットは一日中注文できる。', 'スミス先生はこのカフェによく来る。'], evidence: ['I want to try the pancakes'], why: 'Next time, I want to try the pancakes, too.' },
     ],
   },
+  {
+    id: 'festival',
+    intro: '中学生のソウタと ALT のブラウン先生が、文化祭のプログラムを見ながら話しています。プログラムと対話を読んで、あとの問いに答えなさい。',
+    table: {
+      caption: 'School Festival Program',
+      head: ['Time', 'Event', 'Place'],
+      rows: [
+        ['9:00 - 9:30', 'Opening Ceremony', 'Gym'],
+        ['9:40 - 11:30', 'Class Exhibitions', 'Classrooms'],
+        ['11:30 - 12:30', 'Lunch Time', '-'],
+        ['12:30 - 13:30', 'Brass Band Concert', 'Gym'],
+        ['13:40 - 14:40', 'Drama by Class 3-2', 'Gym'],
+      ],
+    },
+    lines: [
+      ['Mr. Brown', 'Sota, I\'m looking forward to the school festival tomorrow. What are you going to do?'],
+      ['Sota', 'My class is going to show a drama in the afternoon. I\'m going to play the main character.'],
+      ['Mr. Brown', 'Wow, that\'s great! I\'ll watch it. Are you nervous?'],
+      ['Sota', 'A little. We have practiced it every day for a month.'],
+      ['Mr. Brown', 'I\'m sure it will be great. I also want to listen to the brass band. My friend Kana plays the trumpet in it.'],
+      ['Sota', 'Then you can listen to the concert first and come to our drama after that.'],
+      ['Mr. Brown', 'Perfect. I\'ll be there.'],
+    ],
+    qs: [
+      { ask: 'What is Sota going to do at the festival?', correct: 'He is going to play the main character in a drama.', wrongs: ['He is going to play the trumpet.', 'He is going to sing in the gym.', 'He is going to show pictures in his classroom.'], evidence: ['I\'m going to play the main character'], why: 'I\'m going to play the main character.（劇の主役）' },
+      { ask: 'プログラムによると、ソウタのクラスの劇は何時に始まりますか。', correct: '午後1時40分', wrongs: ['午後12時30分', '午前9時', '午後2時40分'], evidence: ['Drama by Class 3-2', '13:40 - 14:40'], why: 'Drama by Class 3-2 は 13:40 から。' },
+      { ask: 'How long has Sota\'s class practiced the drama?', correct: 'For a month.', wrongs: ['For a week.', 'For a year.', 'For three days.'], evidence: ['every day for a month'], why: 'We have practiced it every day for a month.' },
+      { ask: '対話とプログラムの内容に合うものはどれですか。', correct: 'ブラウン先生の友だちのカナは、ブラスバンドでトランペットをふく。', wrongs: ['ブラウン先生は劇を見ないつもりだ。', 'ソウタは劇のことを全く緊張していない。', 'ブラスバンドの演奏会は教室で行われる。'], evidence: ['My friend Kana plays the trumpet'], why: 'My friend Kana plays the trumpet in it.' },
+    ],
+  },
+  {
+    id: 'picnic',
+    intro: 'リサとダイキが、週末のピクニックについて天気予報を見ながら話しています。天気予報と対話を読んで、あとの問いに答えなさい。',
+    table: {
+      caption: 'Weather This Week',
+      head: ['Day', 'Weather', 'Temperature'],
+      rows: [
+        ['Friday', 'sunny', '24°C'],
+        ['Saturday', 'rainy', '18°C'],
+        ['Sunday', 'cloudy', '21°C'],
+        ['Monday', 'sunny', '23°C'],
+      ],
+    },
+    lines: [
+      ['Lisa', 'Daiki, let\'s go on a picnic to the park by the lake this weekend.'],
+      ['Daiki', 'Sounds good! Let\'s check the weather. Oh, it will rain on Saturday.'],
+      ['Lisa', 'Then how about Sunday? It won\'t rain, but it will be cloudy.'],
+      ['Daiki', 'That\'s OK. I don\'t like hot days, so a cloudy day is better for me.'],
+      ['Lisa', 'Great. I\'ll make sandwiches. Can you bring something to drink?'],
+      ['Daiki', 'Sure. I\'ll bring some tea. Let\'s meet at the station at ten.'],
+    ],
+    qs: [
+      { ask: 'When will they go on a picnic?', correct: 'On Sunday.', wrongs: ['On Friday.', 'On Saturday.', 'On Monday.'], evidence: ['how about Sunday?'], why: '土曜日は雨なので、日曜日にした。' },
+      { ask: '天気予報によると、ピクニックの日の気温は何度ですか。', correct: '21度', wrongs: ['24度', '18度', '23度'], evidence: ['Sunday', '21°C'], why: 'ピクニックは日曜日（cloudy・21°C）。' },
+      { ask: 'Why does Daiki think a cloudy day is better?', correct: 'Because he doesn\'t like hot days.', wrongs: ['Because he likes rainy days.', 'Because he wants to swim in the lake.', 'Because it is cold on Sunday.'], evidence: ['I don\'t like hot days'], why: 'I don\'t like hot days, so a cloudy day is better for me.' },
+      { ask: '対話と天気予報の内容に合うものはどれですか。', correct: 'リサはサンドイッチを作る。', wrongs: ['ダイキは昼ご飯を作って持っていく。', '二人は駅で9時に会う。', '土曜日は晴れる。'], evidence: ['I\'ll make sandwiches'], why: 'I\'ll make sandwiches.（ダイキは飲み物、待ち合わせは10時）' },
+    ],
+  },
+  {
+    id: 'museum',
+    intro: '中学生のメイと留学生のベンが、科学館の入り口で料金表を見ながら話しています。料金表と対話を読んで、あとの問いに答えなさい。',
+    table: {
+      caption: 'Biwako Science Museum - Tickets',
+      head: ['Visitor', 'Price'],
+      rows: [
+        ['Adult', '800 yen'],
+        ['Junior high school student', '400 yen'],
+        ['Child (6 - 12)', '200 yen'],
+        ['Under 6', 'free'],
+        ['Planetarium show (11:00 / 14:00 / 16:00)', '+300 yen'],
+      ],
+    },
+    lines: [
+      ['Ben', 'Mei, how much is a ticket for us?'],
+      ['Mei', 'We are junior high school students, so it\'s 400 yen each.'],
+      ['Ben', 'I want to see the planetarium show, too.'],
+      ['Mei', 'Me too. The next show starts at 14:00. It\'s 13:20 now, so we have time to see the fish on the first floor before the show.'],
+      ['Ben', 'Great. By the way, my little brother is five years old. Does he need a ticket?'],
+      ['Mei', 'No. Children under six don\'t need one.'],
+    ],
+    qs: [
+      { ask: 'メイが払う金額（入館料とプラネタリウム）は全部でいくらですか。', correct: '700円', wrongs: ['400円', '300円', '1,100円'], evidence: ['Junior high school student', '400 yen', '+300 yen'], why: '中学生 400円 ＋ プラネタリウム 300円 = 700円。' },
+      { ask: 'What will Mei and Ben do before the show?', correct: 'They will see the fish on the first floor.', wrongs: ['They will eat lunch.', 'They will buy a ticket for Ben\'s brother.', 'They will go home.'], evidence: ['see the fish on the first floor'], why: 'we have time to see the fish on the first floor before the show' },
+      { ask: 'ベンの弟がチケットを買わなくてよいのはなぜですか。', correct: '6歳未満の子どもは無料だから。', wrongs: ['中学生は無料だから。', '弟はプラネタリウムを見ないから。', 'ベンが代わりに払うから。'], evidence: ['Children under six don\'t need one', 'Under 6'], why: '弟は5歳。6歳未満は free。' },
+      { ask: '2人が見るプラネタリウムのショーは何時に始まりますか。', correct: '午後2時', wrongs: ['午前11時', '午後4時', '午後1時20分'], evidence: ['The next show starts at 14:00'], why: 'The next show starts at 14:00.（13:20 は今の時刻）' },
+    ],
+  },
+  {
+    id: 'camp',
+    intro: '中学生のナナと ALT のホワイト先生が、英語キャンプのお知らせを見ながら話しています。お知らせと対話を読んで、あとの問いに答えなさい。',
+    table: {
+      caption: 'Summer English Camp',
+      head: ['', ''],
+      rows: [
+        ['Date', 'August 5 - August 7'],
+        ['Place', 'Biwako Youth Center'],
+        ['For', 'junior high school students'],
+        ['Fee', '3,000 yen (meals included)'],
+        ['Apply by', 'July 20'],
+      ],
+    },
+    lines: [
+      ['Ms. White', 'Nana, look at this. Why don\'t you join the English camp this summer?'],
+      ['Nana', 'It looks interesting. What will we do there?'],
+      ['Ms. White', 'You will talk with students from other countries, cook together, and give a short speech in English.'],
+      ['Nana', 'A speech? I\'m not good at speaking in front of people.'],
+      ['Ms. White', 'Don\'t worry. The teachers will help you. It\'s a good chance to improve your English.'],
+      ['Nana', 'OK. I\'ll ask my parents tonight. Today is July 18, so I have to hurry.'],
+    ],
+    qs: [
+      { ask: 'How many days is the English camp?', correct: 'Three days.', wrongs: ['Two days.', 'Five days.', 'Seven days.'], evidence: ['August 5 - August 7'], why: '8月5日〜7日の3日間。' },
+      { ask: 'What will Nana have to do at the camp?', correct: 'Give a short speech in English.', wrongs: ['Write a long letter in English.', 'Teach English to children.', 'Sing songs on the stage.'], evidence: ['give a short speech in English'], why: 'give a short speech in English' },
+      { ask: 'ナナが「急がなければならない」と言っているのはなぜですか。', correct: '申しこみのしめきりが2日後だから。', wrongs: ['キャンプが明日から始まるから。', '両親が今夜出かけるから。', '参加費がもうすぐ高くなるから。'], evidence: ['Today is July 18', 'July 20'], why: '今日は7月18日、申しこみは7月20日まで。' },
+      { ask: 'お知らせと対話の内容に合うものはどれですか。', correct: 'キャンプの参加費には食事代がふくまれている。', wrongs: ['キャンプには小学生も参加できる。', 'ナナは人前で話すのが得意だ。', 'キャンプでは料理をしない。'], evidence: ['meals included'], why: '3,000 yen (meals included)' },
+    ],
+  },
 ];
 
 // ---------- 大問3: スピーチ ----------
@@ -165,6 +281,94 @@ export const SPEECHES = [
       model: ['I will speak slowly and use easy words. Then the person can understand me easily.', 'I will use gestures and pictures. They help us communicate.'],
     },
   },
+  {
+    id: 'sleep',
+    intro: '中学生がクラスで行ったスピーチです。読んで、あとの問いに答えなさい。',
+    paras: [
+      'Hello, everyone. Do you sleep well? Last month, I asked 30 students in my class about their sleep. Twenty of them said, "I sleep less than seven hours." I was surprised.',
+      'I also asked them, "What do you do before you go to bed?" Many students said they use their smartphones in bed. I did the same thing. I often watched videos until midnight, and I was always sleepy in class.',
+      'Then I read a book about sleep. It said that the light from smartphones makes it hard to sleep. So I decided to stop using my smartphone one hour before bed. Instead, I started to read books.',
+      'Now I can sleep better, and I feel good in the morning. I can also listen to my teachers better in class. Why don\'t you try it, too? Thank you.',
+    ],
+    notes: ['less than 〜より少ない', 'midnight 真夜中', 'instead そのかわりに'],
+    qs: [
+      { ask: 'How many students said they sleep less than seven hours?', correct: 'Twenty students.', wrongs: ['Thirty students.', 'Seven students.', 'Ten students.'], evidence: ['Twenty of them said'], why: '30人に聞いて、そのうち20人。' },
+      { ask: '話し手が読んだ睡眠についての本には、何と書いてありましたか。', correct: 'スマートフォンの光で、眠りにくくなる。', wrongs: ['毎日8時間以上ねるべきだ。', '寝る前に動画を見ると、よく眠れる。', '朝に本を読むと、頭がよくなる。'], evidence: ['the light from smartphones makes it hard to sleep'], why: 'It said that the light from smartphones makes it hard to sleep.' },
+      { ask: 'What does the speaker do before bed now?', correct: 'The speaker reads books.', wrongs: ['The speaker watches videos.', 'The speaker plays games.', 'The speaker studies math.'], evidence: ['I started to read books'], why: 'Instead, I started to read books.' },
+      { ask: 'スピーチの内容に合うものはどれですか。', correct: '話し手は以前、授業中いつも眠かった。', wrongs: ['話し手は、学校の生徒全員にアンケートをした。', '話し手は今も、真夜中までスマートフォンを使っている。', '話し手のクラスには20人の生徒がいる。'], evidence: ['I was always sleepy in class'], why: 'I was always sleepy in class.（アンケートはクラスの30人）' },
+      { ask: '話し手がいちばん伝えたいことはどれですか。', correct: 'Stop using smartphones before bed.', wrongs: ['Buy a new smartphone.', 'Watch videos to learn English.', 'Sleep in class when you are tired.'], evidence: ['stop using my smartphone one hour before bed'], why: '自分がやって効果があったことを「Why don\'t you try it, too?」とすすめている。' },
+    ],
+    write: {
+      ask: 'あなたが健康のために気をつけていることを、英語2文以上で書きなさい。理由も書くこと。',
+      model: ['I eat breakfast every morning. It gives me energy for the day.', 'I go to bed before eleven. I can study well when I sleep enough.'],
+    },
+  },
+  {
+    id: 'furoshiki',
+    intro: '中学生が英語の授業で行ったスピーチです。読んで、あとの問いに答えなさい。',
+    paras: [
+      'Hello. Last month, a student from France, Lucas, stayed at my house. One day, I gave him a present wrapped in a furoshiki. He was very interested in it.',
+      'He asked me, "What is this beautiful cloth?" I explained, "It\'s a furoshiki. We use it to carry many things, like boxes, bottles, and books." Then I showed him how to use it. He said, "It\'s like a bag, but you can change its shape. That\'s amazing!"',
+      'He also said, "In France, many people try to use fewer plastic bags. A furoshiki can help us." [[I didn\'t think about that before.]] I thought a furoshiki was just an old thing.',
+      'Before Lucas went back to France, I gave him three furoshiki. He sent me an email last week. It said, "My family uses them every day." I was very happy. I want to tell more people about good things in Japanese culture.',
+    ],
+    notes: ['wrapped 包まれた', 'cloth 布', 'shape 形', 'fewer より少ない'],
+    qs: [
+      { ask: 'Where is Lucas from?', correct: 'France.', wrongs: ['Canada.', 'Australia.', 'China.'], evidence: ['a student from France, Lucas'], why: 'a student from France, Lucas' },
+      { ask: 'ルーカスが「すごい」と言ったのは、ふろしきのどんなところですか。', correct: '形を変えられるところ。', wrongs: ['とても古いところ。', 'とても安いところ。', '絵がかいてあるところ。'], evidence: ['you can change its shape. That\'s amazing!'], why: 'It\'s like a bag, but you can change its shape.' },
+      { ask: '下線部 I didn\'t think about that before. の that の内容として最も適切なものはどれですか。', correct: 'ふろしきが、プラスチックの袋を減らすのに役立つこと。', wrongs: ['フランスでは、ふろしきが人気だということ。', 'ふろしきで本を運べるということ。', 'ルーカスが日本の文化をよく知っていたこと。'], evidence: ['A furoshiki can help us'], why: '下線部の直前のルーカスの言葉。' },
+      { ask: 'What did Lucas\'s email say?', correct: 'His family uses the furoshiki every day.', wrongs: ['He wants to come back to Japan next year.', 'He lost the furoshiki.', 'He made a furoshiki at school.'], evidence: ['My family uses them every day'], why: 'It said, "My family uses them every day."' },
+      { ask: 'このスピーチのタイトルとして最も適切なものはどれですか。', correct: 'What a Furoshiki Taught Me', wrongs: ['How to Make a Bag', 'My Trip to France', 'The History of Plastic'], evidence: ['I want to tell more people about good things in Japanese culture'], why: 'ふろしきを通して、日本の文化のよさに気づいた話。' },
+    ],
+    write: {
+      ask: '外国の人にすすめたい日本のもの（食べ物・道具・行事など）を1つ選んで、英語2文以上で紹介しなさい。',
+      model: ['I want to recommend onigiri. It is easy to carry, and you can enjoy many tastes.', 'I recommend summer festivals. You can wear a yukata and see beautiful fireworks.'],
+    },
+  },
+  {
+    id: 'elderly',
+    intro: '中学生がクラスで行ったスピーチです。読んで、あとの問いに答えなさい。',
+    paras: [
+      'Hi, everyone. Last winter, I visited a nursing home near my school as a volunteer. At first, I didn\'t know what to talk about with the elderly people there.',
+      'A woman named Mrs. Tanaka was sitting alone by the window. I said hello to her, but she didn\'t say anything. I felt nervous. Then I saw an old picture of a school on her table. I asked her, "Is this your school?" She smiled and started to talk about her school days. She told me that she walked for an hour to school every day.',
+      'After that, I visited her every Saturday. She taught me how to make otedama, and I taught her how to take pictures with a smartphone. We enjoyed learning from each other.',
+      'Through this experience, I learned that we can become friends with people of any age. Talking is the first step. Thank you.',
+    ],
+    notes: ['nursing home 老人ホーム', 'elderly お年寄りの', 'otedama お手玉', 'age 年齢'],
+    qs: [
+      { ask: 'When did the speaker visit the nursing home for the first time?', correct: 'Last winter.', wrongs: ['Last summer.', 'Last spring.', 'Last weekend.'], evidence: ['Last winter, I visited a nursing home'], why: 'Last winter, I visited a nursing home near my school as a volunteer.' },
+      { ask: 'タナカさんが話し始めたのはなぜですか。', correct: '話し手が、古い学校の写真について質問したから。', wrongs: ['話し手が、お手玉を持ってきたから。', '話し手が、毎週土曜日に来たから。', 'ほかの人が、タナカさんに話しかけたから。'], evidence: ['Is this your school?', 'She smiled and started to talk'], why: '写真を見て「Is this your school?」と聞いたら、笑って話し始めた。' },
+      { ask: 'How did Mrs. Tanaka go to school when she was a student?', correct: 'She walked for an hour.', wrongs: ['She went by bus.', 'She rode a bike.', 'Her father took her by car.'], evidence: ['she walked for an hour to school every day'], why: 'she walked for an hour to school every day' },
+      { ask: 'スピーチの内容に合うものはどれですか。', correct: '話し手はタナカさんに、スマートフォンで写真をとる方法を教えた。', wrongs: ['タナカさんは、最初からたくさん話してくれた。', '話し手は、毎週日曜日にタナカさんをたずねた。', '話し手が、タナカさんにお手玉の作り方を教えた。'], evidence: ['I taught her how to take pictures with a smartphone'], why: 'お手玉はタナカさんが教えてくれた。話し手はスマートフォンの写真のとり方を教えた。' },
+      { ask: '話し手がいちばん伝えたいことはどれですか。', correct: 'We can become friends with people of any age.', wrongs: ['We should not talk to elderly people.', 'Old pictures are very expensive.', 'Volunteers must work every day.'], evidence: ['we can become friends with people of any age'], why: '最後の段落に「学んだこと」がまとめてある。' },
+    ],
+    write: {
+      ask: 'あなたがやってみたいボランティア活動を1つ、英語2文以上で書きなさい。理由も書くこと。',
+      model: ['I want to clean the beach of Lake Biwa. I want to keep the lake beautiful.', 'I want to read picture books to small children. I like children and books.'],
+    },
+  },
+  {
+    id: 'tourist',
+    intro: '中学生が英語の授業で行ったスピーチです。読んで、あとの問いに答えなさい。',
+    paras: [
+      'Hello. Last Sunday, I was at Kyoto Station with my mother. A man from Canada came to us. He had a map in his hand and looked worried. He said something in English, but my mother couldn\'t understand him.',
+      'I was nervous, but I tried to talk to him. I said, "Can I help you?" He wanted to go to Kinkakuji. I showed him the right bus stop and said, "Take bus number 205." He said, "Thank you so much! Your English is very good."',
+      'Before that day, I studied English only for tests. But I realized that English is a tool to help people. Now I study English harder, and I practice speaking with our ALT every week.',
+      'In the future, I want to work at a hotel and help many people from other countries. Thank you.',
+    ],
+    notes: ['worried 心配そうな', 'realize 気づく', 'tool 道具'],
+    qs: [
+      { ask: 'Where was the speaker last Sunday?', correct: 'At Kyoto Station.', wrongs: ['At Kinkakuji.', 'At a hotel.', 'At school.'], evidence: ['I was at Kyoto Station with my mother'], why: 'Last Sunday, I was at Kyoto Station with my mother.' },
+      { ask: 'Where did the man from Canada want to go?', correct: 'Kinkakuji.', wrongs: ['Kyoto Station.', 'A hotel.', 'Canada.'], evidence: ['He wanted to go to Kinkakuji'], why: 'He wanted to go to Kinkakuji.' },
+      { ask: 'この日のあと、話し手の英語の勉強はどう変わりましたか。', correct: 'テストのためだけでなく、人を助ける道具として勉強するようになった。', wrongs: ['英語の勉強をやめてしまった。', 'テストのためだけに勉強するようになった。', '母親に英語を教えるようになった。'], evidence: ['I studied English only for tests', 'English is a tool to help people'], why: 'Before that day, I studied English only for tests. But I realized that English is a tool to help people.' },
+      { ask: 'スピーチの内容に合うものはどれですか。', correct: '話し手は毎週、ALT と話す練習をしている。', wrongs: ['話し手の母親は、その男性の英語を理解できた。', '男性は、駅で地図をなくして困っていた。', '話し手は、男性を金閣寺まで連れて行った。'], evidence: ['I practice speaking with our ALT every week'], why: 'I practice speaking with our ALT every week.' },
+      { ask: 'What does the speaker want to do in the future?', correct: 'To work at a hotel.', wrongs: ['To become an English teacher.', 'To live in Canada.', 'To drive a bus in Kyoto.'], evidence: ['I want to work at a hotel'], why: 'In the future, I want to work at a hotel.' },
+    ],
+    write: {
+      ask: '英語を使ってやってみたいことを、英語2文以上で書きなさい。理由も書くこと。',
+      model: ['I want to talk with people from other countries. I want to learn about their cultures.', 'I want to watch movies in English. It is a good way to learn real English.'],
+    },
+  },
 ];
 
 // ---------- 大問4: 英作文（20語以上） ----------
@@ -175,6 +379,10 @@ export const WRITING = [
   { ask: 'あなたの中学校生活でいちばんの思い出を、ALT の先生に伝えます。20語以上の英語で書きなさい。', q: 'What is your best memory of junior high school?', model: 'My best memory is the school trip to Tokyo. I visited many places with my friends. We talked a lot at night, and it was a lot of fun.' },
   { ask: 'ALT の先生から、次の質問をされました。あなたの考えを、理由をふくめて 20語以上の英語で書きなさい。', q: 'Which do you like better, reading books or watching movies? Why?', model: 'I like reading books better. When I read a book, I can imagine the story in my own way. I can also read books anywhere, for example, on the train.' },
   { ask: 'ALT の先生から、次の質問をされました。あなたの考えを、理由をふくめて 20語以上の英語で書きなさい。', q: 'What is the most important thing in your life? Why?', model: 'My friends are the most important thing in my life. When I am sad, they always talk with me. I can be happy when I am with them.' },
+  { ask: 'ALT の先生から、次の質問をされました。あなたの考えを、理由をふくめて 20語以上の英語で書きなさい。', q: 'Which is better for students, studying at home or studying at a library? Why?', model: 'I think studying at a library is better. It is quiet, and there are many books. I can study hard there because I do not have my games.' },
+  { ask: '留学生に、あなたの町（または学校）のよいところを紹介します。20語以上の英語で書きなさい。', q: 'What is good about your town?', model: 'My town is near Lake Biwa. The lake is very beautiful in the evening. We can also eat fresh fish and vegetables. I love my town.' },
+  { ask: 'ALT の先生から、次の質問をされました。あなたの考えを、理由をふくめて 20語以上の英語で書きなさい。', q: 'Do you think students should use smartphones at school? Why?', model: 'I do not think students should use smartphones at school. If we use them, we cannot listen to our teachers well. We should talk with friends face to face.' },
+  { ask: '卒業する前に、クラスのみんなとやりたいことを ALT の先生に伝えます。理由もふくめて 20語以上の英語で書きなさい。', q: 'What do you want to do with your classmates before graduation?', model: 'I want to play soccer with all my classmates. We have played together many times since we were first-year students. It will be a good memory.' },
 ];
 export const WRITING_RUBRIC = [
   { text: '20語以上書けている', pts: 4 },
@@ -191,4 +399,8 @@ export const LISTEN_OWN = [
   { q: 'Where do you want to go in the future?', model: 'I want to go to Canada.' },
   { q: 'What did you do last weekend?', model: 'I went shopping with my sister.' },
   { q: 'Who is your favorite person?', model: 'My favorite person is my grandmother because she is very kind.' },
+  { q: 'What time do you usually get up?', model: 'I usually get up at six thirty.' },
+  { q: 'What sport do you like?', model: 'I like basketball.' },
+  { q: 'How do you come to school?', model: 'I come to school by bike.' },
+  { q: 'What do you want to learn in high school?', model: 'I want to learn more about science.' },
 ];

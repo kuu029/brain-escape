@@ -94,5 +94,7 @@ export const BG_KEYS = [
   "bg-en-2",
   "bg-en-3",
   "banner-math",
-  "banner-en"
+  "banner-en",
+  "banner-memory",
+  "banner-exam"
 ];

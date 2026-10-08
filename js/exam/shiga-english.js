@@ -222,7 +222,7 @@ function sec1(rng, mini) {
 function sec2(rng, seed) {
   const D = rng.pick(DIALOGS);
   const T = D.table;
-  const table = `<table class="ex-table"><caption>${esc(T.caption)}</caption><tr>${T.head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr>${T.rows.map((r) => `<tr>${r.map((x) => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table>`;
+  const table = `<table class="ex-table"><caption>${esc(T.caption)}</caption>${T.head.some(Boolean) ? `<tr>${T.head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr>` : ''}${T.rows.map((r) => `<tr>${r.map((x) => `<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</table>`;
   const passage = `${table}${D.lines.map(([who, text]) => `<p><b>${esc(who)}:</b> ${ul(text)}</p>`).join('')}`;
   const src = [T.caption, ...T.head, ...T.rows.flat(), ...D.lines.map(([, t]) => plain(t))].join('\n');
   const qs = D.qs.map((q) => ({ pts: 4, p: readQ(rng, { stem: q.ask, correct: q.correct, wrongs: q.wrongs, evidence: q.evidence, src, why: q.why }) }));
