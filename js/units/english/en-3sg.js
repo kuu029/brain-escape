@@ -1,7 +1,7 @@
 // 英語 第1段階: 3単現のs と can
-import { SUBJ, SUBJ3, SUBJ_Q, VP_ALL, TIME, pickTime, clause, jaSentence, cap, is3sg } from './gram.js';
+import { SUBJ, SUBJ3, SUBJ_Q, VP_ALL, TIME, pickTime, clause, jaSentence, cap, is3sg, sentence } from './gram.js';
 import { third, ing, bePresent } from './lex.js';
-import { frameQ, orderAns, spellAns } from './kit-en.js';
+import { frameQ, orderAns, spellAns, BLANK } from './kit-en.js';
 
 const S_RULE = '主語が he / she / ケンなど「1人・1つ（自分と相手以外）」で、今のことなら動詞に s をつける。';
 
@@ -42,6 +42,21 @@ function sRule(v) {
   return 'ふつうは s をつけるだけ';
 }
 function genSpell(rng) {
+  // 半分は文の中で（主語 ＋ （　　） ＋ 〜）。残りは動詞だけ（es / ies の形を集中して練習）
+  if (rng.chance(0.5)) {
+    const subj = rng.pick(SUBJ3);
+    const vp = rng.pick(VP_ALL);
+    const [tEn, tJa] = pickTime(rng, vp, 'habit');
+    const ans = third(vp.v);
+    const chunks = clause(subj, vp, 'pres', 'pos');
+    return {
+      stem: `${jaSentence(subj, vp, 'pres', 'pos', tJa)}\n${sentence([...chunks.map((c, i) => (i === 1 ? BLANK : c)), tEn])}\n（　　）に入る形をつづろう（もとの形: ${vp.v}）`,
+      ...spellAns(rng, ans, { extra: 2 }),
+      hint: S_RULE,
+      steps: [`主語 ${subj.en} は3人称単数`, `${vp.v} → ${sRule(vp.v)}`, `答え: ${ans}`],
+      check: { kind: 'en-form', base: vp.v, form: 'third' },
+    };
+  }
   const [v, ja] = rng.pick(SPELL_VERBS);
   const ans = third(v);
   return {

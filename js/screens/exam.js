@@ -13,6 +13,10 @@ import { UNIT } from '../units/registry.js';
 import { topBar } from './home.js';
 import { backdrop } from '../ui/deco.js';
 import { EXAM_KINDS, buildExam, allQs, gradeExam, weakUnits, inputText } from '../exam/exam.js';
+import { claimActivity } from '../game/bonus.js';
+import { bonusChips } from './result.js';
+import { flyGems } from '../ui/gems.js';
+import { paperCheck, countdown } from '../ui/ready.js';
 
 const GRADERS = ['本人', 'お母さん', 'お兄さん'];
 const mmss = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, '0')}`;
@@ -20,7 +24,7 @@ const leftSec = (d, ex) => Math.round(ex.minutes * 60 - (Date.now() - d.startedA
 
 export function render(el, params = {}) {
   if (params.phase === 'sheet') return sheetView(el);
-  if (params.phase === 'result') return resultView(el, params.id);
+  if (params.phase === 'result') return resultView(el, params.id, params.fresh);
   return introView(el);
 }
 
@@ -34,14 +38,23 @@ function introView(el) {
     ...[[false, '📱 アプリで穴うめ', '証明は【　】をうめる・作図は手順をならべる（自動で採点）'], [true, '✏️ 紙に書いて採点', '本番と同じく紙に書く。終わったら模範解答を見て、本人か家族が採点']].map(([v, label, sub]) =>
       h('button', { class: `ex-opt${paper === v ? ' on' : ''}`, type: 'button', onclick: () => { sfx('tap'); paper = v; s.settings.examPaper = v; save(); paintSeg(); } }, h('b', {}, label), h('small', {}, sub))));
   paintSeg();
-  const start = (kind) => {
-    const go1 = () => {
-      s.examDraft = { subject: 'math', kind, seed: newSeed(), paperMode: paper, startedAt: Date.now(), answers: {}, cur: 0 };
-      saveNow();
-      go('exam', { phase: 'sheet' });
-    };
-    if (d) confirmBox('とちゅうの模試があるよ', '新しく始めると、とちゅうの模試は消えるよ。', '新しく始める', 'やめる', true).then((ok) => ok && go1());
-    else go1();
+  // スタート前に確認（時間・紙とペン）→ 3・2・1 の合図のあとで時間スタート
+  const start = async (kind) => {
+    if (d && !(await confirmBox('とちゅうの模試があるよ', '新しく始めると、とちゅうの模試は消えるよ。', '新しく始める', 'やめる', true))) return;
+    const k = EXAM_KINDS[kind];
+    const ok = await paperCheck({
+      title: `${k.name}（${k.minutes}分）を始める？`,
+      lines: [
+        `⏱ 制限時間は <b>${k.minutes}分</b>。合図のあとスタート。アプリを閉じても時間は進む`,
+        paper ? '✏️ 証明・作図は<b>紙に書く</b>（終わったら採点）' : '📱 証明は【　】をうめる、作図は手順をならべる',
+        'むずかしい問題は飛ばして、あとで戻ってOK',
+      ],
+    });
+    if (!ok) return;
+    await countdown('はじめ！');
+    s.examDraft = { subject: 'math', kind, seed: newSeed(), paperMode: paper, startedAt: Date.now(), answers: {}, cur: 0 };
+    saveNow();
+    go('exam', { phase: 'sheet' });
   };
   const hist = (s.exams || []).slice(-5).reverse();
   backdrop(el, 'desk');
@@ -204,6 +217,7 @@ function sheetView(el) {
     const gems = 5 + Math.round(G.score100 / 4);
     s.gems += gems;
     rec.gems = gems;
+    rec.bonus = claimActivity('exam');
     (s.exams ||= []).push(rec);
     if (s.exams.length > 40) s.exams.shift();
     s.examDraft = null;
@@ -211,7 +225,7 @@ function sheetView(el) {
     saveNow();
     sfx('win');
     if (timeUp) toast('⏰ 時間切れ！ 提出したよ', 2600);
-    go('exam', { phase: 'result', id: rec.id });
+    go('exam', { phase: 'result', id: rec.id, fresh: true });
   }
 
   tick();
@@ -219,7 +233,7 @@ function sheetView(el) {
 }
 
 // ---------- 採点・見直し ----------
-function resultView(el, id) {
+function resultView(el, id, fresh = false) {
   const s = S();
   const rec = (s.exams || []).find((r) => r.id === id);
   if (!rec) return go('exam');
@@ -286,13 +300,15 @@ function resultView(el, id) {
   el.append(topBar(() => go('exam')),
     h('div', { class: 'exam-result' },
       scoreBox,
-      rec.gems && h('p', { class: 'note center' }, `💎 +${rec.gems}（模試ボーナス）`),
+      rec.gems && h('p', { class: 'note center ex-gems' }, `💎 +${rec.gems}（模試の報酬）`),
+      fresh && bonusChips(rec.bonus),
       paperBox,
       weak.length > 0 && h('h3', { class: 'sec' }, '🎯 点を落としたところ（ここを復習）'),
       weak.length > 0 && h('div', { class: 'ex-weak' }, weak.map(({ unit, pts }) => btn(h('span', {}, h('b', {}, UNIT[unit]?.title || unit), h('small', {}, ` −${pts}点`)), () => go('map', { focus: unit, subject: UNIT[unit]?.subject || 'math' }), 'ghost small'))),
       h('h3', { class: 'sec' }, '🔍 見直し（タップで解説）'),
       review,
       h('div', { class: 'up-btns' },
-        btn('📝 もう1回（新しい問題）', () => { s.examDraft = { subject: rec.subject, kind: rec.kind, seed: newSeed(), paperMode: rec.paperMode, startedAt: Date.now(), answers: {}, cur: 0 }; saveNow(); go('exam', { phase: 'sheet' }); }, 'primary'),
+        btn('📝 もう1回（新しい問題）', () => go('exam'), 'primary'),
         btn('ホームへ', () => go('home'), 'ghost'))));
+  if (fresh) flyGems((rec.gems || 0) + (rec.bonus?.gems || 0), el.querySelector('.ex-gems'), 400);
 }

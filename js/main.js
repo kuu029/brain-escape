@@ -14,9 +14,10 @@ import * as records from './screens/records.js';
 import * as settings from './screens/settings.js';
 import * as exam from './screens/exam.js';
 import * as memory from './screens/memory.js';
+import * as timeattack from './screens/timeattack.js';
 
 init();
-const screens = { onboarding, home, map, diagnosis, training, battle, result, collection, records, settings, exam, memory };
+const screens = { onboarding, home, map, diagnosis, training, battle, result, collection, records, settings, exam, memory, timeattack };
 for (const [k, v] of Object.entries(screens)) register(k, v);
 mount(document.getElementById('app'));
 startTimer();

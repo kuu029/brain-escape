@@ -8,6 +8,8 @@ import { answerLine } from '../ui/answer.js';
 import { cardSprite, spriteHTML } from '../game/art.js';
 import { backdrop, confetti } from '../ui/deco.js';
 import { sfx } from '../core/sound.js';
+import { topBar } from './home.js';
+import { flyGems } from '../ui/gems.js';
 
 // 数字がカチカチ増えていく表示
 function countUp(to, fmt, delay) {
@@ -51,6 +53,8 @@ export function render(el, r) {
   const again = () => go('battle', { mode: r.mode, unit: r.unitId, subject: r.subject });
 
   backdrop(el, r.win ? 'win' : 'lose');
+  el.append(topBar(() => go('map', { focus: r.unitId, subject: r.subject })));
+  const gemStat = h('div', {}, countUp(r.gems, (v) => `💎${v}`, 450), h('small', {}, 'ゲット'));
   // 主役: その単元のボス（ボス戦なら「撃破」のハンコ）／復習なら おばけ
   const face = u
     ? spriteHTML(`boss-${u.id}`, boss?.emoji || u.emoji, boss?.name || u.title)
@@ -65,10 +69,11 @@ export function render(el, r) {
     r.win && confetti(),
     hero,
     h('h2', {}, head.t),
+    bonusChips(r.bonus),
     h('p', { class: 'rs-sub' }, rank ? `${RANK_TEXT[rank]} ${head.s}` : head.s),
     h('div', { class: 'stats tickets' },
       h('div', {}, countUp(rate, (v) => `${v}%`, 0), h('small', {}, `正答率（${r.firstCorrect}/${r.asked}）`)),
-      h('div', {}, countUp(r.gems, (v) => `💎${v}`, 450), h('small', {}, 'ゲット')),
+      gemStat,
       h('div', {}, countUp(r.maxCombo, (v) => `🔥${v}`, 900), h('small', {}, '最大コンボ'))),
     cards.length > 0 && h('div', { class: 'new-cards' }, h('h3', { class: 'sec' }, '🃏 新カード！'), cards.map((c) => h('div', { class: `card r${c.rarity} flip-in` }, h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name)))),
     r.opened.length > 0 && h('div', { class: 'opened' }, h('h3', { class: 'sec' }, '🚪 新しいエリアが開いた！'), r.opened.map((id) => h('div', { class: 'op-row' }, h('span', { class: 'op-face', html: spriteHTML(`boss-${id}`, BOSSES[id]?.emoji || UNIT[id].emoji, '') }), h('span', { class: 'op-text' }, h('small', {}, UNIT[id].area), h('b', {}, UNIT[id].title))))),
@@ -81,4 +86,8 @@ export function render(el, r) {
       r.mode === 'practice' && r.unitId && canBoss(r.unitId) && btn('👑 ボスウェーブへ', () => go('battle', { mode: 'boss', unit: r.unitId }), 'boss'),
       btn('マップへ', () => go('map', { focus: r.unitId, subject: r.subject }), 'ghost')),
     u && h('p', { class: 'note center' }, `${u.area}｜${u.title}`)));
+  flyGems(r.gems + (r.bonus?.gems || 0), gemStat, 1300);
 }
+
+// 習慣ボーナス（1時間ごと・はじめての模試）の表示
+export const bonusChips = (b) => b?.items?.length > 0 && h('div', { class: 'bonus-list' }, b.items.map((x) => h('span', { class: 'bonus-chip' }, `${x.label} 💎+${x.gems}`)));

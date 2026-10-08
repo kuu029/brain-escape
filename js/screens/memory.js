@@ -13,6 +13,9 @@ import { bump } from '../game/missions.js';
 import { addCard } from '../game/progress.js';
 import { GACHA_CARDS, CARDS as GAME_CARDS } from '../game/content.js';
 import * as ME from '../memory/engine.js';
+import { claimActivity } from '../game/bonus.js';
+import { bonusChips } from './result.js';
+import { flyGems } from '../ui/gems.js';
 
 const POS = { n: '名詞', v: '動詞', adj: '形容詞', adv: '副詞', prep: '前置詞', conj: '接続詞', wh: '疑問詞', pron: '代名詞', int: 'あいさつ等', num: '数', idiom: '熟語' };
 const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science' };
@@ -297,6 +300,7 @@ function rushView(el, subject, opts) {
     }
     S().gems += gems;
     R.gems = gems;
+    R.bonus = claimActivity('memory');
     R.cards = extra;
     closeSession(R.test ? (R.passed ? 'win' : 'lose') : 'clear');
     saveNow();
@@ -322,11 +326,13 @@ function resultView(el, subject, R) {
           R.test && h('b', { class: R.passed ? 'mm-pass' : 'mm-fail' }, R.passed ? '🏅 解読成功！（9割以上）' : `あと少し！（${acc}% → 90% で解読）`)),
         h('div', { class: 'mm-total' },
           [['🆕 新しく覚えた', R.news], ['⬆️ レベルアップ', R.ups], ['🔒 定着した', R.solid], ['✍️ 書けるように', R.wr], ['🔥 最大コンボ', R.maxCombo]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))))),
-      h('p', { class: 'note center' }, `💎 +${R.gems}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
+      h('p', { class: 'note center mm-gems' }, `💎 +${R.gems}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
+      bonusChips(R.bonus),
       R.cards?.length > 0 && h('p', { class: 'note center' }, `🃏 カードゲット: ${R.cards.map((id) => GAME_CARDS.find((c) => c.id === id)?.name || id).join('、')}`),
       R.misses.length > 0 && h('h3', { class: 'sec' }, R.intro ? '😵 まちがえた暗号（顔合わせのあとの復習でまた出るよ）' : '😵 まちがえた暗号（少し時間をおいて、また出るよ）'),
       R.misses.length > 0 && h('div', { class: 'md-list' }, R.misses.map((id) => { const c = ME.CARD[id]; return h('div', { class: 'md-row' }, h('span', { class: 'mr-q' }, c.q), h('span', { class: 'mr-a' }, c.a)); })),
       h('div', { class: 'up-btns' },
         R.deck && !R.test ? btn('⚡ このデッキをもう1回', () => startRush(subject, { deck: R.deck }), 'primary') : nextButtons(subject, todayState(M, subject, Date.now()), M),
         btn('🔐 暗号室へ', () => go('memory', { subject }), 'ghost'))));
+  if (!R.shown) { R.shown = true; flyGems(R.gems + (R.bonus?.gems || 0), el.querySelector('.mm-gems'), 400); }
 }

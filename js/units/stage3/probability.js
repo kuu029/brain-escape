@@ -19,7 +19,7 @@ function enumQ(stem, list, ok, { hint, wrong = [], how = '' }) {
     stem,
     ...P(F(c, n), wrong),
     hint,
-    steps: [`全部で ${n} 通り${how}`, `あてはまるのは ${c} 通り`, `${m(`\frac{${c}}{${n}}`)}${F(c, n).d !== n ? ` ${m(`=${tnum(F(c, n))}`)}` : ''}`],
+    steps: [`全部で ${n} 通り${how}`, `あてはまるのは ${c} 通り`, `${m(`\\frac{${c}}{${n}}`)}${F(c, n).d !== n ? ` ${m(`=${tnum(F(c, n))}`)}` : ''}`],
     check: byEnum(list, ok),
   };
 }
@@ -75,7 +75,17 @@ function genDice(rng) {
   if (rng.chance(0.55)) {
     const head = '大小2つのさいころを同時に投げるとき、';
     const hint = '大小を区別して、6×6 = 36 通りの表を作って数える。';
-    const t = rng.int(0, 6);
+    const t = rng.int(0, 10);
+    if (t === 7) return enumQ(`${head}大きいさいころの目が、小さいさいころの目の倍数になる確率は？`, DICE2, ([a, b]) => a % b === 0, { hint: '小さいさいころの目ごとに、大きいさいころの目が倍数になるものを数える（同じ目も倍数）。', wrong: [{ p: F(1, 6), msg: '同じ目どうしだけではない。(2, 1) や (6, 3) も倍数。' }] });
+    if (t === 8) { const odd = rng.chance(0.5); return enumQ(`${head}出る目の和が${odd ? '奇数' : '偶数'}になる確率は？`, DICE2, ([a, b]) => (a + b) % 2 === (odd ? 1 : 0), { hint: '和が奇数 → 奇数と偶数の組。和が偶数 → 同じ種類どうし。', wrong: [{ p: F(1, 4), msg: `(奇, 偶) と (偶, 奇) の両方ある。` }] }); }
+    if (t === 9) {
+      const c = rng.int(1, 3), d = rng.int(4, 9);
+      return enumQ(`${head}大きいさいころの目を ${m('a')}、小さいさいころの目を ${m('b')} とする。${m(`${c === 1 ? '' : c}a+b`)} の値が ${d} 以下になる確率は？`, DICE2, ([a, b]) => c * a + b <= d, { hint: `${m('a')} の値ごとに、${m('b')} がいくつまでならよいか数える。` });
+    }
+    if (t === 10) {
+      const k = rng.int(-2, 2);
+      return enumQ(`${head}大きいさいころの目を ${m('a')}、小さいさいころの目を ${m('b')} とする。点 ${m('(a,\\ b)')} が直線 ${m(k === 0 ? 'y=x' : `y=x${k > 0 ? '+' : ''}${k}`)} 上にある確率は？`, DICE2, ([a, b]) => b === a + k, { hint: `${m(`b=a${k === 0 ? '' : (k > 0 ? '+' : '') + k}`)} になる組を書き出す。` });
+    }
     if (t === 0) { const k = rng.pick([3, 4, 6, 7, 8, 9]); return enumQ(`${head}大きいさいころの目を十の位、小さいさいころの目を一の位として2けたの整数をつくる。この整数が ${k} の倍数になる確率は？`, DICE2, ([a, b]) => (10 * a + b) % k === 0, { hint: '11〜66 の2けたの整数（36 通り）を書き出して数える。' }); }
     if (t === 1) return enumQ(`${head}大きいさいころの目を十の位、小さいさいころの目を一の位とする2けたの整数が、素数になる確率は？`, DICE2, ([a, b]) => isPrime(10 * a + b), { hint: '一の位が偶数や5なら素数ではない。残りを1つずつ確かめる。' });
     if (t === 2) { const k = rng.pick([2, 3, 4, 6]); return enumQ(`${head}出る目の積が ${k} の倍数になる確率は？`, DICE2, ([a, b]) => (a * b) % k === 0, { hint, wrong: [{ p: F(1, k), msg: '積は和とちがって、出やすさがかたよる。表を作って数えよう。' }] }); }
@@ -158,8 +168,8 @@ function genBag(rng) {
     const pairs = [];
     for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) pairs.push([balls[i], balls[j]]);
     return rng.chance(0.5)
-      ? enumQ(`${head}同時に2個取り出すとき、2個が同じ色である確率は？`, pairs, ([x, y]) => x === y, { hint: '玉に番号をつけて、2個の組み合わせを全部書き出す。', how: `（${m(`\frac{${n}\times ${n - 1}}{2}`)}）` })
-      : enumQ(`${head}同時に2個取り出すとき、青玉が1個もふくまれない確率は？`, pairs, ([x, y]) => x !== '青' && y !== '青', { hint: '赤と白だけから2個選ぶ組み合わせを数える。', how: `（${m(`\frac{${n}\times ${n - 1}}{2}`)}）` });
+      ? enumQ(`${head}同時に2個取り出すとき、2個が同じ色である確率は？`, pairs, ([x, y]) => x === y, { hint: '玉に番号をつけて、2個の組み合わせを全部書き出す。', how: `（${m(`\\frac{${n}\\times ${n - 1}}{2}`)}）` })
+      : enumQ(`${head}同時に2個取り出すとき、青玉が1個もふくまれない確率は？`, pairs, ([x, y]) => x !== '青' && y !== '青', { hint: '赤と白だけから2個選ぶ組み合わせを数える。', how: `（${m(`\\frac{${n}\\times ${n - 1}}{2}`)}）` });
   }
   let r, w;
   do { r = rng.int(2, 4); w = rng.int(1, 4); } while (r + w > 6 || r + w < 4);
@@ -203,7 +213,7 @@ function genCards(rng) {
     const nums = cards.flatMap((a) => cards.filter((b) => b !== a).map((b) => 10 * a + b));
     const head = `${cards.join('、')} のカードから続けて2枚引き、1枚目を十の位、2枚目を一の位とする2けたの整数が、`;
     const t = rng.int(0, 3);
-    const hint = `全部で ${m(`${n}\times ${n - 1}`)} 通り。整数を全部書き出して数える。`;
+    const hint = `全部で ${m(`${n}\\times ${n - 1}`)} 通り。整数を全部書き出して数える。`;
     if (t === 0) return enumQ(`${head}奇数になる確率は？`, nums, (x) => x % 2 === 1, { hint });
     if (t === 1) { const k = rng.pick([4, 6]); return enumQ(`${head}${k} の倍数になる確率は？`, nums, (x) => x % k === 0, { hint }); }
     if (t === 2) return enumQ(`${head}素数になる確率は？`, nums, isPrime, { hint: '一の位が偶数や5なら素数ではない。残りを1つずつ確かめる。' });
@@ -248,9 +258,28 @@ function genCards(rng) {
 }
 
 function genLottery(rng) {
-  const n = rng.int(4, 8), k = rng.int(1, Math.min(3, n - 2));
+  const n = rng.int(4, 9), k = rng.int(1, Math.min(4, n - 2));
   const lots = [...Array(n).keys()].map((i) => i < k);
   const pairs = lots.flatMap((a, i) => lots.filter((_, j) => j !== i).map((b) => [a, b]));
+  // ほかの聞き方（少なくとも1人・2人ともはずれ・B だけ・もどす・同時に2本）
+  if (rng.chance(0.45)) {
+    const v = rng.int(0, 4);
+    const head = `${n} 本のうち当たりが ${k} 本入ったくじを、A が先に1本引き、引いたくじをもどさずに B が1本引くとき、`;
+    const hint = 'A と B の引き方を (A, B) の組で全部数える。';
+    const how = `（${m(`${n}\\times ${n - 1}`)}）`;
+    if (v === 0) return enumQ(`${head}少なくとも1人が当たる確率は？`, pairs, ([a, b]) => a || b, { hint: '「少なくとも1人が当たる」= 1 − 「2人ともはずれ」', how, wrong: [{ p: F(2 * k, n), msg: 'A と B の確率をたすと、2人とも当たる場合を2回数えてしまう。' }] });
+    if (v === 1) return enumQ(`${head}2人ともはずれる確率は？`, pairs, ([a, b]) => !a && !b, { hint, how, wrong: [{ p: F((n - k) ** 2, n * n), msg: 'くじはもどさないので、B が引くときは残り ' + (n - 1) + ' 本。' }] });
+    if (v === 2) return enumQ(`${head}B だけが当たる確率は？`, pairs, ([a, b]) => !a && b, { hint: 'A がはずれて、B が当たる場合を数える。', how });
+    if (v === 3 && n <= 8) {
+      const seq = lots.flatMap((a) => lots.map((b) => [a, b]));
+      const both = rng.chance(0.5);
+      return enumQ(`${n} 本のうち当たりが ${k} 本入ったくじを、A が1本引いてもとにもどし、そのあと B が1本引くとき、${both ? '2人とも当たる' : '1人だけが当たる'}確率は？`, seq, ([a, b]) => (both ? a && b : a !== b), { hint: `もどすので、B も ${n} 本から引く。全部で ${n}×${n} 通り。`, how: `（${m(`${n}\\times ${n}`)}）` });
+    }
+    const sets = [];
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) sets.push([lots[i], lots[j]]);
+    const one = rng.chance(0.5);
+    return enumQ(`${n} 本のうち当たりが ${k} 本入ったくじから、同時に2本引くとき、${one ? '当たりがちょうど1本である' : '少なくとも1本が当たりである'}確率は？`, sets, ([a, b]) => (one ? a !== b : a || b), { hint: 'くじに番号をつけて、2本の組み合わせを全部書き出す。', how: `（${m(`\\frac{${n}\\times ${n - 1}}{2}`)}）` });
+  }
   const type = rng.int(0, 2);
   const head = `${n} 本のうち当たりが ${k} 本入ったくじを、A が先に1本引き、引いたくじをもどさずに B が1本引くとき、`;
   if (type === 0) {

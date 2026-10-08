@@ -3,6 +3,7 @@ import { S, unitState, cleared, save, saveNow } from '../core/store.js';
 import { UNIT, GEN, SUBJECTS, unitsOf } from '../units/registry.js';
 import { BOSS_CARD, GACHA_CARDS, SKINS, CARDS, GACHA_RATES, TOWER_TYPES, SKIN_ITEMS, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from './content.js';
 import { bump } from './missions.js';
+import { claimActivity } from './bonus.js';
 
 export function isUnlocked(id) {
   const u = UNIT[id];
@@ -111,6 +112,7 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
   }
   s.gems += gems;
   out.gems = gems;
+  out.bonus = claimActivity('wave');
   saveNow();
   return out;
 }
@@ -118,6 +120,8 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
 // ---------- ガチャ（カード＋スキン。ダブりはかけらに）----------
 export const GACHA_COST = 30;
 export const GACHA5_COST = 140;
+export const GACHA10_COST = 270;
+export const gachaCost = (n) => (n === 10 ? GACHA10_COST : n === 5 ? GACHA5_COST : GACHA_COST * n);
 function rollOne(rand = Math.random) {
   const total = GACHA_RATES.reduce((a, r) => a + r.weight, 0);
   let x = rand() * total;
@@ -132,7 +136,7 @@ function rollOne(rand = Math.random) {
 // n 回まわす。戻り値: [{ kind, id, rarity, isNew, shards }]（宝石が足りなければ null）
 export function gacha(n = 1) {
   const s = S();
-  const cost = n === 5 ? GACHA5_COST : GACHA_COST * n;
+  const cost = gachaCost(n);
   if (s.gems < cost) return null;
   s.gems -= cost;
   const out = [];

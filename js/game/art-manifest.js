@@ -71,7 +71,19 @@ export const ART_KEYS = [
   "skin-lava-beam",
   "skin-lava-frost",
   "skin-lava-bomb",
-  "gacha-machine"
+  "gacha-machine",
+  "card-broccoli",
+  "card-onigiri",
+  "card-toast",
+  "card-duck",
+  "card-moai",
+  "card-pigeon",
+  "card-snail",
+  "card-robot",
+  "card-sushi",
+  "card-banana-car",
+  "card-cheese",
+  "card-crown"
 ];
 export const BG_KEYS = [
   "bg-home",

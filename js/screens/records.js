@@ -24,7 +24,7 @@ export function titleOf(stats) {
   return { name: TITLES[i][1], pt, next: next ? { name: next[1], need: next[0] - pt, ratio: (pt - TITLES[i][0]) / (next[0] - TITLES[i][0]) } : null };
 }
 const STARS = { new: 0, trained: 1, practicing: 2, mastered: 3 };
-const KIND = { training: ['📘', '訓練'], practice: ['⚔️', '練習ウェーブ'], boss: ['👑', 'ボスウェーブ'], review: ['👻', 'リベンジウェーブ'], diagnosis: ['🔦', '看守チェック'], exam: ['📝', '模試'], memory: ['🔐', '暗号ラッシュ'], memtest: ['🏅', 'デッキ試験'] };
+const KIND = { training: ['📘', '訓練'], practice: ['⚔️', '練習ウェーブ'], boss: ['👑', 'ボスウェーブ'], review: ['👻', 'リベンジウェーブ'], diagnosis: ['🔦', '看守チェック'], exam: ['📝', '模試'], memory: ['🔐', '暗号ラッシュ'], memtest: ['🏅', 'デッキ試験'], timeattack: ['⏱', 'タイムアタック'] };
 const RESULT = { win: ['突破', 'good'], clear: ['クリア', 'good'], lose: ['つかまった', 'bad'], quit: ['とちゅうで終了', 'dim'], idle: ['放置で退出', 'dim'] };
 const hm = (t) => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
 const minText = (sec) => (sec < 60 ? `${sec}秒` : `${Math.round(sec / 60)}分`);

@@ -20,6 +20,16 @@ export const PASSIVES = [
   P('this letter', 'この手紙', false, 'write', 'by Yumi', 'last week', 'past', ['先週ユミによって書かれました', '先週ユミによって書かれませんでした', '先週ユミによって書かれましたか']),
   P('the park', 'その公園', false, 'clean', 'by volunteers', 'every Sunday', 'pres', ['毎週日曜日にボランティアによってそうじされます', '毎週日曜日にボランティアによってそうじされません', '毎週日曜日にボランティアによってそうじされますか']),
   P('these cups', 'これらのカップ', true, 'wash', 'by Ken', 'every night', 'pres', ['毎晩ケンによって洗われます', '毎晩ケンによって洗われません', '毎晩ケンによって洗われますか']),
+  P('this room', 'この部屋', false, 'use', 'by many students', '', 'pres', ['多くの生徒に使われています', '多くの生徒に使われていません', '多くの生徒に使われていますか']),
+  P('this song', 'この歌', false, 'write', 'by Ken', 'last year', 'past', ['去年ケンによって書かれました', '去年ケンによって書かれませんでした', '去年ケンによって書かれましたか']),
+  P('these books', 'これらの本', true, 'love', 'by many children', '', 'pres', ['多くの子どもたちに愛されています', '多くの子どもたちに愛されていません', '多くの子どもたちに愛されていますか']),
+  P('this cake', 'このケーキ', false, 'eat', 'by Tom', 'yesterday', 'past', ['昨日トムによって食べられました', '昨日トムによって食べられませんでした', '昨日トムによって食べられましたか']),
+  P('the window', 'その窓', false, 'open', 'by my sister', 'every morning', 'pres', ['毎朝姉によって開けられます', '毎朝姉によって開けられません', '毎朝姉によって開けられますか']),
+  P('this temple', 'この寺', false, 'visit', 'by many people', 'every year', 'pres', ['毎年多くの人々がおとずれます', '毎年多くの人々がおとずれません', '毎年多くの人々がおとずれますか']),
+  P('this letter', 'この手紙', false, 'write', '', 'in English', 'pres', ['英語で書かれています', '英語で書かれていません', '英語で書かれていますか']),
+  P('these pictures', 'これらの写真', true, 'take', '', 'in Kyoto', 'past', ['京都でとられました', '京都でとられませんでした', '京都でとられましたか']),
+  P('English', '英語', false, 'teach', 'by Mr. Brown', 'at our school', 'pres', ['私たちの学校ではブラウン先生によって教えられています', '私たちの学校ではブラウン先生によって教えられていません', '私たちの学校ではブラウン先生によって教えられていますか']),
+  P('the park', 'その公園', false, 'clean', 'by Ken', 'last Sunday', 'past', ['この前の日曜日にケンによってそうじされました', 'この前の日曜日にケンによってそうじされませんでした', 'この前の日曜日にケンによってそうじされましたか']),
 ];
 const beOf = (x) => (x.tense === 'past' ? (x.pl ? 'were' : 'was') : (x.pl ? 'are' : 'is'));
 const rest = (x) => [x.by, x.tail].filter(Boolean);

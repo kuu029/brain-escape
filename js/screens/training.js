@@ -12,6 +12,9 @@ import { sfx } from '../core/sound.js';
 import { bump } from '../game/missions.js';
 import { grantTool } from '../game/progress.js';
 import { TOOLS } from '../game/content.js';
+import { claimActivity } from '../game/bonus.js';
+import { bonusChips } from './result.js';
+import { flyGems } from '../ui/gems.js';
 
 export function render(el, { unit, lesson }) {
   const u = UNIT[unit];
@@ -110,6 +113,7 @@ export function render(el, { unit, lesson }) {
     }
     studyEnd();
     closeSession('clear');
+    const bonus = claimActivity('training');
     saveNow();
     sfx('win');
     bar.firstChild.style.width = '100%';
@@ -121,12 +125,14 @@ export function render(el, { unit, lesson }) {
     body.append(h('div', { class: 'center-col' },
       h('div', { class: 'big-em' }, '🎉'),
       h('h2', {}, `訓練${idx + 1} クリア！`),
+      bonusChips(bonus),
       h('p', { rich: L.unlocks.length ? 'この型の問題が練習ウェーブに出るようになった。' : '' }),
       // 訓練が残っていれば「次の訓練」を黄色に（全部の訓練 → 練習 → ボス の順に進む）
       nextL && btn(`📘 次の訓練へ: ${nextL.title.replace(/\$/g, '')}`, () => go('training', { unit, lesson: nextL.id }), 'primary big'),
       btn('⚔️ 練習ウェーブで試す', () => go('battle', { mode: 'practice', unit }), nextL ? 'ghost' : 'primary big'),
       h('p', { class: 'note' }, nextL ? `訓練はあと ${u.lessons.filter((l) => !us.lessons[l.id]).length} つ。全部クリアするとボスへの道が開く。` : '練習ウェーブ＝覚えた解き方を、看守とのバトルで使ってみる場所。'),
       btn('マップへ', () => go('map', { focus: unit }), 'ghost')));
+    flyGems(bonus.gems, null, 500);
   }
 
   if (location.hostname === 'localhost') window.__training = { steps, i: () => i };

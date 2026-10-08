@@ -1,5 +1,6 @@
 // 英語 第1段階: 疑問詞（what / who / where / when / whose / which / how）
 import { frameQ, orderAns, textChoice } from './kit-en.js';
+import { third, past } from './lex.js';
 
 // 質問のテンプレート。q: チャンク、cue: 何をたずねているか、ans: 答えの文、ng: 空欄に入れると紛らわしいので選択肢に出さない疑問詞
 const CITIES = ['Osaka', 'Nara', 'Kyoto', 'Kobe', 'Tokyo'];
@@ -8,6 +9,7 @@ const THINGS = [['a pen', 'ペン'], ['a camera', 'カメラ'], ['an eraser', '�
 const SPORTS = [['tennis', 'テニス'], ['soccer', 'サッカー'], ['baseball', '野球']];
 const MONTHS = ['May', 'June', 'July', 'April'];
 const RIDES = [['bike', '自転車'], ['bus', 'バス'], ['train', '電車']];
+const NAME_JA = { Yumi: 'ユミ', Emma: 'エマ', Ken: 'ケン', Tom: 'トム' };
 
 export const TEMPLATES = [
   (r) => ({ q: ['Where', 'do', 'you', 'live'], ja: 'あなたはどこに住んでいますか？', ans: `I live in ${r.pick(CITIES)}.`, cue: 'place' }),
@@ -25,6 +27,12 @@ export const TEMPLATES = [
   () => ({ q: ['Which', 'do', 'you', 'like'], tail: ', cats or dogs', ja: 'ねこと犬では、あなたはどちらが好きですか？', ans: 'I like dogs.', cue: 'choice', ng: ['What', 'Who'] }),
   (r) => { const [v, vj] = r.pick(RIDES); return { q: ['How', 'do', 'you', 'go', 'to school'], ja: 'あなたはどうやって学校へ行きますか？', ans: `By ${v}.`, cue: 'way', vj }; },
   (r) => ({ q: ['How', 'many', 'books', 'do', 'you', 'have'], ja: 'あなたは本を何冊持っていますか？', ans: `I have ${r.pick(['three', 'five', 'ten'])} books.`, cue: 'count', ng: ['What'] }),
+  (r) => { const [n, p] = r.pick(NAMES); const [sp, sj] = r.pick(SPORTS); return { q: ['When', 'does', n, 'play', sp], ja: `${NAME_JA[n]}はいつ${sj}をしますか？`, ans: `${p} plays ${sp} ${r.pick(['after school', 'on Sundays'])}.`, cue: 'time', ng: ['What'] }; },
+  (r) => { const [sp, sj] = r.pick(SPORTS); return { q: ['Where', 'do', 'you', 'play', sp], ja: `あなたはどこで${sj}をしますか？`, ans: `I play ${sp} in the park.`, cue: 'place' }; },
+  (r) => { const [n, p] = r.pick(NAMES); const [v] = r.pick(RIDES); return { q: ['How', 'does', n, 'go', 'to school'], ja: `${NAME_JA[n]}はどうやって学校へ行きますか？`, ans: `By ${v}.`, cue: 'way' }; },
+  (r) => ({ q: ['Where', 'did', 'you', 'go'], tail: 'yesterday', ja: 'あなたは昨日どこへ行きましたか？', ans: `I went to ${r.pick(CITIES)}.`, cue: 'place' }),
+  (r) => { const [n, p] = r.pick(NAMES); return { q: ['Where', 'did', n, 'go'], tail: 'last Sunday', ja: `${NAME_JA[n]}はこの前の日曜日にどこへ行きましたか？`, ans: `${p} went to ${r.pick(CITIES)}.`, cue: 'place' }; },
+  (r) => { const [n, p] = r.pick(NAMES); return { q: ['Who', 'is', n], ja: `${NAME_JA[n]}はだれですか？`, ans: `${p} is my friend.`, cue: 'person' }; },
   (r) => ({ q: ['How', 'old', 'is', 'your brother'], ja: 'あなたのお兄さんは何歳ですか？', ans: `He is ${r.pick(['fifteen', 'sixteen', 'twenty'])} years old.`, cue: 'age' }),
 ];
 // 疑問詞が何をたずねるか
@@ -52,8 +60,10 @@ function genChoose(rng) {
 
 function genOrder(rng) {
   const t = rng.pick(TEMPLATES)(rng);
-  const aux = t.q.find((c) => ['do', 'does', 'is'].includes(c));
-  const decoy = aux === 'do' ? 'does' : aux === 'does' ? 'do' : aux === 'is' ? 'are' : t.q.includes('plays') ? 'play' : 'do';
+  const aux = t.q.find((c) => ['do', 'does', 'did', 'is'].includes(c));
+  // does / did の文は「動詞の形をまちがえたタイル」を不要タイルに（does 〜 goes / did 〜 went）
+  const verb = ['does', 'did'].includes(aux) ? t.q[t.q.indexOf(aux) + 2] : null;
+  const decoy = aux === 'did' ? past(verb) : aux === 'does' && verb ? third(verb) : aux === 'do' ? 'does' : aux === 'is' ? 'are' : t.q.includes('plays') ? 'play' : 'do';
   return {
     stem: `日本語に合うように並べかえよう\n${t.ja}`,
     // Whose bag is this? は Whose is this bag? とも言えるので、whose ＋ 名詞 は1枚のタイルにする

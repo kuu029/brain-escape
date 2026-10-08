@@ -1,8 +1,8 @@
 // ホーム: ロゴ・脱獄進捗・ゲームのポスター（数学・英語）＋ デイリーミッション
-import { h, btn, toast } from '../core/ui.js';
-import { S, streakAlive, dayLog, cleared } from '../core/store.js';
+import { h, btn, toast, modal } from '../core/ui.js';
+import { S, streakAlive, dayLog, cleared, save } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
-import { nextUnit } from '../game/progress.js';
+import { nextUnit, GACHA10_COST } from '../game/progress.js';
 import { BOSSES } from '../game/content.js';
 import { spriteHTML, bgUrl } from '../game/art.js';
 import { backdrop } from '../ui/deco.js';
@@ -10,6 +10,9 @@ import { go } from '../core/router.js';
 import { todayMissions, claim } from '../game/missions.js';
 import { sfx } from '../core/sound.js';
 import { dueList } from '../memory/engine.js';
+import { flyGems } from '../ui/gems.js';
+import { takeAdvice } from '../game/advice.js';
+import { hourOpen, HOUR_GEMS } from '../game/bonus.js';
 
 export function topBar(back = null) {
   const s = S();
@@ -17,7 +20,7 @@ export function topBar(back = null) {
     back ? h('button', { class: 'back', type: 'button', onclick: back, 'aria-label': 'もどる' }, '‹') : h('span', { class: 'who' }, `👤 ${s.nickname}`),
     h('span', { class: 'spacer' }),
     h('span', { class: 'pill' }, `🔥 ${streakAlive()}日`),
-    h('span', { class: 'pill' }, `💎 ${s.gems}`));
+    h('span', { class: 'pill gem-pill' }, '💎 ', h('b', {}, String(s.gems))));
 }
 
 export function render(el) {
@@ -31,7 +34,7 @@ export function render(el) {
       mlist.append(h('div', { class: `mission ${m.claimed ? 'claimed' : done ? 'done' : ''}` },
         h('div', { class: 'm-text' }, m.text, h('div', { class: 'm-bar' }, h('i', { style: { width: `${(m.progress / m.goal) * 100}%` } }))),
         m.claimed ? h('span', { class: 'm-ok' }, '✔') : done
-          ? btn(`💎${m.reward}`, () => { const g = claim(i); sfx('coin'); toast(`💎 +${g}`); paintM(); el.querySelector('.topbar')?.replaceWith(topBar()); }, 'primary small')
+          ? btn(`💎${m.reward}`, (e) => { const from = e.currentTarget.getBoundingClientRect(); const g = claim(i); sfx('coin'); paintM(); el.querySelector('.topbar')?.replaceWith(topBar()); flyGems(g, { getBoundingClientRect: () => from }); }, 'primary small')
           : h('span', { class: 'm-num' }, `${m.progress}/${m.goal}`)));
     });
   };
@@ -59,12 +62,32 @@ export function render(el) {
       h('div', { class: 'mboard' },
         h('h3', { class: 'mboard-title' }, '📋 今日の指令'),
         mlist,
+        hourLine(),
         h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ 再襲来待ち 👻${s.reviewQueue.length}`)),
     ),
     h('nav', { class: 'bottom-nav' },
-      [['🃏', 'コレクション', 'collection'], ['📊', '記録', 'records'], ['⚙️', '設定', 'settings']].map(([em, label, to]) =>
-        btn(h('span', { class: 'nav-in' }, h('span', { class: 'nav-em' }, em), h('span', {}, label)), () => go(to), 'nav'))),
+      [['🎰', 'ガチャ', 'collection', { tab: 'gacha' }], ['🃏', 'コレクション', 'collection', {}], ['📊', '記録', 'records', {}], ['⚙️', '設定', 'settings', {}]].map(([em, label, to, p]) =>
+        btn(h('span', { class: 'nav-in' }, h('span', { class: 'nav-em' }, em), h('span', {}, label),
+          // 10連ぶんの💎がたまったら、吹き出しでお知らせ
+          label === 'ガチャ' && s.gems >= GACHA10_COST ? h('span', { class: 'nav-bubble' }, '10連できるぞ！') : null), () => go(to, p), `nav${label === 'ガチャ' ? ' nav-gacha' : ''}`))),
   );
+  // 学習のかたよりのおすすめ（1日1回）
+  setTimeout(() => {
+    if (!el.isConnected || document.querySelector('.modal-back')) return;
+    const a = takeAdvice();
+    if (!a) return;
+    save();
+    modal({ title: a.title, body: a.body, buttons: [{ label: 'あとで', value: false }, { label: a.label, value: true, cls: 'primary' }] }).then((v) => { if (v) go(...a.go); });
+  }, 800);
+}
+
+// 1時間ごとのボーナスの表示（この時間にまだ何もクリアしていなければ「チャンス」）
+function hourLine() {
+  const hr = hourOpen();
+  if (hr === null) return h('p', { class: 'hour-line off' }, '⏰ 1時間ボーナスは 6時〜22時台（夜はしっかり寝よう）');
+  return hr === false
+    ? h('p', { class: 'hour-line done' }, `⏰ ${new Date().getHours()}時台のボーナス ゲット済み！ 次は ${new Date().getHours() + 1}時から`)
+    : h('p', { class: 'hour-line open' }, `⏰ ${hr}時台のボーナス 💎+${HOUR_GEMS}：何か1つクリアでゲット！`);
 }
 
 // 暗号室（暗記）のポスター: 復習どきの枚数

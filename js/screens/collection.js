@@ -4,7 +4,7 @@ import { S, save } from '../core/store.js';
 import { CARDS, SKINS, TOOLS, BOSS_CARD, SKIN_ITEMS, TOWER_TYPES, TOWER_LOOK, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from '../game/content.js';
 import { UNIT } from '../units/registry.js';
 import { backdrop } from '../ui/deco.js';
-import { gacha, GACHA_COST, GACHA5_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX } from '../game/progress.js';
+import { gacha, gachaCost, GACHA_COST, GACHA5_COST, GACHA10_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX } from '../game/progress.js';
 import { SUMMON, GAUGE_NEED } from '../game/engine.js';
 import { cardSprite, towerSprite, spriteHTML } from '../game/art.js';
 import { go } from '../core/router.js';
@@ -118,7 +118,7 @@ export function render(el, { tab = 'cards' } = {}) {
   } else if (tab === 'gacha') {
     const pull = async (n) => {
       const res = gacha(n);
-      if (!res) return toast(`💎が足りない（あと ${(n === 5 ? GACHA5_COST : GACHA_COST) - s.gems}）`);
+      if (!res) return toast(`💎が足りない（あと ${gachaCost(n) - s.gems}）`);
       await gachaStage(res);
       go('collection', { tab: 'gacha' });
     };
@@ -127,7 +127,8 @@ export function render(el, { tab = 'cards' } = {}) {
       h('p', {}, `💎 ${s.gems}　🧩 かけら ${shards}`),
       h('div', { class: 'gacha-btns' },
         btn(`1回 💎${GACHA_COST}`, () => pull(1), 'primary'),
-        btn(`5回 💎${GACHA5_COST}`, () => pull(5), 'boss')),
+        btn(`5回 💎${GACHA5_COST}`, () => pull(5), 'boss'),
+        btn(`10回 💎${GACHA10_COST}（おトク）`, () => pull(10), `boss${s.gems >= GACHA10_COST ? ' ready10' : ''}`)),
       h('div', { class: 'rates' },
         h('b', {}, '出るもの'),
         h('div', {}, '★1〜2 キャラカード ／ ★3〜4 タワースキン（タワーごと）'),

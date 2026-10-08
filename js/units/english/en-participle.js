@@ -3,26 +3,55 @@ import { ing, pp, past, third } from './lex.js';
 import { frameQ, orderAns } from './kit-en.js';
 import { cap } from './gram.js';
 
-// -ing（〜している）: 人・動物。main: 主語の位置（The boy 〜ing … is Ken.）
+// -ing（〜している）: 人 × していること × 「〜です」の組み合わせ（約100通り）＋ 動物など
+// 人: g = 性別（「〜です」の部分を合わせる）
+const PEOPLE = [
+  { n: 'the boy', nja: '男の子', main: [['is Ken', 'ケンです'], ['is my brother', '私の弟です'], ['is my friend', '私の友だちです']] },
+  { n: 'the girl', nja: '女の子', main: [['is Yumi', 'ユミです'], ['is my sister', '私の姉です'], ['is my friend', '私の友だちです']] },
+  { n: 'the man', nja: '男性', main: [['is my father', '私の父です'], ['is my teacher', '私の先生です'], ['is Tom', 'トムです']] },
+  { n: 'the woman', nja: '女性', main: [['is my mother', '私の母です'], ['is my teacher', '私の先生です'], ['is a famous singer', '有名な歌手です']] },
+];
+const DOING = [
+  { v: 'play', obj: 'tennis', ja: 'テニスをしている' },
+  { v: 'read', obj: 'a book', ja: '本を読んでいる' },
+  { v: 'talk', obj: 'with Ken', ja: 'ケンと話している' },
+  { v: 'run', obj: 'in the park', ja: '公園で走っている' },
+  { v: 'wash', obj: 'the car', ja: '車を洗っている' },
+  { v: 'sing', obj: 'on the stage', ja: 'ステージで歌っている' },
+  { v: 'play', obj: 'the piano', ja: 'ピアノをひいている' },
+  { v: 'walk', obj: 'with a dog', ja: '犬と歩いている' },
+];
 const ACT = [
-  { n: 'the boy', nja: '男の子', v: 'play', obj: 'tennis', ja: 'テニスをしている', main: 'is Ken', mja: 'ケンです' },
-  { n: 'the girl', nja: '女の子', v: 'read', obj: 'a book', ja: '本を読んでいる', main: 'is my sister', mja: '私の姉です' },
-  { n: 'the man', nja: '男性', v: 'talk', obj: 'with Ken', ja: 'ケンと話している', main: 'is my father', mja: '私の父です' },
+  ...PEOPLE.flatMap((p) => DOING.flatMap((d) => p.main.map(([main, mja]) => ({ n: p.n, nja: p.nja, v: d.v, obj: d.obj, ja: d.ja, main, mja })))),
   { n: 'the cat', nja: 'ねこ', v: 'sleep', obj: 'on the sofa', ja: 'ソファーで眠っている', main: 'is very cute', mja: 'とてもかわいいです' },
   { n: 'the dog', nja: '犬', v: 'run', obj: 'in the park', ja: '公園で走っている', main: 'is mine', mja: '私の犬です' },
-  { n: 'the woman', nja: '女性', v: 'sing', obj: 'on the stage', ja: 'ステージで歌っている', main: 'is a famous singer', mja: '有名な歌手です' },
   { n: 'the children', nja: '子どもたち', v: 'swim', obj: 'in the river', ja: '川で泳いでいる', main: 'are my friends', mja: '私の友だちです', pl: true },
-  { n: 'the boy', nja: '男の子', v: 'wash', obj: 'the car', ja: '車を洗っている', main: 'is my brother', mja: '私の兄です' },
 ];
-// 過去分詞（〜された）: もの。pre: 前に固定で置く部分（This is など）
+// 過去分詞（〜された）: もの × 前の部分（This is など）。pre: 前に固定で置く部分
+const PRE = {
+  'This is': (x) => `これは${x}です。`,
+  'I have': (x) => `私は${x}を持っています。`,
+  'I want': (x) => `私は${x}がほしいです。`,
+  'I read': (x) => `私は${x}を読みました。`,
+  'I ate': (x) => `私は${x}を食べました。`,
+};
+const THINGS = [
+  { n: 'a picture', nja: '写真', v: 'take', obj: 'by my father', ja: '父によってとられた', pre: ['This is', 'I have', 'I want'] },
+  { n: 'a picture', nja: '写真', v: 'take', obj: 'in Kyoto', ja: '京都でとられた', pre: ['This is', 'I have'] },
+  { n: 'a car', nja: '車', v: 'make', obj: 'in Japan', ja: '日本で作られた', pre: ['This is', 'I have', 'I want'] },
+  { n: 'a book', nja: '本', v: 'write', obj: 'by a famous writer', ja: '有名な作家によって書かれた', pre: ['This is', 'I have', 'I want', 'I read'] },
+  { n: 'a book', nja: '本', v: 'write', obj: 'in English', ja: '英語で書かれた', pre: ['This is', 'I have', 'I want', 'I read'] },
+  { n: 'a letter', nja: '手紙', v: 'write', obj: 'in English', ja: '英語で書かれた', pre: ['This is', 'I have', 'I read'] },
+  { n: 'a letter', nja: '手紙', v: 'write', obj: 'by my friend', ja: '友だちによって書かれた', pre: ['This is', 'I read'] },
+  { n: 'a cake', nja: 'ケーキ', v: 'make', obj: 'by my mother', ja: '母によって作られた', pre: ['This is', 'I want', 'I ate'] },
+  { n: 'a house', nja: '家', v: 'build', obj: 'by my grandfather', ja: '祖父によって建てられた', pre: ['This is', 'I want'] },
+  { n: 'a bike', nja: '自転車', v: 'make', obj: 'in Japan', ja: '日本で作られた', pre: ['This is', 'I have', 'I want'] },
+  { n: 'a language', nja: '言語', v: 'speak', obj: 'in many countries', ja: '多くの国で話されている', pre: ['This is'] },
+  { n: 'a song', nja: '歌', v: 'sing', obj: 'by many people', ja: '多くの人々に歌われている', pre: ['This is'] },
+];
 const PASS = [
-  { pre: 'This is', n: 'a picture', nja: '写真', v: 'take', obj: 'by my father', ja: '父によってとられた', all: 'これは父によってとられた写真です。' },
-  { pre: 'I have', n: 'a car', nja: '車', v: 'make', obj: 'in Japan', ja: '日本で作られた', all: '私は日本で作られた車を持っています。' },
-  { pre: 'This is', n: 'a book', nja: '本', v: 'write', obj: 'by a famous writer', ja: '有名な作家によって書かれた', all: 'これは有名な作家によって書かれた本です。' },
+  ...THINGS.flatMap((t) => t.pre.map((pre) => ({ ...t, pre, all: PRE[pre](t.ja + t.nja) }))),
   { pre: 'English is', n: 'a language', nja: '言語', v: 'speak', obj: 'in many countries', ja: '多くの国で話されている', all: '英語は多くの国で話されている言語です。' },
-  { pre: 'I ate', n: 'a cake', nja: 'ケーキ', v: 'make', obj: 'by my mother', ja: '母によって作られた', all: '私は母によって作られたケーキを食べました。' },
-  { pre: 'I read', n: 'a letter', nja: '手紙', v: 'write', obj: 'in English', ja: '英語で書かれた', all: '私は英語で書かれた手紙を読みました。' },
-  { pre: 'This is', n: 'a house', nja: '家', v: 'build', obj: 'by my grandfather', ja: '祖父によって建てられた', all: 'これは祖父によって建てられた家です。' },
   { pre: 'I like', n: 'the song', nja: '歌', v: 'sing', obj: 'by that singer', ja: 'あの歌手によって歌われた', all: '私はあの歌手によって歌われた歌が好きです。' },
 ];
 

@@ -76,6 +76,32 @@ function genConsec(rng) {
       check: { kind: 'fn', verify: (v) => near0(v.x * (v.x + 1) - P) && v.x > 0 },
     };
   }
+  // 連続する奇数・偶数（差が2）の積
+  if (rng.chance(0.4)) {
+    const odd = rng.chance(0.5);
+    const a = odd ? 2 * rng.int(1, 9) + 1 : 2 * rng.int(2, 10);
+    const P = a * (a + 2);
+    const kind = odd ? '奇数' : '偶数';
+    return {
+      stem: `連続する2つの正の${kind}があり、その積は ${P} である。小さいほうの${kind}は？`,
+      ...numAns([{ key: 'x', text: '小さいほう' }], { x: a }, { wrong: [{ vals: { x: -(a + 2) }, msg: '正の数なので、負の解は使わない。' }, { vals: { x: a + 2 }, msg: 'それは大きいほう。' }] }),
+      hint: `連続する${kind}は 2 ずつちがう。小さいほうを $x$ とすると、大きいほうは $x+2$。`,
+      steps: [`${m(`x(x+2)=${P}`)}`, `${m(`x^{2}+2x-${P}=0`)} → ${m(`(x+${a + 2})(x-${a})=0`)}`, `正なので ${m(`x=${a}`)}`],
+      check: { kind: 'fn', verify: (v) => near0(v.x * (v.x + 2) - P) && v.x > 0 },
+    };
+  }
+  // 連続する3つの整数の2乗の和 → 真ん中
+  if (rng.chance(0.35)) {
+    const b = rng.int(3, 12);
+    const T = 3 * b * b + 2;
+    return {
+      stem: `連続する3つの正の整数があり、それぞれの2乗の和は ${T} である。真ん中の整数は？`,
+      ...numAns([{ key: 'x', text: '真ん中' }], { x: b }, { wrong: [{ vals: { x: b - 1 }, msg: 'それはいちばん小さい数。' }, { vals: { x: b + 1 }, msg: 'それはいちばん大きい数。' }, { vals: { x: -b }, msg: '正の整数なので、負の解は使わない。' }] }),
+      hint: '真ん中を $x$ とすると、3つの数は $x-1$, $x$, $x+1$。',
+      steps: [`${m(`(x-1)^{2}+x^{2}+(x+1)^{2}=${T}`)}`, `${m(`3x^{2}+2=${T}`)} → ${m(`x^{2}=${b * b}`)}`, `正なので ${m(`x=${b}`)}`],
+      check: { kind: 'fn', verify: (v) => near0((v.x - 1) ** 2 + v.x ** 2 + (v.x + 1) ** 2 - T) && v.x > 1 },
+    };
+  }
   const S = n * n + (n + 1) * (n + 1);
   return {
     stem: `連続する2つの正の整数があり、それぞれの2乗の和は ${S} である。小さいほうの整数は？`,

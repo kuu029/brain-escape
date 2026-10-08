@@ -4,6 +4,26 @@ import { cap } from './gram.js';
 
 // 2つの文をつなぐテンプレート。front: 接続詞が文の最初に来る形（, で区切る）
 // main / sub: 主節・従属節のチャンク、conj: 接続詞、ja: 日本語
+// that 〜: 前の部分（I think など）× 中身 の組み合わせ。t: 「〜だ」と思う の形、k: 「〜な」ことを知っている の形
+const THAT_MAIN = [
+  { main: ['I', 'think'], ja: (x) => `私は${x.t}と思います。` },
+  { main: ['we', 'think'], ja: (x) => `私たちは${x.t}と思います。` },
+  { main: ['my mother', 'thinks'], ja: (x) => `母は${x.t}と思っています。` },
+  { main: ['I', 'know'], ja: (x) => `私は${x.k}ことを知っています。` },
+];
+const THAT_SUB = [
+  { sub: ['Ken', 'is', 'kind'], t: 'ケンは親切だ', k: 'ケンが親切な' },
+  { sub: ['she', 'is', 'busy'], t: '彼女は忙しい', k: '彼女が忙しい' },
+  { sub: ['English', 'is', 'important'], t: '英語は大切だ', k: '英語が大切な' },
+  { sub: ['you', 'are', 'right'], t: 'あなたは正しい', k: 'あなたが正しい' },
+  { sub: ['Yumi', 'can', 'speak', 'English'], t: 'ユミは英語を話せる', k: 'ユミが英語を話せる' },
+  { sub: ['this book', 'is', 'interesting'], t: 'この本はおもしろい', k: 'この本がおもしろい' },
+  { sub: ['Tom', 'likes', 'Japan'], t: 'トムは日本が好きだ', k: 'トムが日本を好きな' },
+  { sub: ['math', 'is', 'useful'], t: '数学は役に立つ', k: '数学が役に立つ' },
+  { sub: ['he', 'can', 'play', 'the piano'], t: '彼はピアノがひける', k: '彼がピアノをひける' },
+];
+const THAT_T = THAT_MAIN.flatMap((m) => THAT_SUB.map((x) => ({ conj: 'that', sub: x.sub, main: m.main, ja: m.ja(x), back: true, combo: true })));
+
 export const CONJ_T = [
   { conj: 'when', sub: ['I', 'came', 'home'], main: ['my mother', 'was', 'cooking', 'dinner'], v: 'cook', ja: '私が家に帰ったとき、母は夕食を作っていました。' },
   { conj: 'when', sub: ['Ken', 'called', 'me'], main: ['I', 'was', 'watching', 'TV'], v: 'watch', ja: 'ケンが電話をくれたとき、私はテレビを見ていました。' },
@@ -96,7 +116,8 @@ function genWhen(rng) {
 }
 
 function genOrder(rng) {
-  const T = rng.pick(CONJ_T.filter((x) => !x.imperative));
+  // that の文は組み合わせで数が多いので、半分くらいにする
+  const T = rng.chance(0.35) ? rng.pick(THAT_T) : rng.pick(CONJ_T.filter((x) => !x.imperative));
   const chunks = [...T.main, T.conj, ...T.sub];
   // 別の接続詞を不要タイルにすると、意味はちがっても文法的には正しい文になってしまうので、入らない語を使う
   const decoy = T.conj === 'if' || T.conj === 'when' ? 'will' : 'did';

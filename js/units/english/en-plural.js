@@ -1,7 +1,7 @@
 // 英語 第1段階: 名詞の複数形と、代名詞（I / my / me / mine）
 import { plural, PLURAL_IRREG, bePresent } from './lex.js';
 import { cap } from './gram.js';
-import { frameQ, spellAns } from './kit-en.js';
+import { frameQ, spellAns, BLANK } from './kit-en.js';
 
 // 複数形の練習に使う名詞。verb: どの文で使うか（have 持っている / see 見える / visit 訪れる / know 知っている / spell つづりだけ）
 // jaS: 日本語訳（{n} に数が入る）、how: 「いくつ〜？」の日本語（have のときだけ）
@@ -80,6 +80,19 @@ function genForm(rng) {
 }
 
 function genSpell(rng) {
+  // 半分は文の中で（I have three （　　）.）
+  if (rng.chance(0.5)) {
+    const nn = rng.pick(NOUNS.filter((x) => x.verb !== 'spell' && plural(x.w) !== x.w));
+    const [num, d] = rng.pick(NUMS);
+    const ans = plural(nn.w);
+    return {
+      stem: `${nn.jaS.replace('{n}', d)}\nI ${nn.verb} ${num} ${BLANK}.\n（　　）に入る形をつづろう（もとの形: ${nn.w}）`,
+      ...spellAns(rng, ans, { extra: 2 }),
+      hint: '2つ以上は複数形。ふつう s、s/x/ch/sh → es、子音字＋y → ies、f/fe → ves。',
+      steps: [`${nn.w} → ${plRule(nn.w)}`, `答え: ${ans}`],
+      check: { kind: 'en-form', base: nn.w, form: 'plural' },
+    };
+  }
   const { w: n, ja } = rng.pick(NOUNS.filter((x) => plural(x.w) !== x.w));
   const ans = plural(n);
   return {

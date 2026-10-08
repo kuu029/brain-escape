@@ -3,6 +3,8 @@ import { h, btn, sheet, toast } from '../core/ui.js';
 import { S, unitState, mastery, MASTERY_LABEL, cleared } from '../core/store.js';
 import { UNIT, SUBJECTS, unitsOf } from '../units/registry.js';
 import { go } from '../core/router.js';
+import { startTimeAttack, taBest, TA_N } from './timeattack.js';
+const fmtTime = (ms) => (ms ? `${Math.floor(ms / 60000)}:${((ms / 1000) % 60).toFixed(1).padStart(4, '0')}` : '—');
 import { isUnlocked, missingPrereqs, canPractice, canBoss, nextUnit } from '../game/progress.js';
 import { topBar } from './home.js';
 import { rich } from '../core/mathml.js';
@@ -152,7 +154,9 @@ function openUnit(id) {
       h('div', { class: 'up-btns' },
         (Object.keys(us.lessons).length || us.diagPassed) ? btn('🃏 思い出しカード', () => { close(); recallCard(id); }, 'ghost') : null,
         practiceOk ? btn('⚔️ 練習ウェーブ', nav('battle', { mode: 'practice', unit: id }), 'ghost') : h('p', { class: 'note' }, '👆 まずは訓練1から！ クリアすると練習ウェーブが開くよ'),
-        bossOk ? btn(`👑 ボスウェーブ${us.bossCleared ? '（再戦）' : ''}`, nav('battle', { mode: 'boss', unit: id }), 'ghost') : h('p', { class: 'note' }, '👑 ボスは「訓練を全部クリア＋練習ウェーブ1回」で出現')));
+        bossOk ? btn(`👑 ボスウェーブ${us.bossCleared ? '（再戦）' : ''}`, nav('battle', { mode: 'boss', unit: id }), 'ghost') : h('p', { class: 'note' }, '👑 ボスは「訓練を全部クリア＋練習ウェーブ1回」で出現'),
+        // 数学だけ: 紙とペンで10問の速さをきそう
+        practiceOk && (u.subject || 'math') === 'math' && btn(`⏱ タイムアタック（紙とペン・${TA_N}問）${taBest(id) ? `　ベスト ${fmtTime(taBest(id).best)}` : ''}`, () => { close(); startTimeAttack(id); }, 'ghost')));
   });
 }
 

@@ -1,7 +1,7 @@
 // 英語 第1段階: 現在進行形（be ＋ -ing）
-import { SUBJ, SUBJ_Q, VP_ACTION, TIME, pickTime, clause, jaSentence, is3sg, cap } from './gram.js';
+import { SUBJ, SUBJ_Q, VP_ACTION, TIME, pickTime, clause, jaSentence, is3sg, cap, sentence } from './gram.js';
 import { third, ing, bePresent } from './lex.js';
-import { frameQ, orderAns, spellAns } from './kit-en.js';
+import { frameQ, orderAns, spellAns, BLANK } from './kit-en.js';
 
 const simple = (vp, subj) => (is3sg(subj) ? third(vp.v) : vp.v);
 
@@ -38,6 +38,19 @@ function ingRule(v) {
   return 'そのまま ing';
 }
 function genSpell(rng) {
+  // 半分は文の中で（主語 ＋ be ＋ （　　） 〜 now.）
+  if (rng.chance(0.5)) {
+    const subj = rng.pick(SUBJ);
+    const vp = rng.pick(VP_ACTION);
+    const ans = ing(vp.v);
+    return {
+      stem: `${jaSentence(subj, vp, 'prog', 'pos', '今')}\n${sentence([subj.en, bePresent(subj), BLANK, ...(vp.obj ? [vp.obj] : []), 'now'])}\n（　　）に入る形をつづろう（もとの形: ${vp.v}）`,
+      ...spellAns(rng, ans, { extra: 2 }),
+      hint: 'e で終わる → e をとる（make → making）。run, swim, sit などは最後の文字を重ねる。',
+      steps: [`${vp.v} → ${ingRule(vp.v)}`, `答え: ${ans}`],
+      check: { kind: 'en-form', base: vp.v, form: 'ing' },
+    };
+  }
   const [v, ja] = rng.pick(ING_VERBS);
   const ans = ing(v);
   return {

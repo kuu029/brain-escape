@@ -4,25 +4,53 @@ import { ing as ingOf } from './lex.js';
 import { cap } from './gram.js';
 
 // 主格（who / which ＋ 動詞）。pre: 前の部分、n: 先行詞、person: 人か、rel: 関係代名詞のあとのチャンク、post: 後ろ（主語の位置のとき）
+// 人の先行詞 × 説明（who 〜）の組み合わせ。pja: 日本語の型（{x} に「〜する」が入る）
+const WHO_PRE = [
+  { pre: 'I have', n: 'a friend', pja: '私には{x}友だちがいます。' },
+  { pre: 'I know', n: 'a girl', pja: '私は{x}女の子を知っています。' },
+  { pre: 'I know', n: 'a boy', pja: '私は{x}男の子を知っています。' },
+  { pre: 'Ken has', n: 'a sister', pja: 'ケンには{x}姉がいます。' },
+  { pre: 'We have', n: 'a teacher', pja: '私たちには{x}先生がいます。' },
+];
+const WHO_DO = [
+  { v: ['lives', 'live'], rest: ['in Kyoto'], ja: '京都に住んでいる' },
+  { v: ['can', 'can'], rest: ['speak', 'French'], ja: 'フランス語を話せる', modal: true },
+  { v: ['plays', 'play'], rest: ['the piano', 'well'], ja: 'ピアノをじょうずにひく' },
+  { v: ['speaks', 'speak'], rest: ['three languages'], ja: '3つの言語を話す' },
+  { v: ['likes', 'like'], rest: ['cats'], ja: 'ねこが好きな' },
+  { v: ['can', 'can'], rest: ['swim', 'very fast'], ja: 'とても速く泳げる', modal: true },
+];
 const SUBJ_REL = [
-  { pre: 'I have', n: 'a friend', person: true, v: ['lives', 'live'], rest: ['in Kyoto'], ja: '私には京都に住んでいる友だちがいます。' },
-  { pre: 'I know', n: 'a girl', person: true, v: ['can', 'can'], rest: ['speak', 'French'], ja: '私はフランス語を話せる女の子を知っています。', modal: true },
+  ...WHO_PRE.flatMap((p) => WHO_DO.map((d) => ({ pre: p.pre, n: p.n, person: true, v: d.v, rest: d.rest, ja: p.pja.replace('{x}', d.ja), modal: d.modal }))),
   { pre: 'This is', n: 'the dog', person: false, v: ['runs', 'run'], rest: ['very fast'], ja: 'これはとても速く走る犬です。' },
   { pre: 'I like', n: 'books', person: false, pl: true, v: ['have', 'has'], rest: ['many pictures'], ja: '私は絵がたくさんある本が好きです。' },
-  { pre: 'Ken has', n: 'a sister', person: true, v: ['plays', 'play'], rest: ['the piano', 'well'], ja: 'ケンにはピアノをじょうずにひく姉がいます。' },
   { pre: 'We have', n: 'a teacher', person: true, v: ['comes', 'come'], rest: ['from Canada'], ja: '私たちにはカナダ出身の先生がいます。' },
   { pre: 'I want', n: 'a bike', person: false, v: ['goes', 'go'], rest: ['very fast'], ja: '私はとても速く走る自転車がほしいです。' },
-  { pre: 'I know', n: 'a boy', person: true, v: ['speaks', 'speak'], rest: ['three languages'], ja: '私は3つの言語を話す男の子を知っています。' },
   { pre: 'She has', n: 'a cat', person: false, v: ['sleeps', 'sleep'], rest: ['all day'], ja: '彼女は一日中眠っているねこを飼っています。' },
   { post: 'is my father', n: 'the man', person: true, v: ['is', 'are'], rest: ['talking', 'with Ken'], ja: 'ケンと話している男性は私の父です。' },
+  { pre: 'This is', n: 'the cat', person: false, v: ['sleeps', 'sleep'], rest: ['on the sofa'], ja: 'これはソファーで眠るねこです。' },
+  { pre: 'I have', n: 'a dog', person: false, v: ['likes', 'like'], rest: ['apples'], ja: '私はりんごが好きな犬を飼っています。' },
+  { pre: 'I want', n: 'a car', person: false, v: ['runs', 'run'], rest: ['very fast'], ja: '私はとても速く走る車がほしいです。' },
+  { post: 'is my brother', n: 'the boy', person: true, v: ['is', 'are'], rest: ['running', 'in the park'], ja: '公園で走っている男の子は私の弟です。' },
+  { post: 'is my mother', n: 'the woman', person: true, v: ['is', 'are'], rest: ['singing', 'on the stage'], ja: 'ステージで歌っている女性は私の母です。' },
   { post: 'is Yumi', n: 'the girl', person: true, v: ['lives', 'live'], rest: ['next to me'], ja: '私のとなりに住んでいる女の子はユミです。' },
 ];
 // 目的格（which ＋ 主語 ＋ 動詞）
+// もの（目的格）× 前の部分の組み合わせ
+const OBJ_PRE = { 'This is': (x) => `これは${x}です。`, 'I like': (x) => `私は${x}が好きです。`, 'I lost': (x) => `私は${x}をなくしました。` };
+const OBJ_CL = [
+  { n: 'the book', nja: '本', s: 'I', v: 'bought', rest: ['yesterday'], ja: '私が昨日買った', pre: ['This is', 'I like', 'I lost'] },
+  { n: 'the book', nja: '本', s: 'my father', v: 'gave', rest: ['me'], ja: '父がくれた', pre: ['This is', 'I like', 'I lost'] },
+  { n: 'the bag', nja: 'かばん', s: 'my mother', v: 'made', rest: [], ja: '母が作った', pre: ['This is', 'I like', 'I lost'] },
+  { n: 'the pen', nja: 'ペン', s: 'Ken', v: 'gave', rest: ['me'], ja: 'ケンがくれた', pre: ['This is', 'I lost'] },
+  { n: 'the picture', nja: '写真', s: 'Ken', v: 'took', rest: ['in Kyoto'], ja: 'ケンが京都でとった', pre: ['This is', 'I like', 'I lost'] },
+  { n: 'the song', nja: '歌', s: 'we', v: 'sang', rest: ['at school'], ja: '私たちが学校で歌った', pre: ['This is', 'I like'] },
+  { n: 'the letter', nja: '手紙', s: 'Yumi', v: 'wrote', rest: [], ja: 'ユミが書いた', pre: ['This is', 'I lost'] },
+];
 const OBJ_REL = [
-  { pre: 'This is', n: 'the book', s: 'I', v: 'bought', rest: ['yesterday'], ja: 'これは私が昨日買った本です。' },
+  ...OBJ_CL.flatMap((c) => c.pre.map((pre) => ({ pre, n: c.n, s: c.s, v: c.v, rest: c.rest, ja: OBJ_PRE[pre](c.ja + c.nja) }))),
   { post: 'was delicious', n: 'the cake', s: 'my mother', v: 'made', rest: [], ja: '母が作ったケーキはとてもおいしかったです。' },
   { post: 'was exciting', n: 'the movie', s: 'we', v: 'saw', rest: ['last night'], ja: '私たちが昨夜見た映画はわくわくしました。' },
-  { pre: 'This is', n: 'the picture', s: 'Ken', v: 'took', rest: ['in Kyoto'], ja: 'これはケンが京都でとった写真です。' },
   { pre: 'I lost', n: 'the pen', s: 'my father', v: 'gave', rest: ['me'], ja: '私は父がくれたペンをなくしました。' },
   { pre: 'This is', n: 'the bag', s: 'I', v: 'want', rest: [], ja: 'これは私がほしいかばんです。' },
   { pre: 'I like', n: 'the song', s: 'you', v: 'sang', rest: ['yesterday'], ja: '私はあなたが昨日歌った歌が好きです。' },
