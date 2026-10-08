@@ -1,21 +1,31 @@
 // 入試本番モード（模試）の共通部分: 組み立て・採点・答えの表示（DOMなし。テストからも使う）
 import { checkAnswer } from '../core/check.js';
 import { buildShigaMath } from './shiga-math.js';
+import { buildShigaEnglish } from './shiga-english.js';
 
 export const EXAM_KINDS = {
   mini: { name: 'ミニ模試', minutes: 15, desc: '小問集合5問＋大問1つ。すき間時間に。' },
   full: { name: 'フル模試', minutes: 50, desc: '本番と同じ 大問4つ・100点。' },
 };
+// 教科ごとの説明
+export const EXAM_DESC = {
+  math: { mini: '小問集合5問＋大問1つ。すき間時間に。', full: '本番と同じ 大問4つ・100点。', about: '数学は 50分・100点・大問4つ（①小問集合 ②平面図形 ③関数と図形 ④空間図形）。' },
+  english: { mini: 'リスニング4問＋読解1題。すき間時間に。', full: '本番に近い 大問4つ・100点（英作文つき）。', about: '英語は 50分・100点・大問4つ（①リスニング ②対話と資料 ③スピーチ ④英作文）。英語で書く問題は紙に書いて、あとで採点。' },
+};
+export const SUBJECT_JA = { math: '数学', english: '英語' };
 
 export function buildExam(subject, kind, seed) {
   if (subject === 'math') return buildShigaMath(kind, seed);
+  if (subject === 'english') return buildShigaEnglish(kind, seed);
   throw new Error(`未対応の教科: ${subject}`);
 }
+// 紙に書いて採点する問題か（数学の証明・作図は「紙モード」のときだけ。英作文はいつも）
+export const isPaper = (q, paperMode) => !!q.paper && (paperMode || !!q.paperAlways);
 export const allQs = (ex) => ex.sections.flatMap((sec) => sec.qs.map((q) => ({ ...q, sec })));
 
 // 1問の採点。paperMode で紙に書く問題は marks（観点ごとの ✔）で点を出す
 export function gradeQ(q, input, { paperMode = false, marks = null } = {}) {
-  if (paperMode && q.paper) {
+  if (isPaper(q, paperMode)) {
     const got = q.paper.rubric.reduce((a, r, i) => a + (marks?.[i] ? r.pts : 0), 0);
     return { got, max: q.pts, ok: got === q.pts, paper: true, graded: !!marks };
   }

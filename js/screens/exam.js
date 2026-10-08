@@ -12,7 +12,8 @@ import { problemCard, answerPad, stepsView } from '../ui/answer.js';
 import { UNIT } from '../units/registry.js';
 import { topBar } from './home.js';
 import { backdrop } from '../ui/deco.js';
-import { EXAM_KINDS, buildExam, allQs, gradeExam, weakUnits, inputText } from '../exam/exam.js';
+import { EXAM_KINDS, EXAM_DESC, SUBJECT_JA, buildExam, allQs, gradeExam, weakUnits, inputText, isPaper } from '../exam/exam.js';
+import { canSpeak, speakLines, stopSpeech } from '../ui/speech.js';
 import { claimActivity } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
@@ -33,6 +34,7 @@ function introView(el) {
   const s = S();
   const d = s.examDraft;
   let paper = !!s.settings.examPaper;
+  let subj = s.settings.examSubject || 'math';
   const seg = h('div', { class: 'ex-seg' });
   const paintSeg = () => seg.replaceChildren(
     ...[[false, '📱 アプリで穴うめ', '証明は【　】をうめる・作図は手順をならべる（自動で採点）'], [true, '✏️ 紙に書いて採点', '本番と同じく紙に書く。終わったら模範解答を見て、本人か家族が採点']].map(([v, label, sub]) =>
@@ -42,37 +44,50 @@ function introView(el) {
   const start = async (kind) => {
     if (d && !(await confirmBox('とちゅうの模試があるよ', '新しく始めると、とちゅうの模試は消えるよ。', '新しく始める', 'やめる', true))) return;
     const k = EXAM_KINDS[kind];
+    const en = subj === 'english';
     const ok = await paperCheck({
-      title: `${k.name}（${k.minutes}分）を始める？`,
+      title: `${SUBJECT_JA[subj]} ${k.name}（${k.minutes}分）を始める？`,
       lines: [
         `⏱ 制限時間は <b>${k.minutes}分</b>。合図のあとスタート。アプリを閉じても時間は進む`,
-        paper ? '✏️ 証明・作図は<b>紙に書く</b>（終わったら採点）' : '📱 証明は【　】をうめる、作図は手順をならべる',
-        'むずかしい問題は飛ばして、あとで戻ってOK',
+        en ? '🔊 リスニングは<b>音が出る</b>。音量を上げるか、イヤホンを用意' : paper ? '✏️ 証明・作図は<b>紙に書く</b>（終わったら採点）' : '📱 証明は【　】をうめる、作図は手順をならべる',
+        en ? (kind === 'full' ? '✏️ 英語で書く問題は<b>紙に書く</b>（終わったら採点）' : '放送はそれぞれ <b>2回まで</b>') : 'むずかしい問題は飛ばして、あとで戻ってOK',
       ],
     });
     if (!ok) return;
     await countdown('はじめ！');
-    s.examDraft = { subject: 'math', kind, seed: newSeed(), paperMode: paper, startedAt: Date.now(), answers: {}, cur: 0 };
+    s.examDraft = { subject: subj, kind, seed: newSeed(), paperMode: en ? false : paper, plays: {}, startedAt: Date.now(), answers: {}, cur: 0 };
     saveNow();
     go('exam', { phase: 'sheet' });
   };
   const hist = (s.exams || []).slice(-5).reverse();
+  // 教科えらび（数学 / 英語）。英語は英作文がいつも紙なので「答え方」のえらびはない
+  const subjBar = h('div', { class: 'ex-subj' });
+  const aboutP = h('p', {});
+  const paperHead = h('h3', { class: 'sec' }, '証明・作図の答え方');
+  const kinds = h('div', { class: 'ex-kinds' });
+  const paintSubj = () => {
+    subjBar.replaceChildren(...Object.entries(SUBJECT_JA).map(([k, ja]) => h('button', { class: subj === k ? 'on' : '', type: 'button', onclick: () => { sfx('tap'); subj = k; s.settings.examSubject = k; save(); paintSubj(); } }, ja)));
+    aboutP.textContent = `滋賀県の公立高校入試に近い形。${EXAM_DESC[subj].about}`;
+    paperHead.style.display = seg.style.display = subj === 'math' ? '' : 'none';
+    kinds.replaceChildren(...Object.entries(EXAM_KINDS).map(([k, v]) => h('button', { class: `ex-kind k-${k}`, type: 'button', onclick: () => { sfx('tap'); start(k); } },
+      h('span', { class: 'ek-time' }, `${v.minutes}分`), h('b', {}, `${SUBJECT_JA[subj]} ${v.name}`), h('small', {}, EXAM_DESC[subj][k]), h('span', { class: 'ek-go' }, 'スタート ▶'))));
+  };
+  paintSubj();
   backdrop(el, 'desk');
   el.append(topBar(() => go('home')),
     h('div', { class: 'exam-intro' },
       h('div', { class: 'ex-hero' },
         h('div', { class: 'ex-badge' }, '入試本番モード'),
         h('h2', {}, '📝 模試で力だめし'),
-        h('p', {}, '滋賀県の公立高校入試と同じ形。数学は 50分・100点・大問4つ（①小問集合 ②平面図形 ③関数と図形 ④空間図形）。')),
+        aboutP),
       d && h('div', { class: 'ex-draft' },
-        h('div', {}, h('b', {}, `とちゅうの ${EXAM_KINDS[d.kind].name}`), h('small', {}, `答えた問題 ${Object.keys(d.answers).length} 問`)),
+        h('div', {}, h('b', {}, `とちゅうの ${SUBJECT_JA[d.subject]} ${EXAM_KINDS[d.kind].name}`), h('small', {}, `答えた問題 ${Object.keys(d.answers).length} 問`)),
         btn('続きから ▶', () => go('exam', { phase: 'sheet' }), 'primary small')),
-      h('div', { class: 'ex-subj' }, h('span', { class: 'on' }, '数学'), h('span', { class: 'off' }, '英語（準備中）')),
-      h('h3', { class: 'sec' }, '証明・作図の答え方'),
+      subjBar,
+      paperHead,
       seg,
       h('h3', { class: 'sec' }, 'どっちを解く？'),
-      h('div', { class: 'ex-kinds' }, Object.entries(EXAM_KINDS).map(([k, v]) => h('button', { class: `ex-kind k-${k}`, type: 'button', onclick: () => { sfx('tap'); start(k); } },
-        h('span', { class: 'ek-time' }, `${v.minutes}分`), h('b', {}, v.name), h('small', {}, v.desc), h('span', { class: 'ek-go' }, 'スタート ▶')))),
+      kinds,
       h('p', { class: 'note' }, '⏱ 時間はアプリを閉じても進む（本番と同じ）。どの問題から解いてもOK。むずかしい問題は飛ばして、あとで戻ろう。'),
       hist.length > 0 && h('h3', { class: 'sec' }, '📈 これまでの模試'),
       hist.length > 0 && h('div', { class: 'ex-hist' }, hist.map((r) => histRow(r)))));
@@ -83,7 +98,7 @@ export function histRow(r) {
   const pct = Math.round((r.got / r.max) * 100);
   return h('button', { class: 'ex-hrow', type: 'button', onclick: () => go('exam', { phase: 'result', id: r.id }) },
     h('span', { class: 'eh-date' }, `${+mo}/${+da}`),
-    h('span', { class: 'eh-name' }, `${r.subject === 'math' ? '数学' : '英語'} ${EXAM_KINDS[r.kind].name}`),
+    h('span', { class: 'eh-name' }, `${SUBJECT_JA[r.subject] || '数学'} ${EXAM_KINDS[r.kind].name}`),
     h('span', { class: 'eh-bar' }, h('i', { style: { width: `${pct}%` } })),
     h('b', { class: 'eh-score' }, r.kind === 'full' ? `${r.got}点` : `${r.got}/${r.max}`));
 }
@@ -123,7 +138,7 @@ function sheetView(el) {
     nav.querySelector('.cur')?.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
   function tick() {
-    if (done || !el.isConnected) return clearInterval(iv);
+    if (done || !el.isConnected) { stopSpeech(); return clearInterval(iv); }
     const left = leftSec(d, ex);
     timer.textContent = `⏱ ${mmss(Math.max(0, left))}`;
     timer.classList.toggle('warn', left <= 300);
@@ -139,16 +154,19 @@ function sheetView(el) {
     studyBegin(300);
     const q = qs[k];
     const sec = q.sec;
+    stopSpeech();
     body.innerHTML = '';
     body.append(h('div', { class: 'ex-sechead' }, h('b', {}, `大問${sec.no}`), h('span', {}, sec.title)));
-    if (sec.fig || (sec.intro && !/^次の/.test(sec.intro))) body.append(h('div', { class: 'ex-ctx' }, h('div', { rich: sec.intro }), sec.fig && h('div', { class: 'qfig', html: sec.fig })));
+    if (sec.fig || sec.passage || (sec.intro && !/^次の/.test(sec.intro))) body.append(h('div', { class: 'ex-ctx' }, h('div', { rich: sec.intro }), sec.fig && h('div', { class: 'qfig', html: sec.fig }), sec.passage && h('div', { class: 'ex-passage', html: sec.passage })));
+    // リスニング: 放送ボタン（それぞれ2回まで。同じ放送の問題は回数を共有）
+    if (q.listen) body.append(listenBox(q.listen, { used: () => (d.plays ||= {})[q.listen.key] || 0, use: () => { (d.plays ||= {})[q.listen.key] = (d.plays[q.listen.key] || 0) + 1; save(); } }));
     const cur = d.answers[q.id];
-    if (d.paperMode && q.paper) {
+    if (isPaper(q, d.paperMode)) {
       body.append(h('div', { class: 'qcard ex-paper' },
         h('div', { class: 'qcard-tags' }, h('span', { class: 'tag' }, `${q.label} ${q.pts}点`), h('span', { class: 'tag tag-dim' }, '✏️ 紙に書く')),
         h('div', { class: 'qstem', rich: q.paper.ask }),
         q.p.fig && h('div', { class: 'qfig', html: q.p.fig })),
-      h('p', { class: 'note' }, '紙に書こう。提出したあとに、模範解答を見ながら採点するよ。'),
+      h('p', { class: 'note' }, q.paperAlways ? '英語で紙（ノート）に書こう。提出したあとに、答えの例を見ながら採点するよ。' : '紙に書こう。提出したあとに、模範解答を見ながら採点するよ。'),
       btn(cur ? '✔ 書けた（もう一度押すと取り消し）' : '✏️ 紙に書けた', () => { if (cur) delete d.answers[q.id]; else d.answers[q.id] = 'paper'; save(); paintNav(); if (!cur) goNext(); else show(i); }, cur ? 'ghost' : 'primary big'));
     } else {
       const card = problemCard(q.p, { label: `${q.label} ${q.pts}点` });
@@ -191,6 +209,7 @@ function sheetView(el) {
     if (!v) return;
     done = true;
     clearInterval(iv);
+    stopSpeech();
     if (v === 'drop') { s.examDraft = null; saveNow(); }
     go('exam');
   }
@@ -201,6 +220,7 @@ function sheetView(el) {
     if (!timeUp && !(await confirmBox('提出する？', blank ? `まだ ${blank} 問 答えていないよ。` : '全部答えた。提出して採点しよう！', '提出する', 'まだ見直す'))) return;
     done = true;
     clearInterval(iv);
+    stopSpeech();
     studyEnd();
     const rec = {
       id: `ex${Date.now()}`, at: Date.now(), date: today(), subject: d.subject, kind: d.kind, seed: d.seed, paperMode: d.paperMode,
@@ -240,7 +260,7 @@ function resultView(el, id, fresh = false) {
   const ex = buildExam(rec.subject, rec.kind, rec.seed);
   rec.marks ||= {};
   const scoreBox = h('div', { class: 'ex-score' });
-  const paperQs = rec.paperMode ? allQs(ex).filter((q) => q.paper) : [];
+  const paperQs = allQs(ex).filter((q) => isPaper(q, rec.paperMode));
 
   function paintScore() {
     const G = gradeExam(ex, rec);
@@ -249,7 +269,7 @@ function resultView(el, id, fresh = false) {
     const waiting = paperQs.filter((q) => !rec.marks[q.id]).length;
     scoreBox.replaceChildren(
       h('div', { class: 'es-main' },
-        h('small', {}, `${rec.subject === 'math' ? '数学' : '英語'} ${EXAM_KINDS[rec.kind].name}｜${mmss(rec.usedSec)} 使用${rec.timeUp ? '（時間切れ）' : ''}`),
+        h('small', {}, `${SUBJECT_JA[rec.subject] || '数学'} ${EXAM_KINDS[rec.kind].name}｜${mmss(rec.usedSec)} 使用${rec.timeUp ? '（時間切れ）' : ''}`),
         h('div', { class: 'es-num' }, h('b', {}, String(G.got)), h('span', {}, ` / ${G.max}点`)),
         rec.kind !== 'full' && h('small', {}, `100点満点にすると ${G.score100} 点`),
         waiting > 0 && h('small', { class: 'es-wait' }, `✏️ 紙の問題 ${waiting} 問がまだ採点前（下で採点しよう）`)),
@@ -271,6 +291,7 @@ function resultView(el, id, fresh = false) {
         h('div', { class: 'eg-title' }, `大問${q.sec.no} ${q.label}（${q.pts}点）`),
         h('div', { class: 'qstem', rich: q.paper.ask }),
         q.p.fig && h('div', { class: 'qfig', html: q.p.fig }),
+        q.listen && listenBox(q.listen, { review: true }),
         h('details', { class: 'eg-model' }, h('summary', {}, '模範解答を見る'), h('ol', {}, q.paper.model.map((l) => h('li', { rich: l })))),
         h('div', { class: 'eg-rubric' }, q.paper.rubric.map((r, k) => h('label', { class: 'eg-item' },
           h('input', { type: 'checkbox', ...(marks[k] ? { checked: true } : {}), onchange: (e) => { marks[k] = e.target.checked; rec.marks[q.id] = marks; paintScore(); } }),
@@ -288,6 +309,8 @@ function resultView(el, id, fresh = false) {
         h('summary', {}, h('span', { class: 'er-mk' }, mk), h('span', { class: 'er-label' }, q.label), h('span', { class: 'er-unit' }, UNIT[q.p.unit]?.title || ''), h('b', {}, `${g.got}/${g.max}`)),
         h('div', { class: 'er-body' },
           sec.intro && !/^次の/.test(sec.intro) && h('div', { class: 'er-ctx', rich: sec.intro }),
+          sec.passage && h('details', { class: 'er-passage' }, h('summary', {}, '本文を見る'), h('div', { class: 'ex-passage', html: sec.passage })),
+          q.listen && listenBox(q.listen, { review: true }),
           h('div', { class: 'qstem', rich: g.paper ? q.paper.ask : q.p.stem }),
           q.p.fig && h('div', { class: 'qfig', html: q.p.fig }),
           !g.paper && h('div', { class: 'er-line', rich: `あなたの答え: ${inputText(q.p, rec.answers[q.id])}` }),
@@ -311,4 +334,40 @@ function resultView(el, id, fresh = false) {
         btn('📝 もう1回（新しい問題）', () => go('exam'), 'primary'),
         btn('ホームへ', () => go('home'), 'ghost'))));
   if (fresh) flyGems((rec.gems || 0) + (rec.bonus?.gems || 0), el.querySelector('.ex-gems'), 400);
+}
+
+// ---------- リスニングの放送ボタン ----------
+// 解いている間: 2回まで。見直し（review）: 何回でも聞けて、放送文も読める
+function listenBox(listen, { used = () => 0, use = () => {}, review = false } = {}) {
+  const MAX = 2;
+  const box = h('div', { class: 'ex-listen' });
+  const lineEls = () => listen.lines.map((l) => h('p', {}, l.who !== 'N' && h('b', {}, `${l.who}: `), l.text));
+  const script = h('div', { class: 'el-script' }, ...lineEls());
+  let shown = false;
+  let playing = false;
+  const paint = () => {
+    const left = MAX - used();
+    const speak = canSpeak();
+    const label = playing ? '🔊 放送中…'
+      : review ? (speak ? '🔊 もう一度聞く' : '')
+        : left <= 0 ? '放送は終わりました'
+          : speak ? `🔊 放送を聞く（あと${left}回）` : '📄 放送文を読む（1回）';
+    const b = label && h('button', { class: `btn ${review || left > 0 ? 'primary' : 'ghost'} el-play`, type: 'button', disabled: playing || (!review && left <= 0) }, label);
+    if (b) b.onclick = async () => {
+      if (!review) use();
+      if (!speak) { shown = true; paint(); return; }
+      playing = true;
+      paint();
+      await speakLines(listen.lines);
+      playing = false;
+      if (box.isConnected) paint();
+    };
+    box.replaceChildren(
+      b || '',
+      !speak && !review ? h('small', { class: 'note' }, 'この端末では読み上げが使えないので、放送文を表示します。') : '',
+      review ? h('details', { class: 'el-text' }, h('summary', {}, '放送文を見る'), ...lineEls()) : '',
+      !review && shown ? script : '');
+  };
+  paint();
+  return box;
 }
