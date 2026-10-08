@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = '296a101480';
+const VERSION = '6ee053b9e1';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -204,8 +204,10 @@ const ASSETS = [
   './manifest.webmanifest',
 ];
 
+// cache: 'reload' … ブラウザに残っている古いファイル（HTTP キャッシュ）を使わず、必ずサーバーから取る。
+// これがないと、新しい版のキャッシュに古いファイルが入って、アップロードしても画面が変わらないことがある
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

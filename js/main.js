@@ -1,7 +1,7 @@
 // 起動
 import { init, S } from './core/store.js';
 import { startTimer } from './core/timer.js';
-import { register, mount, go } from './core/router.js';
+import { register, mount, go, currentScreen, markUpdateReady } from './core/router.js';
 import * as onboarding from './screens/onboarding.js';
 import * as home from './screens/home.js';
 import * as map from './screens/map.js';
@@ -31,7 +31,14 @@ else go('home');
 // （localhost で開発中はキャッシュが邪魔なので ?sw を付けたときだけ）
 const devHost = location.hostname === 'localhost' && !location.search.includes('sw');
 if ('serviceWorker' in navigator && location.protocol !== 'file:' && !devHost) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  // 新しい版（アップロードした更新）が届いたら: ホームにいればすぐ、ほかの画面ならホームに戻ったときに読みこみ直す
+  const hadOld = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadOld) return;
+    if (currentScreen() === 'home') location.reload();
+    else markUpdateReady();
+  });
+  navigator.serviceWorker.register('./sw.js').then((r) => r.update()).catch(() => {});
 }
 // ダブルタップ拡大は CSS の touch-action: manipulation で止める。
 // （touchend を preventDefault すると素早い連続タップが消えるので使わない）

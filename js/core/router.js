@@ -11,7 +11,11 @@ export function register(name, mod) {
 export function mount(el) {
   root = el;
 }
+// 新しい版が届いていたら、ホームに戻ったときに読みこみ直す（バトルや模試のとちゅうでは読みこみ直さない）
+let updateReady = false;
+export const markUpdateReady = () => { updateReady = true; };
 export function go(name, params = {}) {
+  if (updateReady && name === 'home') { location.reload(); return; }
   current?.mod.leave?.();
   studyStop(); // 勉強時間と挑戦の記録は、画面を離れたら締める
   root.innerHTML = '';
