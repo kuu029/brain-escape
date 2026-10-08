@@ -9,7 +9,8 @@ import { sfx } from '../core/sound.js';
 const key = (c, r) => `${c},${r}`;
 const near = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1])) <= 1;
 
-export function boardView(st, { onSlot, onTap, skin = 'default', skinCls = 'skin-default', coinTarget = null, speed = () => 1 }) {
+// skinFor(type) → { id, cls, star }: タワーごとのスキン（★が上がるほど光り方が派手）
+export function boardView(st, { onSlot, onTap, skinFor = () => ({ id: 'default', cls: 'skin-default', star: 0 }), coinTarget = null, speed = () => 1 }) {
   const pathIndex = new Map(PATH.map(([c, r], i) => [key(c, r), i]));
   const slotIndex = new Map(SLOTS.map(([c, r], i) => [key(c, r), i]));
   const cells = [];
@@ -27,7 +28,7 @@ export function boardView(st, { onSlot, onTap, skin = 'default', skinCls = 'skin
         cells.push(el);
       } else if (slotIndex.has(k)) {
         const si = slotIndex.get(k);
-        const el = h('button', { class: `cell slot ${skinCls}`, type: 'button', style, 'aria-label': 'タワーの場所', onclick: (e) => { e.stopPropagation(); onSlot(si, el); } });
+        const el = h('button', { class: 'cell slot', type: 'button', style, 'aria-label': 'タワーの場所', onclick: (e) => { e.stopPropagation(); onSlot(si, el); } });
         slotEls[si] = el;
         cells.push(el);
       } else cells.push(h('div', { class: 'cell wall', style }));
@@ -71,8 +72,9 @@ export function boardView(st, { onSlot, onTap, skin = 'default', skinCls = 'skin
     const s = slotEls[si];
     const prev = shownTowers[si];
     shownTowers[si] = sig;
-    s.classList.toggle('built', !!tw);
-    s.innerHTML = tw ? `${towerSprite(tw.type, tw.lvl, skin)}<span class="lv">${'★'.repeat(tw.lvl)}</span>` : '<span class="plus">＋</span>';
+    const sk = tw ? skinFor(tw.type) : null;
+    s.className = `cell slot${tw ? ` built ${sk.cls} sk-star-${sk.star}` : ''}`;
+    s.innerHTML = tw ? `${towerSprite(tw.type, tw.lvl, sk.id)}<span class="lv">${'★'.repeat(tw.lvl)}</span>` : '<span class="plus">＋</span>';
     if (tw && pop) {
       anim(s, [{ transform: 'scale(.3) translateY(-20px)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], 320);
       burst(...slotCenter(si), prev ? ['✨', '⭐', '✨'] : ['💥', '✨'], prev ? 8 : 6);
@@ -230,7 +232,7 @@ export function boardView(st, { onSlot, onTap, skin = 'default', skinCls = 'skin
         await beamLine(x, -cellPx() * 0.6, x, y, 'zap');
         ring(x, y, 'zap-ring', 1.6);
       }
-      await applyHits(events.filter((e) => (e.t === 'hit' || e.t === 'kill') && (e.src === 'zap' || e.src === 'tool')));
+      await applyHits(events.filter((e) => (e.t === 'hit' || e.t === 'kill') && (e.src === 'zap' || e.src === 'tool' || e.src === 'ally')));
       // 2) タワー（同時に撃つ）
       const fires = events.filter((e) => e.t === 'fire');
       if (fires.length) {

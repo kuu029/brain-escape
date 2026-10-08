@@ -39,6 +39,8 @@ export function enemySprite(kind, look) {
 // カード（ボス・敵のカードは同じ絵を使う）
 const CARD_ART = {
   kutsushita: 'enemy-grunt', sanma: 'enemy-runner', reizouko: 'enemy-tank', obake: 'enemy-review',
+  // ガチャだけのキャラ（docs/image-prompts.md の K。画像がないあいだは絵文字）
+  ...Object.fromEntries(['broccoli', 'onigiri', 'toast', 'duck', 'moai', 'pigeon', 'snail', 'robot', 'sushi', 'banana-car', 'cheese', 'crown'].map((id) => [id, `card-${id}`])),
   kani: 'boss-signed-numbers', donut: 'boss-fractions-decimals', sponge: 'boss-expressions', bucket: 'boss-linear-equations',
   consent: 'boss-polynomials', hamigaki: 'boss-simultaneous', kanzume: 'boss-expand-factor', katatsumuri: 'boss-square-roots', kaeru: 'boss-quadratic',
   inko: 'boss-en-words1', hachi: 'boss-en-be', hebi: 'boss-en-3sg', hitsuji: 'boss-en-plural', hamster: 'boss-en-prog', fukurou: 'boss-en-wh', pastosaurus: 'boss-en-past',

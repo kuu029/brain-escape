@@ -54,7 +54,12 @@ export function answerPad(p, onSubmit, opts = {}) {
     root = pad.el;
     return pad;
   }
-  if (p.input.kind === 'order' || p.input.kind === 'spell') {
+  if (p.input.kind === 'spell') {
+    const pad = keyboardPad(p, (v) => submit(v), fireLabel);
+    root = pad.el;
+    return pad;
+  }
+  if (p.input.kind === 'order') {
     const pad = tilePad(p, (v) => submit(v), fireLabel);
     root = pad.el;
     return pad;
@@ -146,7 +151,7 @@ export function answerPad(p, onSubmit, opts = {}) {
   };
 }
 
-// タイル入力（英語）: order = 単語タイルの並べかえ、spell = 文字タイルでつづる
+// タイル入力（英語）: order = 単語タイルの並べかえ（spell は keyboardPad）
 // タイルは指が触れた瞬間に反応。置いたタイルはタップで元にもどり、ドラッグで並びを入れかえられる
 function tilePad(p, onFire, fireLabel = '発射!') {
   const spell = p.input.kind === 'spell';
@@ -283,6 +288,63 @@ function tilePad(p, onFire, fireLabel = '発射!') {
     clearMarks() { picked = []; paint(); },
     disable() {},
   };
+}
+
+// つづり: キーボードと同じ並び（QWERTY）。使う文字の候補だけ光らせて、ほかは押せない（探す時間をへらす）
+// 軽いヒント: 何文字か（マス）と、💡で次の1文字を入れる（使ったら pad.usedHint = true）
+const QWERTY = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+function keyboardPad(p, onFire, fireLabel) {
+  const word = p.input.answer;
+  const need = word.length;
+  const cand = new Set(p.input.letters.map((c) => c.toLowerCase()));
+  let typed = '';
+  const pad = { usedHint: false };
+  const slots = h('div', { class: 'kb-slots' });
+  function paint() {
+    slots.replaceChildren(...Array.from({ length: need }, (_, i) => h('span', { class: `kb-slot${i < typed.length ? ' on' : ''}${i === typed.length ? ' cur' : ''}` }, typed[i] || '')));
+  }
+  const type = (c) => {
+    if (typed.length >= need) { slots.classList.remove('shake'); void slots.offsetWidth; slots.classList.add('shake'); return; }
+    typed += c;
+    paint();
+  };
+  const key = (c) => h('button', {
+    class: `kb-key${cand.has(c) ? ' hot' : ''}`,
+    type: 'button',
+    ...(cand.has(c) ? {} : { disabled: true, 'aria-hidden': 'true' }),
+    onpointerdown: (e) => { e.preventDefault(); if (!cand.has(c)) return; sfx('tap'); type(c); },
+    onclick: (e) => { if (e.detail === 0 && cand.has(c)) type(c); },
+  }, c);
+  const fn = (label, act, cls = '') => h('button', { class: `kb-key fn ${cls}`, type: 'button', onpointerdown: (e) => { e.preventDefault(); sfx('tap'); act(); }, onclick: (e) => { if (e.detail === 0) act(); } }, label);
+  // 💡 ヒント: 正しいところまで残して、次の1文字を入れる
+  const hint = () => {
+    let k = 0;
+    while (k < typed.length && typed[k].toLowerCase() === word[k].toLowerCase()) k++;
+    if (k >= need) return;
+    typed = typed.slice(0, k) + word[k].toLowerCase();
+    pad.usedHint = true;
+    paint();
+  };
+  const fire = h('button', {
+    class: 'key fire kb-fire',
+    type: 'button',
+    onclick: () => {
+      if (!typed) { slots.classList.remove('shake'); void slots.offsetWidth; slots.classList.add('shake'); return; }
+      sfx('tap');
+      onFire(typed);
+    },
+  }, fireLabel);
+  const kb = h('div', { class: 'kb' },
+    h('div', { class: 'kb-row' }, [...QWERTY[0]].map(key)),
+    h('div', { class: 'kb-row r2' }, [...QWERTY[1]].map(key)),
+    h('div', { class: 'kb-row r3' }, fn('💡', hint, 'hint'), [...QWERTY[2]].map(key), fn('⌫', () => { typed = typed.slice(0, -1); paint(); }, 'del')));
+  paint();
+  pad.el = h('div', { class: 'pad kbpad' }, slots, kb, h('div', { class: 'kb-ctrl' }, fn('クリア', () => { typed = ''; paint(); }), fire));
+  pad.clear = () => { typed = ''; paint(); };
+  pad.mark = () => {};
+  pad.clearMarks = () => { typed = ''; paint(); };
+  pad.disable = () => {};
+  return pad;
 }
 
 // 穴うめ（証明）: 文の中の【ア】をタップ → 下の候補から選ぶ

@@ -42,8 +42,32 @@ async function askMotivation() {
   return true;
 }
 async function startRush(subject, opts = {}) {
-  if (!opts.test && !opts.weak && !(await askMotivation())) return;
+  if (opts.intro && !(await askMotivation())) return;
   go('memory', { phase: 'rush', subject, ...opts });
+}
+
+// 今日の状態: 顔合わせが残っている → 復習どきがある → 今日の分は終わり
+function todayState(M, subject, now) {
+  const day = ME.dayOf(M, now);
+  const limit = ME.newLimit(M, subject, now);
+  const done = day.newCount[subject] || 0;
+  const introLeft = day.motivation ? Math.min(ME.newLeft(M, subject, now), ME.unseenLeft(M, subject)) : Math.min(1, ME.unseenLeft(M, subject));
+  const review = ME.dueList(M, subject, now).length + ME.pendingCount(M, subject);
+  return { day, limit, done, introLeft, review, stage: introLeft > 0 ? 'intro' : review > 0 ? 'review' : 'done' };
+}
+// 次にやることのボタン（いちばん大事なものだけ黄色）
+function nextButtons(subject, T, M) {
+  const extra = () => { ME.addExtra(M, subject, Date.now()); save(); startRush(subject, { intro: true }); };
+  const introBtn = (cls) => btn(h('span', {}, '🆕 顔合わせ', h('small', {}, T.day.motivation ? `今日の新しい暗号 あと ${T.introLeft} 語（${ME.INTRO_SIZE}語ずつ）` : '今日の新しい暗号を、まず全部1回ずつ見る')), () => startRush(subject, { intro: true }), cls);
+  const reviewBtn = (cls) => btn(h('span', {}, '🔁 復習ラッシュ', h('small', {}, `復習どき ${T.review} 枚（最大${ME.RUSH_SIZE}枚・4分）`)), () => startRush(subject), cls);
+  if (T.stage === 'intro') return [introBtn('primary big mm-go'), T.review > 0 && reviewBtn('ghost mm-go')];
+  if (T.stage === 'review') return [reviewBtn('primary big mm-go'), ME.unseenLeft(M, subject) > 0 && btn(`＋${ME.EXTRA_STEP}語 追加で覚える`, extra, 'ghost small')];
+  const nd = ME.nextDue(M, subject);
+  const mins = nd ? Math.max(1, Math.round((nd - Date.now()) / 60000)) : null;
+  return [
+    h('div', { class: 'mm-clear' }, h('b', {}, '✅ 今日の分はクリア！'), h('small', {}, mins ? `次の復習どきは ${mins >= 120 ? `${Math.round(mins / 60)}時間` : `${mins}分`}後` : '')),
+    ME.unseenLeft(M, subject) > 0 && btn(`🔥 もっとやる: ＋${ME.EXTRA_STEP}語 追加で覚える`, extra, 'primary mm-go'),
+  ];
 }
 
 // ---------- トップ ----------
@@ -51,9 +75,7 @@ function topView(el, subject) {
   const M = mem();
   const now = Date.now();
   const sj = ME.MEM_SUBJECTS[subject];
-  const day = ME.dayOf(M, now);
-  const due = ME.dueList(M, subject, now).length;
-  const left = ME.newLeft(M, subject, now);
+  const T = todayState(M, subject, now);
   const decks = ME.courseDecks(subject, M.course);
   const all = decks.flatMap((d) => d.cards);
   const st = all.map((c) => M.cards[c.id]);
@@ -71,10 +93,10 @@ function topView(el, subject) {
       h('div', { class: 'mm-hero' }, h('div', { class: 'mm-title' }, '🔐 暗号室'), h('p', {}, '看守たちの合言葉（暗号）を解読して、扉を開けろ。忘れかけたころに、また出てくるぞ。')),
       h('div', { class: 'mm-subj' }, Object.values(ME.MEM_SUBJECTS).map((x) => h('button', { class: `mm-tab${x.id === subject ? ' on' : ''}${x.ready ? '' : ' off'}`, type: 'button', onclick: () => (x.ready ? go('memory', { subject: x.id }) : toast(`${x.name}の暗号は準備中…`)) }, `${x.emoji} ${x.name}${x.ready ? '' : ' 🔒'}`))),
       h('div', { class: 'mm-today' },
-        h('div', { class: 'mt-nums' },
-          h('div', {}, h('b', {}, String(due)), h('small', {}, '復習どき')),
-          h('div', {}, h('b', {}, day.motivation ? String(left) : '？'), h('small', {}, day.motivation ? '新しい暗号 あと' : 'やる気で決まる'))),
-        btn(h('span', {}, '⚡ 暗号ラッシュ', h('small', {}, '最大20枚・4分')), () => startRush(subject), 'primary big mm-go'),
+        h('div', { class: 'mt-flow' },
+          h('span', { class: T.stage === 'intro' ? 'now' : 'done' }, `① 顔合わせ ${T.day.motivation ? `${T.done}/${T.limit}` : ''}`),
+          h('span', { class: T.stage === 'review' ? 'now' : T.stage === 'done' ? 'done' : '' }, `② 復習 ${T.review ? `あと${T.review}` : ''}`)),
+        nextButtons(subject, T, M),
         weak > 0 && btn(`😵 苦手だけ（${weak}枚）`, () => startRush(subject, { weak: true }), 'ghost small')),
       h('h3', { class: 'sec' }, '難易度'),
       seg,
@@ -132,12 +154,11 @@ function rushView(el, subject, opts) {
   const mode = ME.modeOf(M, subject);
   const queue = ME.buildRush(M, subject, rng, Date.now(), opts);
   if (!queue.length) {
-    toast(opts.weak ? '苦手な暗号はもうない！' : '今日の暗号は全部すんだ！ また明日', 2600);
+    toast(opts.weak ? '苦手な暗号はもうない！' : opts.intro ? '新しく覚える暗号は、今日はもうないよ' : '復習どきの暗号はまだないよ', 2600);
     return go('memory', { subject });
   }
   const t0 = Date.now();
-  const R = { subject, mode, deck: opts.deck || null, test: !!opts.test, weak: !!opts.weak, asked: 0, ok: 0, combo: 0, maxCombo: 0, news: 0, ups: 0, solid: 0, wr: 0, misses: [] };
-  const retried = new Set();
+  const R = { subject, mode, intro: !!opts.intro, deck: opts.deck || null, test: !!opts.test, weak: !!opts.weak, asked: 0, ok: 0, combo: 0, maxCombo: 0, news: 0, ups: 0, solid: 0, wr: 0, misses: [] };
   let k = 0;
   let over = false;
   beginSession({ kind: opts.test ? 'memtest' : 'memory', subject: SUBJ_LANG[subject], lesson: opts.deck || null });
@@ -149,7 +170,7 @@ function rushView(el, subject, opts) {
   el.classList.add('mem-rush-screen');
   el.append(h('header', { class: 'mr-head' },
     h('button', { class: 'hud-exit', type: 'button', 'aria-label': 'やめる', onclick: quit }, '✕'),
-    h('b', {}, opts.test ? `🏅 ${ME.DECK[opts.deck].title} 試験` : `⚡ 暗号ラッシュ｜${ME.MODES[mode].name}`),
+    h('b', {}, opts.test ? `🏅 ${ME.DECK[opts.deck].title} 試験` : opts.intro ? '🆕 顔合わせ' : `🔁 復習ラッシュ｜${ME.MODES[mode].name}`),
     prog, combo, clock), stage);
 
   const iv = setInterval(() => {
@@ -188,7 +209,7 @@ function rushView(el, subject, opts) {
       h('div', { class: 'mr-word en' }, card.q),
       h('div', { class: 'mr-mean' }, card.a),
       card.pos && h('small', { class: 'mr-pos' }, POS[card.pos] || card.pos)),
-      h('p', { class: 'note center' }, '声に出して1回読もう。このあとすぐ出るぞ。'),
+      h('p', { class: 'note center' }, '声に出して1回読もう。4枚見たら、まとめてテスト！'),
       btn('覚えた！ ▶', () => { sfx('tap'); next(); }, 'primary big'));
   }
 
@@ -203,12 +224,13 @@ function rushView(el, subject, opts) {
     studyBegin(30);
     const bar = h('div', { class: 'mr-time' }, h('i', { style: { animationDuration: `${limit}ms` } }));
     const big = form === 'e2j' ? h('div', { class: 'mr-word en' }, q.stem) : h('div', { class: 'mr-word ja' }, q.stem);
-    const cardEl = h('div', { class: `mr-card f-${form}` }, item.retry && h('span', { class: 'mr-retry' }, 'もう一回'), big, h('small', { class: 'mr-ask' }, q.ask), bar);
+    const cardEl = h('div', { class: `mr-card f-${form}` }, big, h('small', { class: 'mr-ask' }, q.ask), bar);
     let done = false;
-    const finishQ = (ok, shown) => {
+    // hinted: 💡ヒントを使った正解は「あやしい」あつかい（レベルを上げない）
+    const finishQ = (ok, shown, hinted = false) => {
       if (done) return;
       done = true;
-      const ms = Date.now() - start;
+      const ms = hinted ? 1e9 : Date.now() - start;
       const res = ME.applyResult(M, card, { ok, form, ms }, Date.now());
       R.asked++;
       tallySession(ok);
@@ -221,17 +243,12 @@ function rushView(el, subject, opts) {
       if (ok) {
         sfx('ok', Math.min(R.combo, 8));
         cardEl.classList.add('good');
-        setTimeout(next, ms > ME.SLOW_MS[form] ? 650 : 280);
-        if (ms > ME.SLOW_MS[form] && !res.isNew) cardEl.append(h('small', { class: 'mr-slow' }, '正解！ でも少しあやしい → 早めにまた出すね'));
+        setTimeout(next, ms > ME.SLOW_MS[form] ? 900 : 280);
+        if (ms > ME.SLOW_MS[form] && !res.isNew) cardEl.append(h('small', { class: 'mr-slow' }, hinted ? '正解！ ヒントを使ったので、早めにまた出すね' : '正解！ でも少しあやしい → 早めにまた出すね'));
         return;
       }
       sfx('ng');
       if (!R.misses.includes(card.id)) R.misses.push(card.id);
-      // まちがえたカードは3枚あとにもう一回（試験ではしない）
-      if (!R.test && !retried.has(card.id)) {
-        retried.add(card.id);
-        queue.splice(Math.min(queue.length, k + 3), 0, { id: card.id, retry: true });
-      }
       cardEl.classList.add('bad');
       stage.append(h('div', { class: 'mr-answer' },
         shown != null && h('small', {}, `あなた: ${shown}`),
@@ -253,7 +270,7 @@ function rushView(el, subject, opts) {
         if (r.invalid) { toast(r.msg, 1600); return; }
         const shown = p.input.kind === 'choice' ? p.input.choices[input] : p.input.kind === 'order' ? input.map((i) => p.input.tiles[i]).join(' ') : String(input);
         if (p.input.kind === 'choice') pad.mark(input, r.ok);
-        finishQ(r.ok, r.ok ? null : shown);
+        finishQ(r.ok, r.ok ? null : shown, !!pad.usedHint);
       }, { fire: '決定' });
       stage.append(pad.el, btn('？ わからない', () => finishQ(false, null), 'ghost small mr-idk'));
     }
@@ -300,17 +317,16 @@ function resultView(el, subject, R) {
     h('div', { class: 'mem-result' },
       h('div', { class: 'ex-score' },
         h('div', { class: 'es-main' },
-          h('small', {}, R.test ? `🏅 ${ME.DECK[R.deck].title} 試験` : `⚡ 暗号ラッシュ｜${ME.MODES[R.mode].name}`),
+          h('small', {}, R.test ? `🏅 ${ME.DECK[R.deck].title} 試験` : R.intro ? '🆕 顔合わせ' : `🔁 復習ラッシュ｜${ME.MODES[R.mode].name}`),
           h('div', { class: 'es-num' }, h('b', {}, `${R.ok}`), h('span', {}, ` / ${R.asked} 正解`)),
           R.test && h('b', { class: R.passed ? 'mm-pass' : 'mm-fail' }, R.passed ? '🏅 解読成功！（9割以上）' : `あと少し！（${acc}% → 90% で解読）`)),
         h('div', { class: 'mm-total' },
           [['🆕 新しく覚えた', R.news], ['⬆️ レベルアップ', R.ups], ['🔒 定着した', R.solid], ['✍️ 書けるように', R.wr], ['🔥 最大コンボ', R.maxCombo]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))))),
       h('p', { class: 'note center' }, `💎 +${R.gems}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
       R.cards?.length > 0 && h('p', { class: 'note center' }, `🃏 カードゲット: ${R.cards.map((id) => GAME_CARDS.find((c) => c.id === id)?.name || id).join('、')}`),
-      R.misses.length > 0 && h('h3', { class: 'sec' }, '😵 まちがえた暗号（すぐまた出るよ）'),
+      R.misses.length > 0 && h('h3', { class: 'sec' }, R.intro ? '😵 まちがえた暗号（顔合わせのあとの復習でまた出るよ）' : '😵 まちがえた暗号（少し時間をおいて、また出るよ）'),
       R.misses.length > 0 && h('div', { class: 'md-list' }, R.misses.map((id) => { const c = ME.CARD[id]; return h('div', { class: 'md-row' }, h('span', { class: 'mr-q' }, c.q), h('span', { class: 'mr-a' }, c.a)); })),
       h('div', { class: 'up-btns' },
-        btn('⚡ もう1ラッシュ', () => startRush(subject, R.deck ? { deck: R.deck } : {}), 'primary'),
-        btn('🔐 暗号室へ', () => go('memory', { subject }), 'ghost')),
-      h('p', { class: 'note center' }, `今日の新しい暗号: あと ${ME.newLeft(M, subject, Date.now())} 枚`)));
+        R.deck && !R.test ? btn('⚡ このデッキをもう1回', () => startRush(subject, { deck: R.deck }), 'primary') : nextButtons(subject, todayState(M, subject, Date.now()), M),
+        btn('🔐 暗号室へ', () => go('memory', { subject }), 'ghost'))));
 }

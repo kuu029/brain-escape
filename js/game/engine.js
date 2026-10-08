@@ -48,6 +48,8 @@ export function createBattle({ mode = 'practice', schedule = [], lives = 3, coin
     frozen: 0,
     double: 0,
     wall: 0,
+    gauge: 0, // なかま召喚のゲージ（正解でたまる）
+    summoned: {}, // このウェーブで呼んだなかま
   };
   spawnDue(st, []);
   return st;
@@ -102,6 +104,7 @@ export function answer(st, { correct, retry = false, targetId = null }) {
   const ev = [];
   if (st.over) return ev;
   if (correct) {
+    st.gauge = Math.min(GAUGE_NEED, (st.gauge || 0) + 1);
     if (!retry) {
       st.combo++;
       st.maxCombo = Math.max(st.maxCombo, st.combo);
@@ -147,7 +150,12 @@ function endTurn(st, ev) {
       const def = ENEMIES[e.kind];
       let steps = def.speed;
       if (def.everyOther && st.turn % 2 === 1) steps = 0;
-      if (e.slowed && st.turn % 2 === 0) steps = Math.max(0, steps - 1);
+      // 氷: 動く番に1歩へらす。ただし続けては止められない（前に止めたら、次の動く番は氷がとけて進む）
+      // → 氷タワーだけで、残り1体やボスを永久に止めることはできない
+      if (steps > 0 && e.slowed) {
+        if (e.chill) e.chill = false;
+        else { steps = Math.max(0, steps - 1); e.chill = true; }
+      } else if (steps > 0) e.chill = false;
       e.slowed = false;
       if (!steps) continue;
       const from = e.pos;
@@ -217,6 +225,43 @@ export function useTool(st, id) {
   else if (id === 'wall') st.wall = 2;
   else if (id === 'mega') st.slots.forEach((tw) => { if (tw && tw.lvl < 3) tw.lvl++; });
   ev.push({ t: 'tool', id });
+  if (!st.queue.length && !alive(st).length && st.mode !== 'diagnosis') {
+    st.over = 'win';
+    ev.push({ t: 'over', result: 'win' });
+  }
+  return ev;
+}
+
+// ---------- なかま召喚 ----------
+// 正解3回でゲージ満タン → なかまを1体よべる（1ウェーブに1体1回）。よぶとゲージは0にもどる
+export const GAUGE_NEED = 3;
+const back = (st, e, n, ev) => { const from = e.pos; e.pos = Math.max(0, e.pos - n); if (from !== e.pos) ev.push({ t: 'move', id: e.id, from, to: e.pos }); };
+// 技（ガチャのキャラごと）。答えを飛ばす技はない（勉強の流れはそのまま）
+export const SUMMON = {
+  kutsushita: { desc: '先頭の敵を1マス押し戻す', run: (st, ev) => { const f = front(st); if (f) back(st, f, 1, ev); } },
+  sanma: { desc: '先頭の敵に2ダメージ', run: (st, ev) => { const f = front(st); if (f) hit(st, f, 2, ev, 'ally'); } },
+  obake: { desc: '再襲来の敵ぜんぶに3ダメージ（いなければ先頭に2）', run: (st, ev) => { const rv = alive(st).filter((e) => e.review); if (rv.length) rv.forEach((e) => hit(st, e, 3, ev, 'ally')); else { const f = front(st); if (f) hit(st, f, 2, ev, 'ally'); } } },
+  broccoli: { desc: '重低音で敵ぜんぶに1ダメージ', run: (st, ev) => alive(st).forEach((e) => hit(st, e, 1, ev, 'ally')) },
+  onigiri: { desc: 'ライフ +1', run: (st) => { st.lives = Math.min(MAX_LIVES, st.lives + 1); } },
+  toast: { desc: '次の2回、正解のこうげきが2倍', run: (st) => { st.double = Math.max(st.double, 2); } },
+  snail: { desc: 'コイン +25', run: (st) => { st.coins += 25; } },
+  cheese: { desc: '敵ぜんぶが1ターン動けない', run: (st) => { st.frozen = Math.max(st.frozen, 1); } },
+  reizouko: { desc: '敵ぜんぶが2ターン動けない', run: (st) => { st.frozen = Math.max(st.frozen, 2); } },
+  duck: { desc: 'ラッパで敵ぜんぶに2ダメージ', run: (st, ev) => alive(st).forEach((e) => hit(st, e, 2, ev, 'ally')) },
+  moai: { desc: '次に出口へ来た敵を1体ブロック', run: (st) => { st.wall = Math.max(st.wall, 1); } },
+  pigeon: { desc: '先頭の敵を2マス押し戻す', run: (st, ev) => { const f = front(st); if (f) back(st, f, 2, ev); } },
+  robot: { desc: '先頭の敵に4ダメージ', run: (st, ev) => { const f = front(st); if (f) hit(st, f, 4, ev, 'ally'); } },
+  sushi: { desc: '先頭に3ダメージ、2番目に1ダメージ', run: (st, ev) => { const [a, b] = alive(st).sort((x, y) => y.pos - x.pos); if (a) hit(st, a, 3, ev, 'ally'); if (b) hit(st, b, 1, ev, 'ally'); } },
+  'banana-car': { desc: '敵ぜんぶを1マス押し戻す', run: (st, ev) => alive(st).forEach((e) => back(st, e, 1, ev)) },
+};
+export const canSummon = (st, id) => !!SUMMON[id] && !st.over && (st.gauge || 0) >= GAUGE_NEED && !st.summoned?.[id];
+export function summon(st, id) {
+  const ev = [];
+  if (!canSummon(st, id)) return ev;
+  st.gauge = 0;
+  (st.summoned ||= {})[id] = true;
+  ev.push({ t: 'summon', id });
+  SUMMON[id].run(st, ev);
   if (!st.queue.length && !alive(st).length && st.mode !== 'diagnosis') {
     st.over = 'win';
     ev.push({ t: 'over', result: 'win' });

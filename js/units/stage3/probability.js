@@ -12,7 +12,33 @@ const DICE2 = [1, 2, 3, 4, 5, 6].flatMap((a) => [1, 2, 3, 4, 5, 6].map((b) => [a
 const coins = (n) => [...Array(2 ** n).keys()].map((k) => [...Array(n).keys()].map((i) => (k >> i) & 1));
 
 const BINOM = { 2: [1, 2, 1], 3: [1, 3, 3, 1], 4: [1, 4, 6, 4, 1] };
+// 数え上げ型: list（全部の場合）のうち ok を満たす割合。その場合の数を steps に出す
+function enumQ(stem, list, ok, { hint, wrong = [], how = '' }) {
+  const c = list.filter(ok).length, n = list.length;
+  return {
+    stem,
+    ...P(F(c, n), wrong),
+    hint,
+    steps: [`全部で ${n} 通り${how}`, `あてはまるのは ${c} 通り`, `${m(`\frac{${c}}{${n}}`)}${F(c, n).d !== n ? ` ${m(`=${tnum(F(c, n))}`)}` : ''}`],
+    check: byEnum(list, ok),
+  };
+}
+const isPrime = (x) => x > 1 && [...Array(x).keys()].slice(2).every((d) => x % d);
+// 金額つきの硬貨（500円玉・100円玉…）
+const COINS = [500, 100, 50, 10, 5, 1];
 function genCoin(rng) {
+  if (rng.chance(0.45)) {
+    const vs = rng.shuffle([...COINS]).slice(0, rng.int(3, 4)).sort((a, b) => b - a);
+    const outs = coins(vs.length).map((c) => c.reduce((a, x, i) => a + x * vs[i], 0));
+    const sums = [...new Set(outs)].sort((a, b) => a - b).slice(1, -1);
+    const x = rng.pick(sums);
+    const more = rng.chance(0.6);
+    return enumQ(`${vs.map((v) => `${v}円玉`).join('、')} を1枚ずつ同時に投げるとき、表が出た硬貨の金額の合計が ${x} 円${more ? '以上' : '未満'}になる確率は？`, outs, (t) => (more ? t >= x : t < x), {
+      hint: '硬貨ごとに表・裏を書き出して（樹形図）、表の金額を合計する。',
+      how: `（${m(`2^{${vs.length}}`)}）`,
+      wrong: [{ p: F(1, 2), msg: '合計金額ごとに数えよう。半分とはかぎらない。' }],
+    });
+  }
   const n = rng.int(2, 4);
   if (rng.chance(0.3) && n >= 3) {
     const k = rng.int(2, n - 1);
@@ -46,6 +72,18 @@ function genCoin(rng) {
 }
 
 function genDice(rng) {
+  if (rng.chance(0.55)) {
+    const head = '大小2つのさいころを同時に投げるとき、';
+    const hint = '大小を区別して、6×6 = 36 通りの表を作って数える。';
+    const t = rng.int(0, 6);
+    if (t === 0) { const k = rng.pick([3, 4, 6, 7, 8, 9]); return enumQ(`${head}大きいさいころの目を十の位、小さいさいころの目を一の位として2けたの整数をつくる。この整数が ${k} の倍数になる確率は？`, DICE2, ([a, b]) => (10 * a + b) % k === 0, { hint: '11〜66 の2けたの整数（36 通り）を書き出して数える。' }); }
+    if (t === 1) return enumQ(`${head}大きいさいころの目を十の位、小さいさいころの目を一の位とする2けたの整数が、素数になる確率は？`, DICE2, ([a, b]) => isPrime(10 * a + b), { hint: '一の位が偶数や5なら素数ではない。残りを1つずつ確かめる。' });
+    if (t === 2) { const k = rng.pick([2, 3, 4, 6]); return enumQ(`${head}出る目の積が ${k} の倍数になる確率は？`, DICE2, ([a, b]) => (a * b) % k === 0, { hint, wrong: [{ p: F(1, k), msg: '積は和とちがって、出やすさがかたよる。表を作って数えよう。' }] }); }
+    if (t === 3) return enumQ(`${head}出る目の積が奇数になる確率は？`, DICE2, ([a, b]) => (a * b) % 2 === 1, { hint: '積が奇数 → 2つとも奇数。', wrong: [{ p: F(1, 2), msg: '積が奇数になるのは、2つとも奇数のときだけ。' }] });
+    if (t === 4) { const big = rng.chance(0.5); return enumQ(`${head}${big ? '大きいさいころの目が、小さいさいころの目より大きくなる' : '大きいさいころの目が、小さいさいころの目以下になる'}確率は？`, DICE2, ([a, b]) => (big ? a > b : a <= b), { hint: '同じ目の 6 通りをどちらに入れるかに注意。' }); }
+    if (t === 5) { const k = rng.int(1, 6); return enumQ(`${head}少なくとも一方の目が ${k} になる確率は？`, DICE2, ([a, b]) => a === k || b === k, { hint: `1 −（どちらも ${k} でない確率）で考えてもよい。`, wrong: [{ p: F(2, 6), msg: `(${k}, ${k}) を2回数えないように。` }] }); }
+    return enumQ(`${head}出る目の和が素数になる確率は？`, DICE2, ([a, b]) => isPrime(a + b), { hint: '和は 2〜12。素数は 2、3、5、7、11。それぞれの場合を数えて合計する。' });
+  }
   const type = rng.int(0, 4);
   if (type === 0) {
     const s = rng.int(3, 11);
@@ -103,6 +141,26 @@ function genDice(rng) {
 }
 
 function genBag(rng) {
+  if (rng.chance(0.5)) {
+    let r, w, b;
+    do { r = rng.int(1, 3); w = rng.int(1, 3); b = rng.int(1, 3); } while (r + w + b > 7 || r + w + b < 4);
+    const balls = [...Array(r).fill('赤'), ...Array(w).fill('白'), ...Array(b).fill('青')];
+    const n = balls.length;
+    const head = `赤玉 ${r} 個、白玉 ${w} 個、青玉 ${b} 個が入った袋から、`;
+    if (rng.chance(0.5)) {
+      // もどしてもう1回（並べ方: n × n 通り）
+      const seq = balls.flatMap((x) => balls.map((y) => [x, y]));
+      const col = rng.pick(['赤', '白', '青']);
+      return rng.chance(0.5)
+        ? enumQ(`${head}1個取り出して色を調べ、袋にもどしてから、もう1個取り出す。2回とも${col}玉である確率は？`, seq, ([x, y]) => x === col && y === col, { hint: `もどすので、2回目も ${n} 個から取る。全部で ${n}×${n} 通り。`, wrong: [{ p: F(1, 9), msg: '色の数ではなく、玉の数で数える。' }] })
+        : enumQ(`${head}1個取り出して色を調べ、袋にもどしてから、もう1個取り出す。2回の色がちがう確率は？`, seq, ([x, y]) => x !== y, { hint: `全部で ${n}×${n} 通り。「同じ色」の場合をひくと速い。` });
+    }
+    const pairs = [];
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) pairs.push([balls[i], balls[j]]);
+    return rng.chance(0.5)
+      ? enumQ(`${head}同時に2個取り出すとき、2個が同じ色である確率は？`, pairs, ([x, y]) => x === y, { hint: '玉に番号をつけて、2個の組み合わせを全部書き出す。', how: `（${m(`\frac{${n}\times ${n - 1}}{2}`)}）` })
+      : enumQ(`${head}同時に2個取り出すとき、青玉が1個もふくまれない確率は？`, pairs, ([x, y]) => x !== '青' && y !== '青', { hint: '赤と白だけから2個選ぶ組み合わせを数える。', how: `（${m(`\frac{${n}\times ${n - 1}}{2}`)}）` });
+  }
   let r, w;
   do { r = rng.int(2, 4); w = rng.int(1, 4); } while (r + w > 6 || r + w < 4);
   const n = r + w;
@@ -139,6 +197,19 @@ function genBag(rng) {
 }
 
 function genCards(rng) {
+  if (rng.chance(0.5)) {
+    const n = rng.int(3, 6);
+    const cards = [...Array(n).keys()].map((i) => i + 1);
+    const nums = cards.flatMap((a) => cards.filter((b) => b !== a).map((b) => 10 * a + b));
+    const head = `${cards.join('、')} のカードから続けて2枚引き、1枚目を十の位、2枚目を一の位とする2けたの整数が、`;
+    const t = rng.int(0, 3);
+    const hint = `全部で ${m(`${n}\times ${n - 1}`)} 通り。整数を全部書き出して数える。`;
+    if (t === 0) return enumQ(`${head}奇数になる確率は？`, nums, (x) => x % 2 === 1, { hint });
+    if (t === 1) { const k = rng.pick([4, 6]); return enumQ(`${head}${k} の倍数になる確率は？`, nums, (x) => x % k === 0, { hint }); }
+    if (t === 2) return enumQ(`${head}素数になる確率は？`, nums, isPrime, { hint: '一の位が偶数や5なら素数ではない。残りを1つずつ確かめる。' });
+    const lo = rng.int(2, n) * 10 + rng.int(1, 9);
+    return enumQ(`${head}${lo} 以下になる確率は？`, nums, (x) => x <= lo, { hint });
+  }
   const n = rng.int(4, 6);
   const cards = [...Array(n).keys()].map((i) => i + 1);
   const nums = cards.flatMap((a) => cards.filter((b) => b !== a).map((b) => Number(`${a}${b}`)));

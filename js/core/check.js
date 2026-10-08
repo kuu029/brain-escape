@@ -78,9 +78,10 @@ function checkBlanks(p, input) {
 function checkSpell(p, input) {
   const s = String(input || '');
   if (!s) return { ok: false, invalid: true, msg: '文字をタップしてつづってね' };
-  if (s === p.input.answer) return { ok: true };
+  // キーボードは小文字だけなので、大文字・小文字は区別しない（Monday も monday でOK）
+  if (s.toLowerCase() === p.input.answer.toLowerCase()) return { ok: true };
   const sort = (x) => x.split('').sort().join('');
-  if (sort(s) === sort(p.input.answer)) return { ok: false, msg: '使う文字は合ってる！ 順番をチェック。' };
+  if (sort(s.toLowerCase()) === sort(p.input.answer.toLowerCase())) return { ok: false, msg: '使う文字は合ってる！ 順番をチェック。' };
   return { ok: false, msg: null };
 }
 

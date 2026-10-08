@@ -1,7 +1,7 @@
 // 進行と報酬（ロック判定・ウェーブ終了時の報酬・ガチャ）
 import { S, unitState, cleared, save, saveNow } from '../core/store.js';
 import { UNIT, GEN, SUBJECTS, unitsOf } from '../units/registry.js';
-import { BOSS_CARD, GACHA_CARDS, SKINS, CARDS, GACHA_RATES } from './content.js';
+import { BOSS_CARD, GACHA_CARDS, SKINS, CARDS, GACHA_RATES, TOWER_TYPES, SKIN_ITEMS, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from './content.js';
 import { bump } from './missions.js';
 
 export function isUnlocked(id) {
@@ -36,10 +36,44 @@ export function pickReviews(unitId, n, subject = UNIT[unitId]?.subject || 'math'
 }
 
 export function addCard(id) {
+  const t = tickets(); // 先に作っておく（はじめてのとき、いまの枚数からチケットを作るので）
   const c = S().collection.cards;
   const isNew = !c[id];
   c[id] = (c[id] || 0) + 1;
+  // ガチャのキャラは「召喚チケット」も1枚ふえる（なかまとして呼ぶと1枚へる）
+  if (GACHA_CARDS.includes(id)) t[id] = (t[id] || 0) + 1;
   return isNew;
+}
+
+// ---------- なかま（ガチャのキャラを召喚） ----------
+// collection.tickets = { id: 枚数 }、collection.party = [id, id]（ウェーブに連れていく2体）
+export const PARTY_MAX = 2;
+export function tickets() {
+  const c = S().collection;
+  // はじめて使うとき: いま持っているキャラの枚数を、そのままチケットにする
+  if (!c.tickets) c.tickets = Object.fromEntries(GACHA_CARDS.filter((id) => c.cards[id]).map((id) => [id, c.cards[id]]));
+  return c.tickets;
+}
+export function party() {
+  const c = S().collection;
+  c.party = (c.party || []).filter((id) => c.cards[id]);
+  return c.party;
+}
+// なかまに入れる / はずす。いっぱいなら一番古いなかまと入れかえ
+export function toggleParty(id) {
+  const p = party();
+  const i = p.indexOf(id);
+  if (i >= 0) p.splice(i, 1);
+  else if (S().collection.cards[id] && GACHA_CARDS.includes(id)) { p.push(id); if (p.length > PARTY_MAX) p.shift(); }
+  save();
+  return p.includes(id);
+}
+export function useTicket(id) {
+  const t = tickets();
+  if (!(t[id] > 0)) return false;
+  t[id]--;
+  save();
+  return true;
 }
 
 // ウェーブ終了。戻り値は結果画面に渡す
@@ -90,7 +124,7 @@ function rollOne(rand = Math.random) {
   const tier = GACHA_RATES.find((r) => (x -= r.weight) < 0) || GACHA_RATES[0];
   const pool = [
     ...CARDS.filter((c) => GACHA_CARDS.includes(c.id) && c.rarity === tier.rarity).map((c) => ({ kind: 'card', id: c.id })),
-    ...SKINS.filter((sk) => sk.rarity === tier.rarity).map((sk) => ({ kind: 'skin', id: sk.id })),
+    ...SKIN_ITEMS.filter((sk) => sk.rarity === tier.rarity).map((sk) => ({ kind: 'skin', id: sk.id })),
   ];
   const item = pool[Math.floor(rand() * pool.length)];
   return { ...item, rarity: tier.rarity, dupShards: tier.shards };
@@ -106,25 +140,71 @@ export function gacha(n = 1) {
     const r = rollOne();
     let isNew;
     if (r.kind === 'card') isNew = addCard(r.id);
-    else {
-      isNew = !s.collection.skins.includes(r.id);
-      if (isNew) s.collection.skins.push(r.id);
+    let star = 0;
+    if (r.kind === 'skin') {
+      // 持っていなければ ★1。持っていれば ★+1（★5 のあとはかけら）
+      const ts = skinState().owned;
+      isNew = !ts[r.id];
+      star = Math.min(SKIN_MAX_STAR, (ts[r.id] || 0) + 1);
+      const up = !isNew && star > ts[r.id];
+      ts[r.id] = star;
+      if (up) { out.push({ kind: 'skin', id: r.id, rarity: r.rarity, isNew: false, starUp: true, star, shards: 0 }); continue; }
     }
     const shards = isNew ? 0 : r.dupShards;
     s.collection.shards = (s.collection.shards || 0) + shards;
-    out.push({ kind: r.kind, id: r.id, rarity: r.rarity, isNew, shards });
+    out.push({ kind: r.kind, id: r.id, rarity: r.rarity, isNew, shards, star });
   }
   saveNow();
   return out;
 }
-// かけらでスキンと交換
-export function exchangeSkin(id) {
+// ---------- タワーごとのスキン ----------
+// collection.tskins = { owned: { 'neon:beam': ★ }, on: { beam: 'neon', frost: 'default', bomb: 'default' } }
+// 前の形（collection.skins = 3タワー共通）からは、持っていたスキンを3タワーとも ★1 で引きつぐ
+export function skinState() {
+  const c = S().collection;
+  if (!c.tskins) {
+    const owned = {};
+    for (const id of c.skins || []) if (id !== 'default') for (const t of TOWER_TYPES) owned[`${id}:${t}`] = 1;
+    const on = Object.fromEntries(TOWER_TYPES.map((t) => [t, c.skin && owned[`${c.skin}:${t}`] ? c.skin : 'default']));
+    c.tskins = { owned, on };
+  }
+  return c.tskins;
+}
+// そのタワーにいま付けているスキン: { id（デザイン）, cls, star }
+export function towerSkin(type) {
+  const ts = skinState();
+  const id = ts.on[type] || 'default';
+  const sk = SKINS.find((x) => x.id === id) || SKINS[0];
+  return { id, cls: sk.cls, star: id === 'default' ? 0 : ts.owned[`${id}:${type}`] || 1 };
+}
+export function equipSkin(type, design) {
+  const ts = skinState();
+  if (design !== 'default' && !ts.owned[`${design}:${type}`]) return false;
+  ts.on[type] = design;
+  save();
+  return true;
+}
+// かけらで、持っていないスキンと交換
+export function exchangeSkin(itemId) {
   const s = S();
-  const sk = SKINS.find((x) => x.id === id);
-  if (!sk || s.collection.skins.includes(id) || (s.collection.shards || 0) < sk.shards) return false;
-  s.collection.shards -= sk.shards;
-  s.collection.skins.push(id);
-  s.collection.skin = id;
+  const it = SKIN_ITEMS.find((x) => x.id === itemId);
+  const ts = skinState();
+  if (!it || ts.owned[itemId] || (s.collection.shards || 0) < skinExchangeCost(it)) return false;
+  s.collection.shards -= skinExchangeCost(it);
+  ts.owned[itemId] = 1;
+  ts.on[it.type] = it.design;
+  save();
+  return true;
+}
+// かけらで ★ を1つ上げる
+export function starUpSkin(itemId) {
+  const s = S();
+  const it = SKIN_ITEMS.find((x) => x.id === itemId);
+  const ts = skinState();
+  const star = ts.owned[itemId] || 0;
+  if (!it || !star || star >= SKIN_MAX_STAR || (s.collection.shards || 0) < skinStarCost(it, star)) return false;
+  s.collection.shards -= skinStarCost(it, star);
+  ts.owned[itemId] = star + 1;
   save();
   return true;
 }

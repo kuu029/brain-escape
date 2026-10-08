@@ -1,25 +1,45 @@
 // 英語 第3段階: 間接疑問（I know where he lives. のように、文の中に疑問文を入れる）
 import { frameQ, orderAns } from './kit-en.js';
 
-// main: 前の部分、wh: 疑問詞（＋名詞）、s: 主語、v: [ふつうの文の動詞, 疑問文にしたときの助動詞, 原形]、rest: 後ろ、end: 文末記号
-const IND = [
-  { main: ['I', 'know'], wh: ['where'], s: 'Ken', v: ['lives', 'does', 'live'], rest: [], end: '.', ja: '私はケンがどこに住んでいるか知っています。' },
-  { main: ['Do', 'you', 'know'], wh: ['what'], s: 'this', v: ['is', 'is'], rest: [], end: '?', ja: 'これが何か知っていますか？' },
-  { main: ['I', 'do', 'not', 'know'], wh: ['who'], s: 'that boy', v: ['is', 'is'], rest: [], end: '.', ja: '私はあの男の子がだれか知りません。' },
-  { main: ['Please', 'tell', 'me'], wh: ['when'], s: 'the party', v: ['starts', 'does', 'start'], rest: [], end: '.', ja: 'パーティーがいつ始まるか教えてください。' },
-  { main: ['Do', 'you', 'know'], wh: ['what', 'time'], s: 'it', v: ['is', 'is'], rest: [], end: '?', ja: '何時か知っていますか？' },
-  { main: ['I', 'do', 'not', 'know'], wh: ['why'], s: 'she', v: ['was', 'was'], rest: ['late'], end: '.', ja: '私は彼女がなぜ遅れたのか知りません。' },
-  { main: ['Can', 'you', 'tell', 'me'], wh: ['where'], s: 'the station', v: ['is', 'is'], rest: [], end: '?', ja: '駅がどこか教えてくれますか？' },
-  { main: ['I', 'know'], wh: ['what'], s: 'Ken', v: ['wants', 'does', 'want'], rest: [], end: '.', ja: '私はケンが何をほしがっているか知っています。' },
-  { main: ['Do', 'you', 'know'], wh: ['how', 'old'], s: 'he', v: ['is', 'is'], rest: [], end: '?', ja: '彼が何歳か知っていますか？' },
-  { main: ['I', 'want', 'to', 'know'], wh: ['where'], s: 'you', v: ['bought', 'did', 'buy'], rest: ['that bag'], end: '.', ja: '私はあなたがどこでそのかばんを買ったのか知りたいです。' },
-  { main: ['Tell', 'me'], wh: ['what'], s: 'you', v: ['want', 'do', 'want'], rest: [], end: '.', ja: 'あなたが何をほしいか教えてください。' },
-  { main: ['I', 'do', 'not', 'know'], wh: ['when'], s: 'Yumi', v: ['came', 'did', 'come'], rest: ['home'], end: '.', ja: '私はユミがいつ家に帰ったのか知りません。' },
-  { main: ['Do', 'you', 'know'], wh: ['where'], s: 'Yumi', v: ['lives', 'does', 'live'], rest: [], end: '?', ja: 'ユミがどこに住んでいるか知っていますか？' },
-  { main: ['I', 'know'], wh: ['how', 'old'], s: 'your brother', v: ['is', 'is'], rest: [], end: '.', ja: '私はあなたのお兄さんが何歳か知っています。' },
-  { main: ['Please', 'tell', 'me'], wh: ['what'], s: 'you', v: ['did', 'did', 'do'], rest: ['yesterday'], end: '.', ja: 'あなたが昨日何をしたか教えてください。' },
-  { main: ['I', 'do', 'not', 'know'], wh: ['where'], s: 'my bag', v: ['is', 'is'], rest: [], end: '.', ja: '私は自分のかばんがどこにあるかわかりません。' },
+// 文 = 前の部分（MAIN）× 中に入れる疑問文（CL）の組み合わせ（約140通り）
+// MAIN: en = 前の部分、ja = 日本語の型（{c} に「〜か」が入る）、end = 文末記号
+const MAIN = [
+  { en: ['I', 'know'], ja: '私は{c}知っています。', end: '.' },
+  { en: ['Do', 'you', 'know'], ja: '{c}知っていますか？', end: '?' },
+  { en: ['I', 'do', 'not', 'know'], ja: '私は{c}知りません。', end: '.' },
+  { en: ['Please', 'tell', 'me'], ja: '{c}教えてください。', end: '.' },
+  { en: ['Can', 'you', 'tell', 'me'], ja: '{c}教えてくれますか？', end: '?' },
+  { en: ['I', 'want', 'to', 'know'], ja: '私は{c}知りたいです。', end: '.' },
 ];
+// CL: wh = 疑問詞（＋名詞）、s = 主語、v = [ふつうの文の動詞, 疑問文にしたときの助動詞, 原形]（be動詞は2つ）、rest = 後ろ、ja = 「〜か」
+const CL = [
+  { wh: ['where'], s: 'Ken', v: ['lives', 'does', 'live'], rest: [], ja: 'ケンがどこに住んでいるか' },
+  { wh: ['what'], s: 'this', v: ['is', 'is'], rest: [], ja: 'これが何か' },
+  { wh: ['who'], s: 'that boy', v: ['is', 'is'], rest: [], ja: 'あの男の子がだれか' },
+  { wh: ['when'], s: 'the party', v: ['starts', 'does', 'start'], rest: [], ja: 'パーティーがいつ始まるか' },
+  { wh: ['what', 'time'], s: 'it', v: ['is', 'is'], rest: [], ja: '何時か' },
+  { wh: ['why'], s: 'she', v: ['was', 'was'], rest: ['late'], ja: '彼女がなぜ遅れたのか' },
+  { wh: ['where'], s: 'the station', v: ['is', 'is'], rest: [], ja: '駅がどこにあるか' },
+  { wh: ['what'], s: 'Ken', v: ['wants', 'does', 'want'], rest: [], ja: 'ケンが何をほしがっているか' },
+  { wh: ['how', 'old'], s: 'he', v: ['is', 'is'], rest: [], ja: '彼が何歳か' },
+  { wh: ['where'], s: 'you', v: ['bought', 'did', 'buy'], rest: ['that bag'], ja: 'あなたがどこでそのかばんを買ったのか' },
+  { wh: ['what'], s: 'you', v: ['want', 'do', 'want'], rest: [], ja: 'あなたが何をほしいか' },
+  { wh: ['when'], s: 'Yumi', v: ['came', 'did', 'come'], rest: ['home'], ja: 'ユミがいつ家に帰ったのか' },
+  { wh: ['how', 'old'], s: 'your brother', v: ['is', 'is'], rest: [], ja: 'あなたのお兄さんが何歳か' },
+  { wh: ['what'], s: 'you', v: ['did', 'did', 'do'], rest: ['yesterday'], ja: 'あなたが昨日何をしたか' },
+  { wh: ['where'], s: 'my bag', v: ['is', 'is'], rest: [], ja: 'かばんがどこにあるか' },
+  { wh: ['how'], s: 'he', v: ['goes', 'does', 'go'], rest: ['to school'], ja: '彼がどうやって学校に行くか' },
+  { wh: ['what'], s: 'she', v: ['likes', 'does', 'like'], rest: [], ja: '彼女が何が好きか' },
+  { wh: ['where'], s: 'they', v: ['play', 'do', 'play'], rest: ['soccer'], ja: '彼らがどこでサッカーをするか' },
+  { wh: ['when'], s: 'the movie', v: ['starts', 'does', 'start'], rest: [], ja: '映画がいつ始まるか' },
+  { wh: ['why'], s: 'he', v: ['is', 'is'], rest: ['angry'], ja: '彼がなぜ怒っているのか' },
+  { wh: ['where'], s: 'Tom', v: ['is', 'is'], rest: [], ja: 'トムがどこにいるか' },
+  { wh: ['where'], s: 'she', v: ['lives', 'does', 'live'], rest: [], ja: '彼女がどこに住んでいるか' },
+  { wh: ['where'], s: 'Yumi', v: ['went', 'did', 'go'], rest: [], ja: 'ユミがどこへ行ったのか' },
+  { wh: ['what'], s: 'that', v: ['is', 'is'], rest: [], ja: 'あれが何か' },
+];
+// 「〜 yesterday?」の疑問文は、文法チェックが主節の時制と読みちがえるので組み合わせない
+const IND = MAIN.flatMap((m) => CL.filter((c) => !(m.end === '?' && c.rest.includes('yesterday'))).map((c) => ({ main: m.en, wh: c.wh, s: c.s, v: c.v, rest: c.rest, end: m.end, ja: m.ja.replace('{c}', c.ja) })));
 
 // 疑問詞のあとの語順を選ぶ（ふつうの文の語順 ⇔ 疑問文の語順）
 function genChoose(rng) {

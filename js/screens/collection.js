@@ -1,10 +1,11 @@
 // コレクション: カード図鑑・ガチャ（カード＋スキン）・スキン・道具
 import { h, btn, modal, toast, sleep } from '../core/ui.js';
 import { S, save } from '../core/store.js';
-import { CARDS, SKINS, TOOLS, BOSS_CARD } from '../game/content.js';
+import { CARDS, SKINS, TOOLS, BOSS_CARD, SKIN_ITEMS, TOWER_TYPES, TOWER_LOOK, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from '../game/content.js';
 import { UNIT } from '../units/registry.js';
 import { backdrop } from '../ui/deco.js';
-import { gacha, GACHA_COST, GACHA5_COST, exchangeSkin } from '../game/progress.js';
+import { gacha, GACHA_COST, GACHA5_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX } from '../game/progress.js';
+import { SUMMON, GAUGE_NEED } from '../game/engine.js';
 import { cardSprite, towerSprite, spriteHTML } from '../game/art.js';
 import { go } from '../core/router.js';
 import { topBar } from './home.js';
@@ -14,8 +15,13 @@ const RARE = { 1: 'ノーマル', 2: 'レア', 3: 'スーパーレア', 4: 'レ�
 
 function itemView(it) {
   if (it.kind === 'skin') {
-    const sk = SKINS.find((x) => x.id === it.id);
-    return { name: `スキン「${sk.name}」`, html: `<span class="cell slot built ${sk.cls} prev-slot">${towerSprite('beam', 2, sk.id)}</span>`, text: 'タワーの見た目が変わる！ スキン欄で使えるよ。' };
+    const sk = SKIN_ITEMS.find((x) => x.id === it.id);
+    const star = it.star || 1;
+    return {
+      name: `${TOWER_LOOK[sk.type].name}のスキン「${sk.name}」`,
+      html: `<span class="cell slot built ${sk.cls} sk-star-${star} prev-slot">${towerSprite(sk.type, 2, sk.design)}</span>`,
+      text: it.starUp ? `★${star} に強化！ 光り方がもっと派手になった。` : 'タワーの見た目が変わる！ スキン欄で使えるよ。ダブると★が上がる。',
+    };
   }
   const c = CARDS.find((x) => x.id === it.id);
   return { name: c.name, html: cardSprite(c.id), text: c.text };
@@ -53,7 +59,7 @@ function gachaStage(results) {
         h('span', { class: 'cap-item', html: v.html }),
         h('span', { class: 'cap-stars' }, `${'★'.repeat(r.rarity)} ${RARE[r.rarity]}`),
         h('span', { class: 'cap-name' }, v.name),
-        r.isNew ? h('span', { class: 'cap-new' }, 'NEW!') : h('span', { class: 'cap-dup' }, `ダブり → 🧩+${r.shards}`));
+        r.isNew ? h('span', { class: 'cap-new' }, 'NEW!') : r.starUp ? h('span', { class: 'cap-new' }, `★${r.star}に強化！`) : h('span', { class: 'cap-dup' }, `ダブり → 🧩+${r.shards}`));
       for (let k = 0; k < 10; k++) {
         const p = h('span', { class: 'cap-spark' }, r.rarity >= 3 ? '✨' : '⭐');
         const ang = (Math.PI * 2 * k) / 10;
@@ -88,12 +94,22 @@ export function render(el, { tab = 'cards' } = {}) {
     const cardView = (c) => {
       const n = s.collection.cards[c.id];
       // まだ持っていないカードはシルエットで見せる（正体はお楽しみ）
+      const ally = !!SUMMON[c.id];
+      const inParty = party().includes(c.id);
+      const open = () => modal({
+        title: `${c.name}`,
+        body: h('div', { class: 'modal-body center' }, h('div', { class: 'card-big', html: cardSprite(c.id) }), h('div', { class: 'stars' }, '★'.repeat(c.rarity)), h('p', {}, c.text),
+          ally && h('div', { class: 'ally-info' }, h('b', {}, '🤝 なかまの技'), h('p', {}, SUMMON[c.id].desc), h('small', {}, `ウェーブ中、正解 ${GAUGE_NEED} 回でゲージ満タン → 召喚（チケット1枚）。のこり ×${tickets()[c.id] || 0}`)),
+          h('small', { class: 'note' }, `所持 ${n}枚`)),
+        buttons: ally ? [{ label: '閉じる', value: null }, { label: inParty ? 'なかまから外す' : `なかまにする（最大${PARTY_MAX}体）`, value: 'party', cls: 'primary' }] : undefined,
+      }).then((v) => { if (v === 'party') { toggleParty(c.id); sfx('build'); go('collection', { tab: 'cards' }); } });
       return n
-        ? h('button', { class: `card r${c.rarity}`, type: 'button', onclick: () => modal({ title: `${c.name}`, body: h('div', { class: 'modal-body center' }, h('div', { class: 'card-big', html: cardSprite(c.id) }), h('div', { class: 'stars' }, '★'.repeat(c.rarity)), h('p', {}, c.text), h('small', { class: 'note' }, `所持 ${n}枚`)) }) },
-          h('span', { class: 'c-stars' }, '★'.repeat(c.rarity)), h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name))
+        ? h('button', { class: `card r${c.rarity}${inParty ? ' in-party' : ''}`, type: 'button', onclick: open },
+          h('span', { class: 'c-stars' }, '★'.repeat(c.rarity)), inParty && h('span', { class: 'c-party' }, '🤝'), h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name), ally && h('small', { class: 'c-tix' }, `×${tickets()[c.id] || 0}`))
         : h('div', { class: `card unknown r${c.rarity}` }, h('span', { class: 'c-stars' }, '★'.repeat(c.rarity)), h('div', { class: 'c-art sil', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, '？？？'));
     };
     content.append(
+      h('div', { class: 'party-bar' }, h('b', {}, '🤝 なかま'), ...[0, 1].map((k) => { const id = party()[k]; const c = id && CARDS.find((x) => x.id === id); return h('span', { class: 'pb-slot' }, c ? h('span', { html: cardSprite(id) }) : '＋', c ? h('small', {}, `×${tickets()[id] || 0}`) : null); }), h('small', { class: 'pb-note' }, 'ガチャのキャラをタップ →「なかまにする」。ウェーブ中、正解でたまるゲージで召喚できる。')),
       h('div', { class: 'coll-prog' }, h('span', {}, `図鑑 ${owned} / ${CARDS.length}`), h('span', { class: 'cp-bar' }, h('i', { style: { width: `${(owned / CARDS.length) * 100}%` } })), h('b', {}, `${Math.round((owned / CARDS.length) * 100)}%`)),
       ...groups.flatMap(([name, list]) => [
         h('h3', { class: 'sec' }, `${name}（${list.filter((c) => s.collection.cards[c.id]).length}/${list.length}）`),
@@ -114,21 +130,31 @@ export function render(el, { tab = 'cards' } = {}) {
         btn(`5回 💎${GACHA5_COST}`, () => pull(5), 'boss')),
       h('div', { class: 'rates' },
         h('b', {}, '出るもの'),
-        h('div', {}, '★1〜2 キャラカード ／ ★3〜4 タワースキン'),
-        h('div', {}, 'ダブったら 🧩かけら（★1:1 ★2:2 ★3:5 ★4:10）'),
-        h('div', {}, 'かけらはスキン欄で好きなスキンと交換できる'))));
+        h('div', {}, '★1〜2 キャラカード ／ ★3〜4 タワースキン（タワーごと）'),
+        h('div', {}, 'スキンがダブると★アップ（最大★5）。キャラのダブりは 🧩かけら（★1:1 ★2:2）'),
+        h('div', {}, 'かけらはスキン欄で、スキンとの交換や★アップに使える'))));
   } else if (tab === 'skins') {
-    content.append(h('p', { class: 'note' }, `タワーの見た目を変えられる。🧩 かけら ${shards}`),
-      h('div', { class: 'skin-list' }, SKINS.map((sk) => {
-        const have = s.collection.skins.includes(sk.id);
-        const on = s.collection.skin === sk.id;
-        return h('div', { class: `skin-row ${on ? 'on' : ''} r${sk.rarity}` },
-          h('div', { class: 'skin-prev' }, ['beam', 'frost', 'bomb'].map((t) => h('span', { class: `cell slot built ${sk.cls}`, html: towerSprite(t, 2, sk.id) }))),
-          h('div', { class: 'sk-name' }, h('b', {}, sk.name), h('small', {}, sk.rarity ? '★'.repeat(sk.rarity) : '')),
-          on ? h('span', { class: 'm-ok' }, '使用中')
-            : have ? btn('使う', () => { s.collection.skin = sk.id; save(); sfx('build'); go('collection', { tab: 'skins' }); }, 'small')
-              : btn(`🧩${sk.shards}`, () => { if (exchangeSkin(sk.id)) { sfx('reveal', sk.rarity); go('collection', { tab: 'skins' }); } else toast(`かけらが足りない（あと ${sk.shards - shards}）`); }, `small ${shards >= sk.shards ? 'primary' : ''}`));
-      })));
+    // タワーごとにスキンを選ぶ。ダブり（またはかけら）で ★1→★5
+    const ts = skinState();
+    const stars = (n) => '★'.repeat(n) + '☆'.repeat(SKIN_MAX_STAR - n);
+    const redo = () => go('collection', { tab: 'skins' });
+    content.append(h('p', { class: 'note' }, `スキンはタワーごと。同じスキンがダブると★が上がって、光り方が派手になる（最大★${SKIN_MAX_STAR}）。🧩 かけら ${shards}`),
+      ...TOWER_TYPES.map((type) => h('div', { class: 'skin-group' },
+        h('h3', { class: 'sec' }, `${TOWER_LOOK[type].emoji || ''} ${TOWER_LOOK[type].name}`),
+        h('div', { class: 'skin-list' }, SKINS.map((sk) => {
+          const itemId = `${sk.id}:${type}`;
+          const it = SKIN_ITEMS.find((x) => x.id === itemId);
+          const star = sk.id === 'default' ? 0 : ts.owned[itemId] || 0;
+          const have = sk.id === 'default' || star > 0;
+          const on = (ts.on[type] || 'default') === sk.id;
+          return h('div', { class: `skin-row ${on ? 'on' : ''} r${sk.rarity}${have ? '' : ' locked'}` },
+            h('span', { class: `cell slot built ${sk.cls} sk-star-${star}`, html: towerSprite(type, 2, sk.id) }),
+            h('div', { class: 'sk-name' }, h('b', {}, sk.name), sk.id !== 'default' && h('small', {}, have ? stars(star) : '未入手')),
+            h('div', { class: 'sk-btns' },
+              on ? h('span', { class: 'm-ok' }, '使用中') : have ? btn('使う', () => { equipSkin(type, sk.id); sfx('build'); redo(); }, 'small') : null,
+              it && !have && btn(`🧩${skinExchangeCost(it)}`, () => { if (exchangeSkin(itemId)) { sfx('reveal', sk.rarity); redo(); } else toast(`かけらが足りない（あと ${skinExchangeCost(it) - shards}）`); }, `small ${shards >= skinExchangeCost(it) ? 'primary' : ''}`),
+              it && have && star < SKIN_MAX_STAR && btn(`★UP 🧩${skinStarCost(it, star)}`, () => { if (starUpSkin(itemId)) { sfx('reveal', Math.min(4, star + 1)); toast(`★${star + 1} に強化！`); redo(); } else toast(`かけらが足りない（あと ${skinStarCost(it, star) - shards}）`); }, 'small ghost')));
+        })))));
   } else {
     content.append(h('p', { class: 'note' }, '単元の訓練を全部クリアすると1つずつもらえる。ウェーブ中に各1回使える。'),
       h('div', { class: 'tool-list' }, Object.entries(TOOLS).map(([id, t]) => h('div', { class: `tool-row ${s.tools.includes(id) ? '' : 'locked'}` },

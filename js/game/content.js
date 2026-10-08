@@ -147,6 +147,14 @@ export const SKINS = [
   { id: 'gold', name: 'ゴールド', cls: 'skin-gold', rarity: 4, shards: 40, emoji: '👑' },
   { id: 'lava', name: 'マグマ', cls: 'skin-lava', rarity: 4, shards: 40, emoji: '🌋' },
 ];
+// スキンはタワーごと（ビーム・氷・爆弾 × 5デザイン = 15個）。同じスキンのダブりで ★1→★5 に強化（★が上がるほど光り方が派手）
+export const TOWER_TYPES = ['beam', 'frost', 'bomb'];
+export const SKIN_MAX_STAR = 5;
+export const SKIN_ITEMS = SKINS.filter((sk) => sk.id !== 'default').flatMap((sk) => TOWER_TYPES.map((t) => ({ id: `${sk.id}:${t}`, design: sk.id, type: t, rarity: sk.rarity, name: sk.name, cls: sk.cls })));
+// かけらでの交換（持っていないスキン）と、★強化（いまの★ × この数）
+export const skinExchangeCost = (it) => (it.rarity >= 4 ? 20 : 10);
+export const skinStarCost = (it, star) => (it.rarity >= 4 ? 8 : 5) * star;
+
 // ガチャの出やすさ（レア度ごと）と、ダブったときのかけら
 export const GACHA_RATES = [
   { rarity: 1, weight: 52, shards: 1 },

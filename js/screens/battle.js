@@ -9,12 +9,12 @@ import { S, recordAnswer, unitState, save, beginSession, closeSession } from '..
 import { studyBegin, studyEnd, studyPause, studyResume, idleFor } from '../core/timer.js';
 import { problemCard, answerPad, stepsView, answerLine } from '../ui/answer.js';
 import { boardView } from '../ui/board.js';
-import { TOOLS, TOWER_LOOK, SKINS } from '../game/content.js';
-import { towerSprite, enemyLook } from '../game/art.js';
+import { TOOLS, TOWER_LOOK, CARDS } from '../game/content.js';
+import { towerSprite, enemyLook, cardSprite } from '../game/art.js';
 import { sfx } from '../core/sound.js';
 import { bump } from '../game/missions.js';
 import { go } from '../core/router.js';
-import { finishWave, pickReviews } from '../game/progress.js';
+import { finishWave, pickReviews, towerSkin, party, tickets, useTicket } from '../game/progress.js';
 
 const MODE_LABEL = { practice: '練習ウェーブ', boss: 'ボスウェーブ', review: 'リベンジウェーブ', diagnosis: '看守チェック' };
 // 放置の見張り: この時間さわらないと「寝てない？」と聞き、さらに IDLE_GRACE 秒こたえがなければウェーブを抜ける
@@ -63,8 +63,6 @@ export function render(el, params) {
   let ending = false;
 
   // ---------- 画面 ----------
-  const skinId = s.collection.skin || 'default';
-  const skinCls = SKINS.find((x) => x.id === skinId)?.cls || 'skin-default';
   const hudLives = h('span', { class: 'hud-lives' });
   const hudCoins = h('span', { class: 'hud-coins' });
   const hudCombo = h('span', { class: 'hud-combo' });
@@ -75,8 +73,7 @@ export function render(el, params) {
   const board = boardView(st, {
     onSlot,
     onTap: closePopover,
-    skin: skinId,
-    skinCls,
+    skinFor: towerSkin,
     coinTarget: hudCoins,
     speed: () => (S().settings.fxFast ? 0.55 : 1),
   });
@@ -118,12 +115,24 @@ export function render(el, params) {
       h('span', { class: `pl ng${leaks ? ' danger' : ''}` }, `❌ ${ngText}`));
   }
 
-  // ---------- 道具（1回目で説明、2回目で発動）----------
+  // ---------- 道具・なかま（1回目で説明、2回目で発動）----------
+  const allies = diagMode ? [] : [...party()];
   let armed = null;
   let armTimer = null;
   function paintTools() {
     toolbar.innerHTML = '';
     if (diagMode) return;
+    // なかま: 正解でゲージがたまったら呼べる（チケットを1枚使う。1ウェーブに1体1回）
+    for (const id of allies) {
+      const n = tickets()[id] || 0;
+      const used = !!st.summoned?.[id];
+      const ready = !used && n > 0 && E.canSummon(st, id);
+      const key = `ally:${id}`;
+      toolbar.append(h('button', { class: `tool ally${ready ? ' ready' : ''}${armed === key ? ' armed' : ''}`, type: 'button', disabled: used || n <= 0 || !!st.over, onclick: () => tapAlly(id) },
+        h('span', { class: 'ally-face', html: cardSprite(id) }),
+        h('span', { class: 'ally-gauge' }, h('i', { style: { width: `${Math.min(1, (st.gauge || 0) / E.GAUGE_NEED) * 100}%` } })),
+        h('small', {}, armed === key ? 'もう1回!' : used ? '出番ずみ' : n <= 0 ? 'チケット0' : ready ? `よべる! ×${n}` : `${st.gauge || 0}/${E.GAUGE_NEED} ×${n}`)));
+    }
     for (const [id, ok] of Object.entries(st.tools)) {
       const t = TOOLS[id];
       toolbar.append(h('button', { class: `tool${armed === id ? ' armed' : ''}`, type: 'button', disabled: !ok || !!st.over, onclick: () => tapTool(id) },
@@ -148,6 +157,29 @@ export function render(el, params) {
     board.finish();
     const evs = E.useTool(st, id);
     sfx('tool');
+    paintHud();
+    board.play(evs, { after: afterPlayback });
+  }
+  function tapAlly(id) {
+    const c = CARDS.find((x) => x.id === id);
+    const key = `ally:${id}`;
+    if (armed !== key) {
+      armed = key;
+      clearTimeout(armTimer);
+      armTimer = setTimeout(() => { armed = null; paintTools(); }, 3500);
+      sfx('tap');
+      toast(E.canSummon(st, id) ? `${c.name}：${E.SUMMON[id].desc}（もう1回タップで召喚）` : `${c.name}：${E.SUMMON[id].desc}（正解 ${E.GAUGE_NEED} 回でゲージ満タン）`, 2400);
+      paintTools();
+      return;
+    }
+    armed = null;
+    clearTimeout(armTimer);
+    if (!E.canSummon(st, id)) { paintTools(); return; }
+    if (!useTicket(id)) { toast('チケットがない…ガチャで仲間を増やそう'); paintTools(); return; }
+    board.finish();
+    const evs = E.summon(st, id);
+    sfx('combo');
+    floatText(board.el, `${c.emoji} ${c.name} 参上！`, 'combo');
     paintHud();
     board.play(evs, { after: afterPlayback });
   }
@@ -218,7 +250,7 @@ export function render(el, params) {
             paintHud();
             refreshPrediction();
           },
-        }, h('span', { class: 'bp-art', html: towerSprite(type, 1, skinId) }), h('b', {}, TOWER_LOOK[type].name), h('small', {}, `🪙${def.cost}`));
+        }, h('span', { class: 'bp-art', html: towerSprite(type, 1, towerSkin(type).id) }), h('b', {}, TOWER_LOOK[type].name), h('small', {}, `🪙${def.cost}`));
       }),
       h('div', { class: 'bp-desc' }, '★ビーム=1体に強い ／ ❄️=足止め ／ 💣=まとめて'));
     // 盤面の中で、マスの上か下に出す

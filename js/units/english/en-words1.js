@@ -107,7 +107,7 @@ export default {
         { text: `💡 ${TIPS[t][1]}` },
         { text: 'では小テスト。意味はどれ？', q: vocabProblem(rng, pool, 'e2j') },
         { text: '英語ではどれ？', q: vocabProblem(rng, pool, 'j2e') },
-        { text: '最後はつづり。文字タイルをタップしてね。', q: vocabProblem(rng, pool, 'spell') },
+        { text: '最後はつづり。光っているキーで打ってね。', q: vocabProblem(rng, pool, 'spell') },
       ];
     },
   })),

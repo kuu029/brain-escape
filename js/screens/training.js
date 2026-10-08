@@ -122,9 +122,10 @@ export function render(el, { unit, lesson }) {
       h('div', { class: 'big-em' }, '🎉'),
       h('h2', {}, `訓練${idx + 1} クリア！`),
       h('p', { rich: L.unlocks.length ? 'この型の問題が練習ウェーブに出るようになった。' : '' }),
-      btn('⚔️ 練習ウェーブで試す', () => go('battle', { mode: 'practice', unit }), 'primary big'),
-      h('p', { class: 'note' }, '練習ウェーブ＝覚えた解き方を、看守とのバトルで使ってみる場所。'),
-      nextL && btn(`📘 次の訓練へ: ${nextL.title.replace(/\$/g, '')}`, () => go('training', { unit, lesson: nextL.id }), 'ghost'),
+      // 訓練が残っていれば「次の訓練」を黄色に（全部の訓練 → 練習 → ボス の順に進む）
+      nextL && btn(`📘 次の訓練へ: ${nextL.title.replace(/\$/g, '')}`, () => go('training', { unit, lesson: nextL.id }), 'primary big'),
+      btn('⚔️ 練習ウェーブで試す', () => go('battle', { mode: 'practice', unit }), nextL ? 'ghost' : 'primary big'),
+      h('p', { class: 'note' }, nextL ? `訓練はあと ${u.lessons.filter((l) => !us.lessons[l.id]).length} つ。全部クリアするとボスへの道が開く。` : '練習ウェーブ＝覚えた解き方を、看守とのバトルで使ってみる場所。'),
       btn('マップへ', () => go('map', { focus: unit }), 'ghost')));
   }
 

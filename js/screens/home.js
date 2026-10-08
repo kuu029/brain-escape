@@ -31,7 +31,7 @@ export function render(el) {
       mlist.append(h('div', { class: `mission ${m.claimed ? 'claimed' : done ? 'done' : ''}` },
         h('div', { class: 'm-text' }, m.text, h('div', { class: 'm-bar' }, h('i', { style: { width: `${(m.progress / m.goal) * 100}%` } }))),
         m.claimed ? h('span', { class: 'm-ok' }, '✔') : done
-          ? btn(`💎${m.reward}`, () => { const g = claim(i); sfx('coin'); toast(`💎 +${g}`); go('home'); }, 'primary small')
+          ? btn(`💎${m.reward}`, () => { const g = claim(i); sfx('coin'); toast(`💎 +${g}`); paintM(); el.querySelector('.topbar')?.replaceWith(topBar()); }, 'primary small')
           : h('span', { class: 'm-num' }, `${m.progress}/${m.goal}`)));
     });
   };
