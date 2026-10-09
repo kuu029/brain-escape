@@ -50,5 +50,5 @@ const CARD_ART = {
 };
 export function cardSprite(id) {
   const c = CARDS.find((x) => x.id === id);
-  return spriteHTML(CARD_ART[id], c.emoji, c.name);
+  return spriteHTML(CARD_ART[id] || `card-${id}`, c.emoji, c.name); // 表にないカードは card-<id>.png（あれば）
 }

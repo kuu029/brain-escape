@@ -3,7 +3,7 @@
 // 再生中に次の操作が来たら、今の再生を早送りしてから次を再生する。
 import { h } from '../core/ui.js';
 import { COLS, ROWS, PATH, SLOTS, EXIT, alive } from '../game/engine.js';
-import { towerSprite, enemySprite } from '../game/art.js';
+import { towerSprite, enemySprite, cardSprite } from '../game/art.js';
 import { sfx } from '../core/sound.js';
 
 const key = (c, r) => `${c},${r}`;
@@ -67,15 +67,23 @@ export function boardView(st, { onSlot, onTap, skinFor = () => ({ id: 'default',
   }
   function paintTower(si, pop = false) {
     const tw = st.slots[si];
-    const sig = tw ? `${tw.type}:${tw.lvl}` : null;
+    const sig = tw ? (tw.type === 'ally' ? `ally:${tw.id}:${tw.turns}` : `${tw.type}:${tw.lvl}`) : null;
     if (sig === shownTowers[si]) return;
     const s = slotEls[si];
     const prev = shownTowers[si];
     shownTowers[si] = sig;
+    // なかまのタワー: キャラの絵＋のこりターン
+    if (tw?.type === 'ally') {
+      const first = !prev?.startsWith(`ally:${tw.id}:`);
+      s.className = 'cell slot built ally-tower';
+      s.innerHTML = `<span class="ally-tw">${cardSprite(tw.id)}</span><span class="lv">⏳${tw.turns}</span>`;
+      if (pop && first) { anim(s, [{ transform: 'scale(.3) translateY(-30px)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], 380); burst(...slotCenter(si), ['✨', '🌟', '✨'], 10); }
+      return;
+    }
     const sk = tw ? skinFor(tw.type) : null;
     s.className = `cell slot${tw ? ` built ${sk.cls} sk-star-${sk.star}` : ''}`;
     s.innerHTML = tw ? `${towerSprite(tw.type, tw.lvl, sk.id)}<span class="lv">${'★'.repeat(tw.lvl)}</span>` : '<span class="plus">＋</span>';
-    if (tw && pop) {
+    if (tw && pop && !prev?.startsWith('ally:')) {
       anim(s, [{ transform: 'scale(.3) translateY(-20px)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], 320);
       burst(...slotCenter(si), prev ? ['✨', '⭐', '✨'] : ['💥', '✨'], prev ? 8 : 6);
       if (prev) floatAt(...slotCenter(si), `Lv${tw.lvl}!`, 'lvup');
@@ -84,8 +92,30 @@ export function boardView(st, { onSlot, onTap, skinFor = () => ({ id: 'default',
   const slotCenter = (si) => center(...SLOTS[si]);
 
   // 状態に合わせて一気に表示を合わせる（早送り・初期表示用）
+  // 道の上のなかま（ガード・出撃型）
+  const shownAllies = new Map(); // key -> el
+  function paintAllies() {
+    const want = new Map();
+    for (const g of st.guards || []) want.set(`g:${g.id}`, { ...g, kind: 'guard' });
+    for (const r of st.raiders || []) want.set(`r:${r.id}`, { ...r, kind: 'raider' });
+    for (const [k, a] of want) {
+      let d = shownAllies.get(k);
+      if (!d) {
+        d = h('div', { class: `ally-token ${a.kind}`, html: `<span class="body">${cardSprite(a.id)}</span><span class="hp"><i></i></span>` });
+        layer.append(d);
+        shownAllies.set(k, d);
+        anim(d.querySelector('.body'), [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.3)', opacity: 1, offset: 0.7 }, { transform: 'none' }], 380);
+      }
+      const [c, r] = PATH[Math.min(a.pos, EXIT)];
+      d.style.setProperty('--c', c);
+      d.style.setProperty('--r', r);
+      d.querySelector('.hp i').style.width = `${Math.max(0, (a.hp / a.maxHp) * 100)}%`;
+    }
+    for (const [k, d] of shownAllies) if (!want.has(k)) { shownAllies.delete(k); anim(d, [{ opacity: 1 }, { opacity: 0 }], 300).then(() => d.remove()); }
+  }
   function sync(pop = false) {
     st.slots.forEach((_, si) => paintTower(si, pop));
+    paintAllies();
     const live = new Set();
     for (const e of st.enemies) {
       if (e.dead) continue;
@@ -245,7 +275,7 @@ export function boardView(st, { onSlot, onTap, skinFor = () => ({ id: 'default',
           s.classList.remove('firing');
           void s.offsetWidth;
           s.classList.add('firing');
-          kinds.add(f.type);
+          kinds.add(f.type === 'ally' ? 'beam' : f.type);
           if (f.type === 'bomb') shots.push(ring(sx, sy, 'bomb-ring', 3.2));
           else if (f.type === 'frost') {
             shots.push(ring(sx, sy, 'frost-ring', 3));
@@ -255,12 +285,19 @@ export function boardView(st, { onSlot, onTap, skinFor = () => ({ id: 'default',
             const o = shown.get(id);
             if (!o) continue;
             const [tx, ty] = enemyCenter(o);
-            if (f.type === 'beam') shots.push(beamLine(sx, sy, tx, ty, `beam lv${f.lvl}`));
+            if (f.type === 'beam' || f.type === 'ally') shots.push(beamLine(sx, sy, tx, ty, `beam lv${f.lvl}`));
           }
         }
         kinds.forEach((k) => sfx(k));
         await Promise.all(shots);
         await applyHits(events.filter((e) => (e.t === 'hit' || e.t === 'kill') && e.src === 'tower'));
+      }
+      // 2b) 道の上のなかま（ガード・出撃型）のこうげき
+      const guardHits = events.filter((e) => (e.t === 'hit' || e.t === 'kill') && e.src === 'guard');
+      if (guardHits.length) {
+        paintAllies();
+        sfx('hit');
+        await applyHits(guardHits);
       }
       // 3) 敵の移動（道にそって1マスずつ）
       const moves = events.filter((e) => e.t === 'move');
