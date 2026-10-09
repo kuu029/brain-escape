@@ -161,6 +161,20 @@ function genFormula(rng) {
   };
 }
 
+// 解の公式で、√ がはずれる（判別式が平方数の）ときの解き方
+function formulaRSteps(P) {
+  const a = P.coef({ x: 2 }).n, b = P.coef({ x: 1 }).n, c = P.coef({}).n;
+  const D = b * b - 4 * a * c, k = Math.round(Math.sqrt(D));
+  const x1 = F(-b + k, 2 * a), x2 = F(-b - k, 2 * a);
+  return [
+    `${m(`a=${a},\\ b=${b},\\ c=${c}`)} を ${m('x=\\frac{-b\\pm\\sqrt{b^{2}-4ac}}{2a}')} に入れる`,
+    `√ の中: ${m(`${tpar(b)}^{2}-4\\times ${a}\\times ${tpar(c)}=${b * b}${-4 * a * c < 0 ? '' : '+'}${-4 * a * c}=${D}`)}`,
+    `${m(`${D}=${k}^{2}`)}（平方数）なので √ がはずれる: ${m(`x=\\frac{${-b}\\pm${k}}{${2 * a}}`)}`,
+    `＋のほう: ${m(`\\frac{${-b}+${k}}{${2 * a}}=\\frac{${-b + k}}{${2 * a}}=${tnum(x1)}`)}`,
+    `－のほう: ${m(`\\frac{${-b}-${k}}{${2 * a}}=\\frac{${-b - k}}{${2 * a}}=${tnum(x2)}`)}`,
+  ];
+}
+
 function genFormulaR(rng) {
   // 有理数の解 (p1 x + q1)(p2 x + q2) = 0、a ≥ 2
   let p1, q1, p2, q2;
@@ -172,7 +186,7 @@ function genFormulaR(rng) {
     stem: `方程式を解け。（分数は ${m('3/4')} のように入力） ${m(tex)}`,
     ...roots2(r1, r2, [{ vals: { x1: r1.neg(), x2: r2.neg() }, msg: '符号を確認！ $-b$ から始まる。' }]),
     hint: '解の公式を使う。√ の中が平方数なら、√ が外れて分数の解になる。',
-    steps: [`${m(`b^{2}-4ac=${P.coef({ x: 1 }).n ** 2 - 4 * P.coef({ x: 2 }).n * P.coef({}).n}`)}（平方数！）`, `${m(`x=${tnum(r1)},\\ ${tnum(r2)}`)}`],
+    steps: formulaRSteps(P),
     check: { kind: 'roots', eq: tex },
   };
 }

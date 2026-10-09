@@ -56,7 +56,10 @@ function genSpecial(rng) {
       fig: geo({ ...rspec(Q, hypGiven ? [{ a: 'A', b: 'B', label: `${hk}cm`, side: 1 }, { a: 'B', b: 'C', label: 'x', side: 1 }] : [{ a: 'B', b: 'C', label: `${k}cm`, side: 1 }, { a: 'A', b: 'B', label: 'x', side: 1 }]), ticks: [['B', 'C'], ['C', 'A']], angles: [{ at: 'C', from: 'B', to: 'A', right: true }, { at: 'B', from: 'A', to: 'C', label: '45°' }] }),
       ...lenQ(rng, hypGiven ? (hk * hk) / 2 : 2 * k * k, hypGiven ? [{ n: hk * hk * 2, msg: '斜辺は他の辺の $\\sqrt{2}$ 倍。だから $x$ は斜辺 ÷ $\\sqrt{2}$。' }, { n: (hk * hk) / 4, msg: '$1:1:\\sqrt{2}$ の比を使おう。' }] : [{ n: 4 * k * k, msg: '斜辺は $\\sqrt{2}$ 倍（2倍ではない）。' }, { n: 3 * k * k, msg: '$\\sqrt{3}$ は 30°・60° の三角形。' }], () => (hypGiven ? dist(Q.B, Q.C) : dist(Q.A, Q.B))),
       hint: '45°・45°・90° の三角形の辺の比は $1:1:\\sqrt{2}$',
-      steps: [hypGiven ? `${m(`x=${hk}\\div \\sqrt{2}=${rootTex((hk * hk) / 2)}`)}` : `${m(`x=${k}\\times \\sqrt{2}=${rootTex(2 * k * k)}`)}`],
+      steps: [
+        '直角二等辺三角形（45°・45°・90°）の辺の比は 等しい辺 : 等しい辺 : 斜辺 = $1:1:\\sqrt{2}$',
+        hypGiven ? `斜辺が ${m(hk)} → 等しい辺は斜辺 ÷ ${m('\\sqrt{2}')}: ${m(`x=\\frac{${hk}}{\\sqrt{2}}=\\frac{${hk}\\sqrt{2}}{2}=${rootTex((hk * hk) / 2)}`)}（分母を有理化）` : `等しい辺が ${m(k)} → 斜辺はその ${m('\\sqrt{2}')} 倍: ${m(`x=${k}\\times \\sqrt{2}=${rootTex(2 * k * k)}`)}`,
+      ],
     };
   }
   // 30°, 60°, 90°（BC=k、AB=2k、CA=k√3。∠B=60°）
@@ -72,7 +75,11 @@ function genSpecial(rng) {
     fig: geo({ ...rspec(P, lens), angles: [{ at: 'C', from: 'B', to: 'A', right: true }, { at: 'B', from: 'A', to: 'C', label: '60°' }, { at: 'A', from: 'C', to: 'B', label: '30°' }] }),
     ...lenQ(rng, N, [{ n: 2 * k * k, msg: '$\\sqrt{2}$ は直角二等辺三角形。30°・60° は $1:2:\\sqrt{3}$。' }, { n: 4 * k * k, msg: '辺の比 $1:2:\\sqrt{3}$ の、どの辺かを確認。' }, { n: askLong ? k * k : 3 * k * k, msg: '短い辺（30° の向かい）と長い辺をとりちがえていない？' }], () => (askLong ? dist(P.C, P.A) : dist(P.B, P.C))),
     hint: '30°・60°・90° の三角形の辺の比は $1:2:\\sqrt{3}$（短い辺：斜辺：残り）',
-    steps: [fromHyp ? `いちばん短い辺は ${m(`${2 * k}\\div 2=${k}`)}` : `短い辺 ${m(k)}`, `${m(`x=${rootTex(N)}`)}`],
+    steps: [
+      '30°・60°・90° の三角形の辺の比は 短い辺（30°の向かい）: 斜辺 : 残りの辺 = $1:2:\\sqrt{3}$',
+      fromHyp ? `斜辺が ${m(2 * k)} → 短い辺はその半分: ${m(`${2 * k}\\div 2=${k}`)}` : `短い辺（BC）が ${m(k)}`,
+      askLong ? `残りの辺（CA）は短い辺の ${m('\\sqrt{3}')} 倍: ${m(`x=${k}\\times \\sqrt{3}=${rootTex(N)}`)}` : `${m(`x=${rootTex(N)}`)}`,
+    ],
   };
 }
 

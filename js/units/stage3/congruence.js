@@ -20,7 +20,7 @@ function genIso(rng) {
       fig: geo(isoSpec(P, [{ at: 'A', from: 'B', to: 'C', label: `${v}°` }, { at: 'B', from: 'C', to: 'A', label: 'x', hl: true }])),
       ...degAns(beta, [{ v: 180 - v, msg: '底角は2つある（等しい）。180° から頂角をひいて、2でわる。' }, { v: v / 2 }]),
       hint: '二等辺三角形の2つの底角は等しい。',
-      steps: [`${m(`(180^{\\circ}-${v}^{\\circ})\\div 2=${beta}^{\\circ}`)}`],
+      steps: [`二等辺三角形の2つの底角（${m('\\angle B')} と ${m('\\angle C')}）は等しい`, `底角2つぶん: ${m(`180^{\\circ}-${v}^{\\circ}=${180 - v}^{\\circ}`)}`, `1つぶん: ${m(`${180 - v}^{\\circ}\\div 2=${beta}^{\\circ}`)}`],
       check: measured(() => angleAt(P.C, P.B, P.A)),
     };
   }
@@ -30,7 +30,7 @@ function genIso(rng) {
       fig: geo(isoSpec(P, [{ at: 'C', from: 'A', to: 'B', label: `${beta}°` }, { at: 'A', from: 'B', to: 'C', label: 'x', hl: true }])),
       ...degAns(v, [{ v: 180 - beta, msg: '底角は2つとも同じ大きさ。' }, { v: beta }]),
       hint: '底角が2つとも同じ → 頂角 = 180° − 底角×2。',
-      steps: [`${m(`180^{\\circ}-${beta}^{\\circ}\\times 2=${v}^{\\circ}`)}`],
+      steps: [`底角は2つとも等しい → ${m('\\angle B')} も ${m(`${beta}^{\\circ}`)}`, `内角の和 ${m('180^{\\circ}')} から底角2つをひく: ${m(`180^{\\circ}-${beta}^{\\circ}\\times 2=${v}^{\\circ}`)}`],
       check: measured(() => angleAt(P.B, P.A, P.C)),
     };
   }
@@ -41,7 +41,7 @@ function genIso(rng) {
     fig: geo(isoSpec(Q, [{ at: 'A', from: 'B', to: 'C', label: `${v}°` }, { at: 'B', from: 'A', to: 'D', label: 'x', hl: true }], { segs: [['B', 'D']] })),
     ...degAns(180 - beta, [{ v: beta, msg: 'それは底角。x は一直線の残り（180° − 底角）。' }, { v: 180 - v }]),
     hint: 'まず底角を求めて、一直線の 180° からひく。',
-    steps: [`底角 ${m(`(180^{\\circ}-${v}^{\\circ})\\div 2=${beta}^{\\circ}`)}`, `${m(`x=180^{\\circ}-${beta}^{\\circ}=${180 - beta}^{\\circ}`)}`],
+    steps: [`底角は等しいので ${m(`(180^{\\circ}-${v}^{\\circ})\\div 2=${beta}^{\\circ}`)}`, `${m('x')} と底角 ${m('\\angle ABC')} で一直線（${m('180^{\\circ}')}）: ${m(`x=180^{\\circ}-${beta}^{\\circ}=${180 - beta}^{\\circ}`)}`],
     check: measured(() => angleAt(P.A, P.B, D)),
   };
 }
@@ -64,7 +64,9 @@ function genPara(rng) {
       fig: geo(paraSpec(P, [{ at: 'A', from: 'B', to: 'D', label: `${alpha}°` }, askB ? { at: 'B', from: 'C', to: 'A', label: 'x', hl: true } : { at: 'C', from: 'D', to: 'B', label: 'x', hl: true }])),
       ...degAns(askB ? 180 - alpha : alpha, [{ v: askB ? alpha : 180 - alpha, msg: askB ? 'となり合う角は合わせて 180°（向かい合う角が等しい）。' : '向かい合う角（対角）は等しい。' }]),
       hint: '平行四辺形: 向かい合う角は等しい。となり合う角の和は 180°。',
-      steps: [askB ? `${m(`180^{\\circ}-${alpha}^{\\circ}=${180 - alpha}^{\\circ}`)}` : '対角は等しい'],
+      steps: askB
+        ? [`平行四辺形のとなり合う角（${m('\\angle A')} と ${m('\\angle B')}）は、たすと ${m('180^{\\circ}')}（AD と BC が平行なので）`, `${m(`x=180^{\\circ}-${alpha}^{\\circ}=${180 - alpha}^{\\circ}`)}`]
+        : [`平行四辺形の向かい合う角（対角）は等しい: ${m('\\angle C=\\angle A')}`, `${m(`x=${alpha}^{\\circ}`)}`],
       check: measured(() => (askB ? angleAt(P.C, P.B, P.A) : angleAt(P.D, P.C, P.B))),
     };
   }
@@ -73,7 +75,7 @@ function genPara(rng) {
     fig: geo(paraSpec(P, [], [{ a: 'A', b: 'B', label: `${w}cm`, side: -1 }, { a: 'D', b: 'A', label: `${s}cm`, side: -1 }])),
     ...numAns([{ key: 'v', text: '', suffix: 'cm' }], { v: 2 * (w + s) }, { wrong: [{ vals: { v: w + s }, msg: '向かい合う辺は等しいので、4本の辺を全部たす。' }] }),
     hint: '平行四辺形の向かい合う辺は等しい。',
-    steps: [`${m(`(${w}+${s})\\times 2=${2 * (w + s)}`)}`],
+    steps: [`平行四辺形の向かい合う辺は等しい: ${m(`CD=AB=${w}`)}、${m(`BC=AD=${s}`)}`, `4本をたす: ${m(`${w}+${s}+${w}+${s}=(${w}+${s})\\times 2=${2 * (w + s)}`)} cm`],
     check: { kind: 'fn', verify: (v) => near(v.v, dist(P.A, P.B) + dist(P.B, P.C) + dist(P.C, P.D) + dist(P.D, P.A)) },
   };
 }
@@ -132,7 +134,13 @@ function genCondition(rng) {
     fig: geo({ pts: P, segs: [['A', 'B'], ['B', 'C'], ['C', 'A'], ['D', 'E'], ['E', 'F'], ['F', 'D']], polys: [['A', 'B', 'C'], ['D', 'E', 'F']], ticks, angles }),
     ...textChoice(rng, correct, [...Object.values(COND).filter((c) => c !== correct).map((c) => ({ tex: c, msg: '印のついた辺と角の数・位置を数えよう。' })), { tex: NOT_COND, msg: '角だけでは、形は同じでも大きさがちがうことがある（合同条件ではない）。' }]),
     hint: '印のついた「辺」の数と「角」の数、そして角が辺の間か両端かを見る。',
-    steps: [`辺 ${pick.sides.length} 組、角 ${pick.angles.length} 組 → 「${correct}」`],
+    steps: [
+      `等しい印がついているのは 辺 ${pick.sides.length} 組（${pick.sides.join('、')}）${pick.angles.length ? `、角 ${pick.angles.length} 組（${pick.angles.map((v) => `∠${v}`).join('、')}）` : ''}`,
+      kind === 'sss' ? '辺が3組 → 角を見なくても合同'
+        : kind === 'sas' ? `角 ∠${pick.angles[0]} は、2つの辺 ${pick.sides.join(' と ')} の「間」にある`
+          : `辺 ${pick.sides[0]} の「両端」の角 ∠${pick.angles.join(' と ∠')} が等しい`,
+      `合同条件は3つ: 3組の辺／2組の辺とその間の角／1組の辺とその両端の角 → 「${correct}」`,
+    ],
     check: { kind: 'fn', verify: (t) => t === classify(pick.sides, pick.angles) },
   };
 }

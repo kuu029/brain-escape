@@ -77,21 +77,31 @@ function genPow(rng) {
   let ans;
   let bad;
   let why;
-  if (form === 0) { tex = `-${a}^{2}`; ans = -a * a; bad = a * a; why = `${m(`-${a}^{2}`)} は「${a} の2乗にマイナスをつける」。2乗されるのは ${a} だけ！`; }
-  else if (form === 1) { tex = `(-${a})^{2}`; ans = a * a; bad = -a * a; why = `${m(`(-${a})^{2}`)} はかっこごと2乗。マイナス×マイナスでプラス！`; }
-  else if (form === 2) { const b = rng.int(2, 4); tex = `(-${b})^{3}`; ans = -(b ** 3); bad = b ** 3; why = 'マイナスを3回かけるとマイナス（奇数回）。'; }
-  else if (form === 3) {
+  let steps; // 解き方: 「何を何回かけるか」をかけ算で書き出す
+  const neg2 = (x) => `(-${x})\\times (-${x})`;
+  if (form === 0) {
+    tex = `-${a}^{2}`; ans = -a * a; bad = a * a; why = `${m(`-${a}^{2}`)} は「${a} の2乗にマイナスをつける」。2乗されるのは ${a} だけ！`;
+    steps = [`2乗されるのは ${m(a)} だけ（マイナスはかっこの外）`, `${m(`-${a}^{2}=-(${a}\\times ${a})=-${a * a}`)}`];
+  } else if (form === 1) {
+    tex = `(-${a})^{2}`; ans = a * a; bad = -a * a; why = `${m(`(-${a})^{2}`)} はかっこごと2乗。マイナス×マイナスでプラス！`;
+    steps = [`かっこごと2乗 → ${m(`-${a}`)} を2回かける`, `${m(`(-${a})^{2}=${neg2(a)}=${a * a}`)}（マイナス×マイナスでプラス）`];
+  } else if (form === 2) {
+    const b = rng.int(2, 4); tex = `(-${b})^{3}`; ans = -(b ** 3); bad = b ** 3; why = 'マイナスを3回かけるとマイナス（奇数回）。';
+    steps = [`${m(`-${b}`)} を3回かける: ${m(`(-${b})\\times (-${b})\\times (-${b})`)}`, `マイナスが3個（奇数）→ 答えはマイナス: ${m(`-(${b}\\times ${b}\\times ${b})=${ans}`)}`];
+  } else if (form === 3) {
     const b = rng.nz(-4, 4);
     tex = `${tnum(b)}\\times (-${a})^{2}`; ans = b * a * a; bad = -b * a * a; why = `${m(`(-${a})^{2}=${a * a}`)} が先。かっこごと2乗だからプラス。`;
+    steps = [`累乗（2乗）が先: ${m(`(-${a})^{2}=${neg2(a)}=${a * a}`)}`, `かけ算: ${m(`${tnum(b)}\\times ${a * a}=${ans}`)}`];
   } else {
     const c = rng.int(2, 5);
     tex = `-${a}^{2}+(-${c})^{2}`; ans = -a * a + c * c; bad = a * a + c * c; why = `${m(`-${a}^{2}=-${a * a}`)}、${m(`(-${c})^{2}=${c * c}`)}。かっこの有無で全然ちがう！`;
+    steps = [`前半はかっこなし → ${a} だけ2乗: ${m(`-${a}^{2}=-(${a}\\times ${a})=-${a * a}`)}`, `後半はかっこごと2乗: ${m(`(-${c})^{2}=${neg2(c)}=${c * c}`)}`, `${m(`-${a * a}+${c * c}=${ans}`)}`];
   }
   return {
     stem: `計算せよ。 ${m(tex)}`,
     ...numAns(ONE, { v: ans }, { wrong: [{ vals: { v: bad }, msg: why }] }),
     hint: '「何が」2乗（3乗）されているか、かっこを見てチェック。',
-    steps: [why, `答え: ${m(String(ans))}`],
+    steps: [...steps, `答え: ${m(String(ans))}`],
     check: { kind: 'value', expr: tex },
   };
 }

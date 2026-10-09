@@ -23,7 +23,7 @@ function genCenter(rng) {
     fig: geo({ pts, segs, circles: C1, angles: askIns ? [{ at: 'O', from: 'A', to: 'B', label: `${c}°` }, { at: 'P', from: 'A', to: 'B', label: 'x', hl: true }] : [{ at: 'P', from: 'A', to: 'B', label: `${c / 2}°` }, { at: 'O', from: 'A', to: 'B', label: 'x', hl: true }] }),
     ...degAns(askIns ? c / 2 : c, askIns ? [{ v: c, msg: '円周角は中心角の半分。' }, { v: 180 - c }] : [{ v: c / 4, msg: '中心角は円周角の2倍。' }, { v: c / 2 }]),
     hint: '1つの弧に対する円周角は、その弧に対する中心角の半分。',
-    steps: [askIns ? `${m(`x=${c}^{\\circ}\\div 2=${c / 2}^{\\circ}`)}` : `${m(`x=${c / 2}^{\\circ}\\times 2=${c}^{\\circ}`)}`],
+    steps: [`${m('\\angle APB')}（円周角）と ${m('\\angle AOB')}（中心角）は、どちらも弧 AB に対する角`, '円周角の定理: 円周角は、同じ弧に対する中心角の半分', askIns ? `${m(`x=${c}^{\\circ}\\div 2=${c / 2}^{\\circ}`)}` : `中心角は円周角の2倍: ${m(`x=${c / 2}^{\\circ}\\times 2=${c}^{\\circ}`)}`],
     check: measured(() => (askIns ? angleAt(A, P, B) : angleAt(A, O, B))),
   };
 }

@@ -34,7 +34,11 @@ function genValue(rng) {
       { vals: { y: a.mul(2 * p) }, msg: '2乗は「2倍」じゃない。同じ数を2回かける。' },
     ] }),
     hint: '$x$ に代入。負の数はかっこをつけて2乗。',
-    steps: [`${m(`y=${tnum(a)}\\times ${par(p)}^{2}=${tnum(a.mul(p * p))}`)}`],
+    steps: [
+      `${m(`x=${p}`)} を代入（負の数はかっこごと）: ${m(`y=${tnum(a)}\\times ${par(p)}^{2}`)}`,
+      `2乗が先: ${m(`${par(p)}^{2}=${par(p)}\\times ${par(p)}=${p * p}`)}（2乗するとプラス）`,
+      `${m(`y=${tnum(a)}\\times ${p * p}=${tnum(a.mul(p * p))}`)}`,
+    ],
     check: { kind: 'value', expr: subX(rhs, p) },
   };
 }
@@ -102,7 +106,11 @@ function genGraph(rng) {
       { tex: paraTex(F(p * p).div(q)), msg: '$a=\\frac{y}{x^{2}}$。上下が逆！' },
     ]),
     hint: `点 ${m(`(${p},\\ ${tnum(q)})`)} を ${m('y=ax^{2}')} に代入。`,
-    steps: [`${m(`${tnum(q)}=a\\times ${p}^{2}`)} → ${m(`a=${tnum(a)}`)}`],
+    steps: [
+      `原点を頂点とする放物線 → ${m('y=ax^{2}')}`,
+      `グラフは点 ${m(`(${p},\\ ${tnum(q)})`)} を通る → 代入: ${m(`${tnum(q)}=a\\times ${p}^{2}=${p * p}a`)}`,
+      `両辺を ${m(p * p)} でわる: ${m(`a=${tnum(a)}`)}（${a.n > 0 ? '上に開くので' : '下に開くので'} ${m(`a${a.n > 0 ? '>' : '<'}0`)} も合う）→ ${m(paraTex(a))}`,
+    ],
     check: { kind: 'graph', pts: [[p, q.num()], [-p, q.num()], [2 * p, a.mul(4 * p * p).num()]] },
   };
 }

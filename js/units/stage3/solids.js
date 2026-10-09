@@ -1,5 +1,5 @@
 import { numAns, m } from '../kit.js';
-import { F, near } from './kit3.js';
+import { F, near, tnum } from './kit3.js';
 import { solid } from './fig.js';
 
 const PI = (key = 'v', unit = 'cm³') => [{ key, text: '', suffix: `π ${unit}` }];
@@ -14,7 +14,7 @@ function genPrism(rng) {
       fig: solid('cylinder', { r: `${r}cm`, h: `${h}cm` }),
       ...piAns(r * r * h, [{ v: 2 * r * h, msg: '底面積は $\\pi r^{2}$（半径の2乗）。' }, { v: F(r * r * h, 3), msg: '$\\frac{1}{3}$ をかけるのは錐（すい）のとき。柱はそのまま。' }]),
       hint: '柱の体積 = 底面積 × 高さ。円の面積は $\\pi r^{2}$。',
-      steps: [`底面積 ${m(`\\pi \\times ${r}^{2}=${r * r}\\pi`)}`, `${m(`${r * r}\\pi \\times ${h}=${r * r * h}\\pi`)}`],
+      steps: ['柱の体積 = 底面積 × 高さ', `底面は半径 ${m(r)} の円: ${m(`\\pi \\times ${r}^{2}=${r * r}\\pi`)}`, `× 高さ ${m(h)}: ${m(`${r * r}\\pi \\times ${h}=${r * r * h}\\pi`)} cm³`],
       check: { kind: 'value', expr: `${r}^{2}\\times ${h}` },
     };
   }
@@ -24,7 +24,7 @@ function genPrism(rng) {
     fig: solid('prism3', { a: `${a}cm`, h: `${h}cm` }),
     ...numAns([{ key: 'v', text: '', suffix: 'cm³' }], { v: F(a * b * h, 2) }, { wrong: [{ vals: { v: a * b * h }, msg: '三角形の面積は「× $\\frac{1}{2}$」。' }, { vals: { v: F(a * b * h, 6) }, msg: '$\\frac{1}{3}$ は錐のとき。' }] }),
     hint: '底面積（三角形 $\\frac{1}{2}\\times a\\times b$）× 高さ。',
-    steps: [`底面積 ${m(`\\frac{1}{2}\\times ${a}\\times ${b}`)}`, `× 高さ ${m(h)}`],
+    steps: ['柱の体積 = 底面積 × 高さ', `底面は直角三角形: ${m(`\\frac{1}{2}\\times ${a}\\times ${b}=${tnum(F(a * b, 2))}`)}`, `× 高さ ${m(h)}: ${m(`${tnum(F(a * b, 2))}\\times ${h}=${tnum(F(a * b * h, 2))}`)} cm³`],
     check: { kind: 'value', expr: `\\frac{1}{2}\\times ${a}\\times ${b}\\times ${h}` },
   };
 }
@@ -38,7 +38,7 @@ function genPyramid(rng) {
       fig: solid('cone', { r: `${r}cm`, h: `${h}cm` }),
       ...piAns((r * r * h) / 3, [{ v: r * r * h, msg: '錐の体積は、柱の $\\frac{1}{3}$。' }, { v: F(2 * r * h, 3), msg: '底面積は $\\pi r^{2}$。' }]),
       hint: '錐（すい）の体積 = $\\frac{1}{3}$ × 底面積 × 高さ',
-      steps: [`${m(`\\frac{1}{3}\\times \\pi \\times ${r}^{2}\\times ${h}=${(r * r * h) / 3}\\pi`)}`],
+      steps: ['錐（すい）の体積 = $\\frac{1}{3}$ × 底面積 × 高さ（同じ底面・高さの柱の $\\frac{1}{3}$）', `底面積: ${m(`\\pi \\times ${r}^{2}=${r * r}\\pi`)}`, `${m(`\\frac{1}{3}\\times ${r * r}\\pi \\times ${h}=${(r * r * h) / 3}\\pi`)} cm³`],
       check: { kind: 'value', expr: `\\frac{1}{3}\\times ${r}^{2}\\times ${h}` },
     };
   }
@@ -49,7 +49,7 @@ function genPyramid(rng) {
     fig: solid('pyramid4', { a: `${a}cm`, h: `${h}cm` }),
     ...numAns([{ key: 'v', text: '', suffix: 'cm³' }], { v: (a * a * h) / 3 }, { wrong: [{ vals: { v: a * a * h }, msg: '錐は $\\frac{1}{3}$ をかける。' }] }),
     hint: '錐の体積 = $\\frac{1}{3}$ × 底面積 × 高さ',
-    steps: [`${m(`\\frac{1}{3}\\times ${a}^{2}\\times ${h}=${(a * a * h) / 3}`)}`],
+    steps: ['錐（すい）の体積 = $\\frac{1}{3}$ × 底面積 × 高さ', `底面は1辺 ${m(a)} の正方形: ${m(`${a}^{2}=${a * a}`)}`, `${m(`\\frac{1}{3}\\times ${a * a}\\times ${h}=${(a * a * h) / 3}`)} cm³`],
     check: { kind: 'value', expr: `\\frac{1}{3}\\times ${a}^{2}\\times ${h}` },
   };
 }
@@ -66,7 +66,7 @@ function genSphere(rng) {
       fig,
       ...piAns(F(2 * r ** 3, 3), [{ v: F(4 * r ** 3, 3), msg: '半分に切ったので、球の体積の半分。' }, byD && { v: F(16 * r ** 3, 3), msg: '半径は直径の半分。' }]),
       hint: '球の体積 $\\frac{4}{3}\\pi r^{3}$ の半分。',
-      steps: [`半径 ${m(r)}`, `${m(`\\frac{4}{3}\\pi \\times ${r}^{3}\\div 2`)}`],
+      steps: [byD ? `半径は直径の半分: ${m(`${2 * r}\\div 2=${r}`)}` : `半径 ${m(r)}`, `球の体積 ${m('\\frac{4}{3}\\pi r^{3}')}: ${m(`\\frac{4}{3}\\pi \\times ${r}^{3}=${tnum(F(4 * r ** 3, 3))}\\pi`)}`, `半球はその半分: ${m(`${tnum(F(4 * r ** 3, 3))}\\pi \\div 2=${tnum(F(2 * r ** 3, 3))}\\pi`)} cm³`],
       check: { kind: 'value', expr: `\\frac{4}{3}\\times ${r}^{3}\\div 2` },
     };
   }
@@ -76,7 +76,7 @@ function genSphere(rng) {
       fig,
       ...piAns(F(4 * r ** 3, 3), [{ v: 4 * r * r, msg: 'それは表面積の式。体積は $\\frac{4}{3}\\pi r^{3}$。' }, { v: F(4 * r * r, 3), msg: '体積は $r$ の3乗。' }]),
       hint: '球の体積 $V=\\frac{4}{3}\\pi r^{3}$（身の上に心配あーる参上）',
-      steps: [`${m(`\\frac{4}{3}\\times \\pi \\times ${r}^{3}`)}`],
+      steps: [byD ? `半径は直径の半分: ${m(`${2 * r}\\div 2=${r}`)}` : `半径 ${m(r)}`, `球の体積 ${m('V=\\frac{4}{3}\\pi r^{3}')} に入れる: ${m(`\\frac{4}{3}\\times \\pi \\times ${r}^{3}`)}`, `${m(`${r}^{3}=${r ** 3}`)} → ${m(`\\frac{4}{3}\\times ${r ** 3}\\pi =${tnum(F(4 * r ** 3, 3))}\\pi`)} cm³`],
       check: { kind: 'value', expr: `\\frac{4}{3}\\times ${r}^{3}` },
     };
   }
@@ -85,7 +85,7 @@ function genSphere(rng) {
     fig,
     ...piAns(4 * r * r, [{ v: F(4 * r ** 3, 3), msg: 'それは体積。表面積は $4\\pi r^{2}$。' }, { v: r * r, msg: '球の表面積は、同じ半径の円の面積の4倍。' }], 'cm²'),
     hint: '球の表面積 $S=4\\pi r^{2}$（心配ある事情）',
-    steps: [`${m(`4\\times \\pi \\times ${r}^{2}=${4 * r * r}\\pi`)}`],
+    steps: [byD ? `半径は直径の半分: ${m(`${2 * r}\\div 2=${r}`)}` : `半径 ${m(r)}`, `球の表面積 ${m('S=4\\pi r^{2}')}（同じ半径の円の面積の4倍）`, `${m(`4\\times \\pi \\times ${r}^{2}=4\\times ${r * r}\\pi =${4 * r * r}\\pi`)} cm²`],
     check: { kind: 'value', expr: `4\\times ${r}^{2}` },
   };
 }

@@ -72,7 +72,7 @@ function genTriangle(rng) {
       fig: geo({ pts, segs, polys: [['A', 'B', 'C']], angles: [{ at: 'B', from: 'C', to: 'A', label: `${b}°` }, { at: 'C', from: 'A', to: 'B', label: `${c}°` }, { at: 'A', from: 'B', to: 'C', label: 'x', hl: true }] }),
       ...degAns(a, [{ v: b + c, msg: '三角形の内角の和は 180°。' }, { v: 360 - b - c, msg: '三角形の内角の和は 180°（360°は四角形）。' }]),
       hint: '三角形の内角の和は 180°。',
-      steps: [`${m(`x=180^{\\circ}-${b}^{\\circ}-${c}^{\\circ}=${a}^{\\circ}`)}`],
+      steps: [`三角形の3つの内角をたすと ${m('180^{\\circ}')}`, `${m(`x+${b}^{\\circ}+${c}^{\\circ}=180^{\\circ}`)}`, `${m(`x=180^{\\circ}-${b}^{\\circ}-${c}^{\\circ}=${a}^{\\circ}`)}`],
       check: measured(() => angleAt(B, A, C)),
     };
   }
@@ -85,7 +85,10 @@ function genTriangle(rng) {
       : [{ at: 'A', from: 'B', to: 'C', label: `${a}°` }, { at: 'B', from: 'C', to: 'A', label: 'x', hl: true }, { at: 'C', from: 'A', to: 'D', label: `${ext}°` }] }),
     ...degAns(askExt ? ext : b, askExt ? [{ v: 180 - ext, msg: 'それは内角の ∠ACB。外角はとなりにない2つの内角の和。' }, { v: Math.abs(a - b), msg: '外角は、となりにない2つの内角の「和」。' }] : [{ v: ext + a, msg: '外角 = 内角2つの和 → $x$ = 外角 − もう1つの内角。' }, { v: 180 - ext, msg: 'それは ∠ACB。' }]),
     hint: '三角形の外角は、それととなり合わない2つの内角の和に等しい。',
-    steps: askExt ? [`${m(`x=${a}^{\\circ}+${b}^{\\circ}=${ext}^{\\circ}`)}`] : [`${m(`${ext}^{\\circ}=${a}^{\\circ}+x`)} → ${m(`x=${b}^{\\circ}`)}`],
+    steps: [
+      `三角形の外角は、となり合わない2つの内角の和（${m('\\angle ACD=\\angle A+\\angle B')}）`,
+      ...(askExt ? [`${m(`x=${a}^{\\circ}+${b}^{\\circ}=${ext}^{\\circ}`)}`] : [`${m(`${ext}^{\\circ}=${a}^{\\circ}+x`)}`, `${m(`x=${ext}^{\\circ}-${a}^{\\circ}=${b}^{\\circ}`)}`]),
+    ],
     check: measured(() => (askExt ? angleAt(A, C, D) : angleAt(C, B, A))),
   };
 }
@@ -102,7 +105,7 @@ function genPolygon(rng) {
       stem: `${n}角形の内角の和は？`,
       ...degAns(180 * (n - 2), [{ v: 180 * n, msg: '$n$ 角形は対角線で $(n-2)$ 個の三角形に分けられる。' }, { v: 180 * (n - 1) }]),
       hint: '$n$ 角形の内角の和は $180^{\\circ}\\times (n-2)$。',
-      steps: [`${m(`180^{\\circ}\\times (${n}-2)=${180 * (n - 2)}^{\\circ}`)}`],
+      steps: [`${n}角形は、1つの頂点から対角線をひくと ${m(`${n}-2=${n - 2}`)} 個の三角形に分かれる`, `三角形1つの内角の和は ${m('180^{\\circ}')} → ${m(`180^{\\circ}\\times (${n}-2)=${180 * (n - 2)}^{\\circ}`)}`],
       // 正 n 角形を作って、1つの内角を測って n 倍
       check: measured(() => interior(n) * n),
     };
@@ -116,7 +119,7 @@ function genPolygon(rng) {
       fig,
       ...degAns(180 - 360 / n, [{ v: 360 / n, msg: 'それは1つの外角。内角 = 180° − 外角。' }, { v: 180 * (n - 2), msg: 'それは内角の和。$n$ でわる。' }]),
       hint: '外角の和は 360°。正 $n$ 角形の1つの外角は $360^{\\circ}\\div n$、内角は $180^{\\circ}-$ 外角。',
-      steps: [`外角 ${m(`360^{\\circ}\\div ${n}=${360 / n}^{\\circ}`)}`, `内角 ${m(`180^{\\circ}-${360 / n}^{\\circ}=${180 - 360 / n}^{\\circ}`)}`],
+      steps: [`先に外角を求める（外角の和はいつも ${m('360^{\\circ}')}）: ${m(`360^{\\circ}\\div ${n}=${360 / n}^{\\circ}`)}`, `内角と外角をたすと ${m('180^{\\circ}')}（一直線）→ 内角 ${m(`180^{\\circ}-${360 / n}^{\\circ}=${180 - 360 / n}^{\\circ}`)}`],
       check: measured(() => interior(n)),
     };
   }
@@ -126,7 +129,7 @@ function genPolygon(rng) {
       fig,
       ...degAns(360 / n, [{ v: 180 - 360 / n, msg: 'それは内角。' }, { v: 180 / n, msg: '外角の和は 360°。' }]),
       hint: '多角形の外角の和はいつも 360°。',
-      steps: [`${m(`360^{\\circ}\\div ${n}=${360 / n}^{\\circ}`)}`],
+      steps: [`多角形の外角の和は、何角形でもいつも ${m('360^{\\circ}')}`, `正${n}角形は外角が ${n} 個すべて等しい → ${m(`360^{\\circ}\\div ${n}=${360 / n}^{\\circ}`)}`],
       check: measured(() => 180 - interior(n)),
     };
   }
@@ -134,7 +137,7 @@ function genPolygon(rng) {
     stem: `1つの外角が ${m(`${360 / n}^{\\circ}`)} の正多角形は、正何角形？`,
     ...numAns([{ key: 'v', text: '正', suffix: '角形' }], { v: n }, { wrong: n % 2 ? [] : [{ vals: { v: n / 2 }, msg: '外角の和は 360°（180°ではない）。' }] }),
     hint: '外角の和は 360° → $360^{\\circ}\\div$ 1つの外角 = 角の数。',
-    steps: [`${m(`360\\div ${360 / n}=${n}`)}`],
+    steps: [`外角の和はいつも ${m('360^{\\circ}')}。正多角形は外角がぜんぶ同じ ${m(`${360 / n}^{\\circ}`)}`, `外角の数（＝角の数）: ${m(`360\\div ${360 / n}=${n}`)} → 正${n}角形`],
     check: { kind: 'fn', verify: (v) => Number.isInteger(v.v) && v.v >= 3 && Math.abs(180 - interior(v.v) - 360 / n) < 1e-6 },
   };
 }

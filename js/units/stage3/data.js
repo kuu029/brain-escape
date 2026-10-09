@@ -69,7 +69,7 @@ function genCenter(rng) {
       stem: `${head}最頻値（モード）は？`,
       ...ans1('最頻値', v, [{ v: medianOf(a) === v ? undefined : toF(medianOf(a)), msg: '最頻値は「いちばん多く出てくる値」。' }]),
       hint: 'いちばん多く出てくる値。',
-      steps: [`${v} が ${a.filter((x) => x === v).length} 回でいちばん多い`],
+      steps: ['最頻値は、データの中でいちばん多く出てくる値', `小さい順に並べると数えやすい: ${[...a].sort((x, y) => x - y).join('、')}`, `${v} が ${a.filter((x) => x === v).length} 回でいちばん多い → 最頻値 ${v}`],
       check: { kind: 'fn', verify: (x) => near(x.v, (() => { let b = null, bc = 0; for (const y of a) { const c = a.filter((z) => z === y).length; if (c > bc) { bc = c; b = y; } } return b; })()) },
     };
   }
@@ -139,7 +139,7 @@ function genRelFreq(rng) {
       fig: table,
       ...ans1('相対度数', F(f[i], N), [{ v: f[i], msg: '相対度数 = その階級の度数 ÷ 度数の合計。' }, { v: F(cum, N).eq(F(f[i], N)) ? undefined : F(cum, N), msg: 'それは累積相対度数。' }]),
       hint: '相対度数 = その階級の度数 ÷ 合計',
-      steps: [`${m(`${f[i]}\\div ${N}=${tdec(F(f[i], N))}`)}`],
+      steps: ['相対度数 = その階級の度数 ÷ 度数の合計（全体のうちの割合）', `${cls[i]}分の度数は ${f[i]}、合計は ${m(`${f.join('+')}=${N}`)}`, `${m(`${f[i]}\\div ${N}=${tdec(F(f[i], N))}`)}`],
       check: { kind: 'fn', verify: (x) => near(x.v, f[i] / f.reduce((p, q) => p + q, 0)) },
     };
   }

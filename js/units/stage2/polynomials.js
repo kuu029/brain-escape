@@ -60,6 +60,17 @@ function genScalar(rng) {
   };
 }
 
+// 文字の指数の計算メモ: 「x は 2+1=3 → x^3、y は …」（sgn=1 かけ算でたす、-1 わり算でひく）
+function expNote(u, v, e1, e2, sgn) {
+  return [u, v].map((w) => {
+    const a = e1[w] || 0, b = e2[w] || 0;
+    if (!a && !b) return null;
+    const r = a + sgn * b;
+    const pw = (k) => (k === 0 ? '1' : k === 1 ? w : `${w}^{${k}}`);
+    return `${m(w)} は ${m(`${a}${sgn > 0 ? '+' : '-'}${b}=${r}`)} → ${r === 0 ? '約分で消える' : m(pw(r))}`;
+  }).filter(Boolean).join('、');
+}
+
 function genMono(rng) {
   const [u, v] = rng.pick(VARS);
   const form = rng.int(0, 3);
@@ -72,7 +83,7 @@ function genMono(rng) {
     tex = `${mono(a, e1)}\\times ${pmono(b, e2)}`;
     ans = Poly.of([[a, e1]]).mul(Poly.of([[b, e2]]));
     wrongs = [{ p: ans.neg(), msg: '符号を確認！' }, { p: Poly.of([[a * b, { [u]: e1[u] * e2[u], [v]: e1[v] + e2[v] }]]), msg: '同じ文字のかけ算は、指数を「たす」！ $x^{2}\\times x=x^{3}$' }];
-    steps = [`数どうし: ${m(`${tpar(a)}\\times ${tpar(b)}=${a * b}`)}`, `文字どうし（指数はたす）→ ${m(ans.toTex())}`];
+    steps = [`数どうし: ${m(`${tpar(a)}\\times ${tpar(b)}=${a * b}`)}`, `文字どうし（同じ文字は指数をたす）: ${expNote(u, v, e1, e2, 1)}`, `あわせて ${m(ans.toTex())}`];
   } else if (form === 1) {
     const r = rng.nz(-6, 6), d = rng.intEx(-5, 5, [0, 1]);
     const eR = e(rng.int(0, 2), rng.int(0, 1)), eD = e(rng.int(1, 2), rng.int(0, 1));
@@ -81,7 +92,7 @@ function genMono(rng) {
     tex = `${mono(dv.c.n, dv.e)}\\div ${pmono(d, eD)}`;
     ans = Poly.of([[r, eR]]);
     wrongs = [{ p: ans.neg(), msg: '符号を確認！' }, { p: dividend.mul(Poly.of([[d, eD]])), msg: 'わり算なのにかけてない？ 分数にして約分しよう。' }, { p: Poly.of([[r * d * d, eR]]), msg: '数の部分もわり算！' }];
-    steps = [`分数にする: ${m(`\\frac{${mono(dv.c.n, dv.e)}}{${mono(d, eD)}}`)}`, `数と文字をそれぞれ約分 → ${m(ans.toTex())}`];
+    steps = [`分数にする: ${m(`\\frac{${mono(dv.c.n, dv.e)}}{${mono(d, eD)}}`)}`, `数どうし: ${m(`${tpar(dv.c.n)}\\div ${tpar(d)}=${r}`)}`, `文字どうし（同じ文字は指数をひく＝約分）: ${expNote(u, v, dv.e, eD, -1)}`, `あわせて ${m(ans.toTex())}`];
   } else if (form === 2) {
     const b = rng.intEx(-4, 4, [0, 1]), c = rng.nz(-5, 5);
     const eB = e(1, rng.int(0, 1)), eC = e(rng.int(0, 1), 1);
@@ -98,7 +109,7 @@ function genMono(rng) {
     tex = `${mono(a * b, eA)}\\div ${mono(b, eB)}\\times ${pmono(c, eC)}`;
     ans = Poly.of([[a * c, e(1, 2)]]);
     wrongs = [{ p: Poly.of([[F(a, c), e(1, 0)]]), msg: '「÷b×c」は「÷(b×c)」じゃない！ ×c は分子へ。' }, { p: ans.neg(), msg: '符号を確認！' }];
-    steps = [`分数にまとめる: ${m(`\\frac{${mono(a * b, eA)}\\times ${pmono(c, eC)}}{${mono(b, eB)}}`)}`, `約分 → ${m(ans.toTex())}`];
+    steps = [`÷ は分母、× は分子へ。分数にまとめる: ${m(`\\frac{${mono(a * b, eA)}\\times ${pmono(c, eC)}}{${mono(b, eB)}}`)}`, `数: ${m(`${a * b}\\times ${tpar(c)}\\div ${b}=${a * c}`)}`, `文字: ${m(`${u}^{2}${v}\\times ${v}\\div ${u}=${u}${v}^{2}`)}`, `あわせて ${m(ans.toTex())}`];
   }
   return {
     stem: `計算せよ。 ${m(tex)}`,
@@ -146,7 +157,11 @@ function genValue(rng) {
     stem: `${m(`x=${tnum(xv)},\\ y=${tnum(yv)}`)} のとき、${m(tex)} の値を求めよ。`,
     ...numAns(ONE, { v: ans }, { wrong }),
     hint: 'いきなり代入しない！ まず式をシンプルにしてから代入すると計算ミスが減る。',
-    steps: [`式を整理: ${m(S.toTex())}`, `代入: ${m(tnum(ans))}`],
+    steps: [
+      `いきなり代入しないで、先にかっこをはずす: ${m(A.scale(p).toTex() + B.scale(-q).terms().map((t) => termTex(t.c, t.e, false)).join(''))}`,
+      `同類項をまとめる: ${m(S.toTex())}`,
+      `代入: ${m(`${tnum(S.coef({ x: 1 }))}\\times ${tpar(xv)}${S.coef({ y: 1 }).n < 0 ? '' : '+'}${tnum(S.coef({ y: 1 }))}\\times ${tpar(yv)}=${tnum(S.coef({ x: 1 }).mul(xv))}${S.coef({ y: 1 }).mul(yv).n < 0 ? '' : '+'}${tnum(S.coef({ y: 1 }).mul(yv))}=${tnum(ans)}`)}`,
+    ],
     check: { kind: 'value', expr: tex, vals: { x: xv.num(), y: yv.num() } },
   };
 }

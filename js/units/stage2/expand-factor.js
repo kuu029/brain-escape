@@ -1,5 +1,5 @@
 import { F, gcd } from '../../core/frac.js';
-import { tnum } from '../../core/fmt.js';
+import { tnum, tpar } from '../../core/fmt.js';
 import { Poly, termTex } from '../../core/poly.js';
 import { numAns, choice, polyChoice, ONE, m } from '../kit.js';
 
@@ -8,6 +8,10 @@ const L = (p, q) => Poly.lin(p, q); // px + q
 const lt = (p, q) => Poly.lin(p, q).toTex();
 const fac = (p, q) => `(${lt(p, q)})`;
 const kpre = (k) => (k === 1 ? '' : k === -1 ? '-' : String(k));
+// 解き方の表示用: px → "3x"・"x"・"-x"、(px)^2 → "9x^{2}"
+const px = (p) => `${kpre(p)}x`;
+const sq = (p) => `${p * p === 1 ? '' : p * p}x^{2}`;
+const pw = (p) => (p === 1 ? 'x^{2}' : `(${px(p)})^{2}`);
 const ID = (expr) => ({ kind: 'identity', expr, vars: ['x'] });
 const FID = (expr) => ({ kind: 'identity', expr, vars: ['x'], factored: true });
 
@@ -54,33 +58,60 @@ function genExp2(rng) {
     ];
     hint = '$(a+b)(a-b)=a^{2}-b^{2}$（和と差の積）。';
   }
-  return { stem: `展開せよ。 ${m(tex)}`, ...polyChoice(rng, ans, wrongs), hint, steps: [`乗法公式を使う → ${m(ans.toTex())}`], check: ID(tex) };
+  // 解き方: 公式の A・B に何が入るかを見せてから、項ごとに計算
+  const A = px(p);
+  const steps = form <= 1
+    ? [`公式 ${m('(A+B)^{2}=A^{2}+2AB+B^{2}')} で、${m(`A=${A}`)}、${m(`B=${tnum(a)}`)}`,
+      `${m('A^{2}')}: ${m(`${pw(p)}=${sq(p)}`)}`,
+      `${m('2AB')}: ${m(`2\\times ${A}\\times (${tnum(a)})=${px(2 * p * a)}`)}`,
+      `${m('B^{2}')}: ${m(`(${tnum(a)})^{2}=${a * a}`)}（2乗なので必ずプラス）`,
+      `ならべて: ${m(ans.toTex())}`]
+    : [`公式 ${m('(A+B)(A-B)=A^{2}-B^{2}')} で、${m(`A=${A}`)}、${m(`B=${Math.abs(a)}`)}`,
+      `${m(`A^{2}=${pw(p)}=${sq(p)}`)}、${m(`B^{2}=${Math.abs(a)}^{2}=${a * a}`)}`,
+      `真ん中の項は消える → ${m(ans.toTex())}`];
+  return { stem: `展開せよ。 ${m(tex)}`, ...polyChoice(rng, ans, wrongs), hint, steps, check: ID(tex) };
 }
 
 function genExp3(rng) {
   const form = rng.int(0, 2);
-  let tex, ans, wrongs;
+  let tex, ans, wrongs, steps;
+  // 前半と後半をそれぞれ展開 → うしろはかっこごとひく（符号が全部かわる）→ まとめる
+  const minus = (P, Q) => [
+    `前半を展開: ${m(P.toTex())}`,
+    `後半を展開: ${m(Q.toTex())}`,
+    `かっこごとひく（うしろの符号が全部かわる）: ${m(`${P.toTex()}-(${Q.toTex()})=${P.toTex()}${Q.neg().toTex().replace(/^(?!-)/, '+')}`)}`,
+    `同類項をまとめる: ${m(P.sub(Q).toTex())}`,
+  ];
   if (form === 0) {
     const a = rng.nz(-6, 6), b = rng.int(1, 6);
     tex = `${fac(1, a)}^{2}-${fac(1, b)}${fac(1, -b)}`;
     ans = L(1, a).pow(2).sub(L(1, b).mul(L(1, -b)));
     wrongs = [{ p: L(1, a).pow(2).sub(Poly.of([[1, { x: 2 }], [b * b, {}]])), msg: 'うしろの展開結果をかっこに入れてから引く！ $-(x^{2}-b^{2})=-x^{2}+b^{2}$' }];
+    steps = minus(L(1, a).pow(2), L(1, b).mul(L(1, -b)));
   } else if (form === 1) {
     const a = rng.nz(-6, 6), b = rng.nz(-6, 6), c = rng.nz(-6, 6);
     tex = `${fac(1, a)}${fac(1, b)}-x(${lt(1, c)})`;
     ans = L(1, a).mul(L(1, b)).sub(X.mul(L(1, c)));
     wrongs = [{ p: L(1, a).mul(L(1, b)).sub(Poly.of([[1, { x: 2 }]])).add(Poly.of([[c, { x: 1 }]])), msg: 'ひくかっこは全部の項の符号を変える！' }];
+    steps = minus(L(1, a).mul(L(1, b)), X.mul(L(1, c)));
   } else {
     const a = rng.int(2, 3), b = rng.nz(-5, 5), c = rng.int(1, 3), d = rng.nz(-5, 5);
     tex = `${fac(a, b)}${fac(c, d)}`;
     ans = L(a, b).mul(L(c, d));
     wrongs = [{ p: Poly.of([[a * c, { x: 2 }], [b * d, {}]]), msg: '4つの組み合わせ全部をかける！ 真ん中の項を忘れてる。' }, { p: Poly.of([[a * c, { x: 2 }], [a * d * b * c, { x: 1 }], [b * d, {}]]), msg: '真ん中は $ad+bc$。' }];
+    // 4つの組み合わせを1つずつ
+    steps = [
+      `前のかっこの2つの項を、うしろのかっこの2つの項に、それぞれかける（4回）`,
+      `${m(`${px(a)}\\times ${px(c)}=${a * c}x^{2}`)}、${m(`${px(a)}\\times (${tnum(d)})=${px(a * d)}`)}`,
+      `${m(`${tnum(b)}\\times ${px(c)}=${px(b * c)}`)}、${m(`${tnum(b)}\\times (${tnum(d)})=${b * d}`)}`,
+      `${m('x')} の項をまとめる: ${m(`${px(a * d)}${b * c < 0 ? '' : '+'}${px(b * c)}=${a * d + b * c === 0 ? '0' : px(a * d + b * c)}`)} → ${m(ans.toTex())}`,
+    ];
   }
   return {
     stem: `計算せよ。 ${m(tex)}`,
     ...polyChoice(rng, ans, [...wrongs, { p: ans.neg(), msg: '符号を確認！' }]),
     hint: 'それぞれ展開してから、同類項をまとめる。ひくところはかっこごと！',
-    steps: [`展開してまとめる → ${m(ans.toTex())}`],
+    steps,
     check: ID(tex),
   };
 }
@@ -145,7 +176,16 @@ function genFac2(rng) {
     hint = '$a^{2}-b^{2}=(a+b)(a-b)$。2乗－2乗の形を見つけたらコレ。';
   }
   const tex = ans.toTex();
-  return { stem: `因数分解せよ。 ${m(tex)}`, ...choice(rng, correct, opts), hint, steps: [`公式を使う: ${m(`${tex}=${correct}`)}`], check: FID(tex) };
+  // 解き方: 最初と最後が「何の2乗」かを見つけ、公式の形にあてはめる
+  const c = Math.abs(a);
+  const steps = form === 0
+    ? [`最初の項 ${m(sq(p))} は ${m(px(p))} の2乗、最後の項 ${m(a * a)} は ${m(c)} の2乗`,
+      `真ん中の項 ${m(px(2 * p * a))} は ${m(`2\\times ${px(p)}\\times ${tpar(a)}`)} → ${m('A^{2}+2AB+B^{2}=(A+B)^{2}')} の形`,
+      `${m(`${tex}=${correct}`)}`]
+    : [`最初の項 ${m(sq(p))} は ${m(px(p))} の2乗、最後の項 ${m(c * c)} は ${m(c)} の2乗。「2乗－2乗」の形`,
+      `${m('A^{2}-B^{2}=(A+B)(A-B)')} で、${m(`A=${px(p)}`)}、${m(`B=${c}`)}`,
+      `${m(`${tex}=${correct}`)}`];
+  return { stem: `因数分解せよ。 ${m(tex)}`, ...choice(rng, correct, opts), hint, steps, check: FID(tex) };
 }
 
 function genFac3(rng) {

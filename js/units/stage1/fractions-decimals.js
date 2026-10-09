@@ -38,6 +38,23 @@ function genAddSub(rng) {
   };
 }
 
+// 分数のかけ算の解き方: （逆数に）→ 符号を決める → 分子どうし・分母どうしをかける → 約分
+function mulSteps(x, y, first, ans) {
+  const negs = (x.n < 0) + (y.n < 0);
+  const num = Math.abs(x.n * y.n), den = x.d * y.d;
+  const raw = `\\frac{${Math.abs(x.n)}\\times ${Math.abs(y.n)}}{${x.d}\\times ${y.d}}`;
+  const red = F(num, den);
+  return [
+    first,
+    `符号: マイナスの数が ${negs} 個 → 答えは ${negs % 2 ? 'マイナス' : 'プラス'}`,
+    `数字だけ、分子どうし・分母どうしをかける: ${m(`${raw}=\\frac{${num}}{${den}}`)}`,
+    red.d !== den ? `約分（分子と分母を ${den / red.d} でわる）: ${m(`\\frac{${num}}{${den}}=${tnum(red)}`)}` : null,
+    `符号をつけて 答え: ${m(tnum(ans))}`,
+  ].filter(Boolean);
+}
+// 小数の数字を整数にするための「10倍・100倍」
+const decPow = (...xs) => { for (const t of [1, 10, 100, 1000]) if (xs.every((x) => x.mul(t).isInt())) return t; return 1000; };
+
 function genMulDiv(rng) {
   let a, b, op, ans;
   do {
@@ -54,18 +71,15 @@ function genMulDiv(rng) {
     stem: `計算せよ。 ${m(tex)}`,
     ...numAns(ONE, { v: ans }, { wrong }),
     hint: op === '\\div ' ? 'わる数を逆数にしてかけ算に。符号を先に決めると楽。' : '分子どうし・分母どうしをかける。約分は先にしてもOK。',
-    steps: [
-      ...(op === '\\div ' ? [`逆数のかけ算に: ${m(`${tnum(a)}\\times ${tpar(b.inv())}`)}`] : []),
-      `符号は ${ans.n < 0 ? 'マイナス' : 'プラス'}`,
-      `答え: ${m(tnum(ans))}`,
-    ],
+    steps: mulSteps(a, op === '\\div ' ? b.inv() : b, op === '\\div ' ? `わる数 ${m(tpar(b))} をひっくり返して（逆数）、かけ算に: ${m(`${tnum(a)}\\times ${tpar(b.inv())}`)}` : null, ans),
     check: { kind: 'value', expr: tex },
   };
 }
 
+const sign = (...xs) => { const k = xs.filter((x) => x.n < 0).length; return `符号: マイナスの数が ${k} 個 → 答えは ${k % 2 ? 'マイナス' : 'プラス'}`; };
 function genDec(rng) {
   const form = rng.int(0, 2);
-  let a, b, tex, ans, wrong = [];
+  let a, b, tex, ans, wrong = [], steps;
   if (form === 0) {
     a = F(rng.nz(-19, 19), 10);
     b = F(rng.nz(-19, 19), 10);
@@ -73,6 +87,12 @@ function genDec(rng) {
     ans = a.mul(b);
     tex = `${tdec(a)}\\times ${tparDec(b)}`;
     wrong.push({ vals: { v: ans.mul(10) }, msg: '小数点の位置に注意！ 小数第1位×小数第1位 → 答えは小数第2位まで。' });
+    // 小数点をとって整数のかけ算 → 小数点以下のけた数だけ、答えの小数点を左へ
+    const ta = decPow(a), tb = decPow(b), A = a.abs().mul(ta).n, B = b.abs().mul(tb).n;
+    const k = String(ta * tb).length - 1;
+    steps = [sign(a, b), `小数点をとって、整数のかけ算: ${m(`${A}\\times ${B}=${A * B}`)}`,
+      k ? `小数点の右にある数字は、あわせて ${k} けた → ${m(A * B)} の小数点を左へ ${k} つ動かす: ${m(tdec(ans.abs()))}` : null,
+      `符号をつけて 答え: ${m(tdec(ans))}`];
   } else if (form === 1) {
     let op;
     do {
@@ -83,6 +103,12 @@ function genDec(rng) {
     } while (ans.isZero() || (a.isInt() && b.isInt()));
     tex = `${tdec(a)}${op}${tparDec(b)}`;
     if (op === '-' && b.n < 0) wrong.push({ vals: { v: a.add(b) }, msg: 'ひく負の数＝たす正の数！' });
+    // ひき算はたし算に直して、「0.1 が何こ分」で整数の計算にする
+    const b2 = op === '+' ? b : b.neg();
+    const t = decPow(a, b2), A = a.mul(t).n, B = b2.mul(t).n;
+    steps = [op === '-' ? `ひき算をたし算に直す: ${m(`${tdec(a)}+${tparDec(b2)}`)}` : null,
+      `${t === 10 ? '0.1' : '0.01'} が何こ分かで考える（${t}倍して整数に）: ${m(`${A}${B < 0 ? '' : '+'}${B}=${A + B}`)}`,
+      `${t}でわってもとにもどす → 答え: ${m(tdec(ans))}`];
   } else {
     const q = F(rng.nz(-9, 9), rng.pick([1, 10]));
     b = F(rng.nz(-9, 9), 10);
@@ -90,14 +116,35 @@ function genDec(rng) {
     ans = q;
     tex = `${tdec(a)}\\div ${tparDec(b)}`;
     wrong.push({ vals: { v: q.mul(10) }, msg: '小数のわり算は、わる数とわられる数の小数点を同じだけ右へ動かしてから。' }, { vals: { v: q.div(10) }, msg: '小数点の位置をもう一度確認！' });
+    // わる数とわられる数を同じだけ10倍・100倍して、整数どうしのわり算に
+    const t = decPow(a, b), A = a.abs().mul(t).n, B = b.abs().mul(t).n;
+    steps = [sign(a, b), `両方を ${t} 倍して（小数点を同じだけ右へ）整数に: ${m(`${tdec(a.abs())}\\div ${tdec(b.abs())}`)} → ${m(`${A}\\div ${B}`)}`,
+      `${m(`${A}\\div ${B}=${tdec(ans.abs())}`)}`, `符号をつけて 答え: ${m(tdec(ans))}`];
   }
   return {
     stem: `計算せよ。（小数で答えてOK） ${m(tex)}`,
     ...numAns(ONE, { v: ans }, { wrong }),
     hint: '符号を先に決めて、小数点の位置は最後に確認。',
-    steps: [`符号は ${ans.n < 0 ? 'マイナス' : 'プラス'}`, `答え: ${m(tdec(ans))}`],
+    steps: steps.filter(Boolean),
     check: { kind: 'value', expr: tex },
   };
+}
+
+// a − b×c の解き方: かけ算が先 → ひく数の符号を整理 → 通分 → 計算
+function mixedSteps(a, b, c, ans) {
+  const P = b.mul(c);
+  const plus = P.n < 0; // ひく負の数 → たす
+  const Q = plus ? P.neg() : P; // 実際にたす／ひく正の数
+  const L = lcm(a.d, Q.d);
+  const as = a.mul(L).n, qs = Q.mul(L).n;
+  const fr = (n) => (L === 1 ? `${n}` : `\\frac{${n}}{${L}}`);
+  return [
+    `かけ算が先: ${m(`${tpar(b)}\\times ${tpar(c)}=${tnum(P)}`)}（約分もここで）`,
+    plus ? `ひく負の数は、たす正の数: ${m(`${tnum(a)}-${tpar(P)}=${tnum(a)}+${tnum(Q)}`)}` : `式は ${m(`${tnum(a)}-${tnum(Q)}`)}`,
+    L > 1 && a.d !== Q.d ? `分母を ${L} にそろえる（通分）: ${m(`${as < 0 ? '-' : ''}${fr(Math.abs(as))}${plus ? '+' : '-'}${fr(qs)}`)}` : null,
+    `分子を計算: ${m(`${fr(`${as}${plus ? '+' : '-'}${qs}`)}=${fr(as + (plus ? qs : -qs))}`)}${F(as + (plus ? qs : -qs), L).d !== L ? ' → 約分' : ''}`,
+    `答え: ${m(tnum(ans))}`,
+  ].filter(Boolean);
 }
 
 function genMixed(rng) {
@@ -113,7 +160,7 @@ function genMixed(rng) {
     stem: `計算せよ。 ${m(tex)}`,
     ...numAns(ONE, { v: ans }, { wrong: [{ vals: { v: a.sub(b).mul(c) }, msg: 'かけ算が先！ 左から順にやらない。' }] }),
     hint: 'かけ算を先に計算してから、ひき算。',
-    steps: [`かけ算: ${m(`${tpar(b)}\\times ${tpar(c)}=${tnum(b.mul(c))}`)}`, `${m(`${tnum(a)}-${tpar(b.mul(c))}=${tnum(ans)}`)}`],
+    steps: mixedSteps(a, b, c, ans),
     check: { kind: 'value', expr: tex },
   };
 }

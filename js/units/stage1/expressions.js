@@ -106,11 +106,19 @@ function genSubst(rng) {
   if (a2 && k < 0) wrong.push({ vals: { v: ans.sub(F(2 * a2 * k * k)) }, msg: `${m(`(${k})^{2}=${k * k}`)}（プラス）。負の数はかっこをつけて代入！` });
   wrong.push({ vals: { v: poly.evaluate({ x: -k }) }, msg: '代入する数の符号を確認！ 負の数はかっこごと入れよう。' });
   const subTex = tex.replace(/x/g, `(${k})`);
+  // 表示の順に [係数, 次数, 値]
+  const order = form === 1 ? [0, 1] : [2, 1, 0];
+  const termVals = order.map((e) => [poly.coef(e === 2 ? { x: 2 } : e === 1 ? X : {}).n, e]).filter(([c]) => c !== 0).map(([c, e]) => [c, e, c * k ** e]);
   return {
     stem: `${m(`x=${k}`)} のとき、${m(tex)} の値を求めよ。`,
     ...numAns(ONE, { v: ans }, { wrong }),
     hint: '負の数はかっこをつけて代入する。$-3x$ に $x=-2$ なら $-3\\times (-2)$。',
-    steps: [`代入: ${m(subTex.replace(/(\d)\(/g, '$1\\times ('))}`, `計算すると ${m(tnum(ans))}`],
+    steps: [
+      `代入（負の数はかっこごと）: ${m(subTex.replace(/(\d)\(/g, '$1\\times ('))}`,
+      // 項ごとに計算（2乗が先 → かけ算）→ 最後にたす
+      ...termVals.map(([c, e, v]) => (e === 2 ? `${m('x^{2}')} の項: ${m(`${tnum(c)}\\times (${k})^{2}=${tnum(c)}\\times ${k * k}=${v}`)}` : e === 1 ? `${m('x')} の項: ${m(`${tnum(c)}\\times (${k})=${v}`)}` : `数の項: ${m(v)}`)),
+      `たす: ${m(`${termVals.map(([, , v], i) => (i && v >= 0 ? `+${v}` : `${v}`)).join('')}=${tnum(ans)}`)}`,
+    ],
     check: { kind: 'value', expr: tex, vals: { x: k } },
   };
 }

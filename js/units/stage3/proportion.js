@@ -1,6 +1,7 @@
 import { numAns, choice, ONE, m } from '../kit.js';
 import { F, Frac, tnum, coef, lineTex, invTex } from './kit3.js';
 import { plane } from './fig.js';
+import { tpar } from '../../core/fmt.js';
 
 const directTex = (a) => `y=${coef(a, 'x')}`;
 // 比例定数（整数か、分母2・3の分数）
@@ -54,7 +55,7 @@ function genFormula(rng) {
         { tex: directTex(a.neg()), msg: '符号を確認！' },
       ]),
       hint: '$y=ax$ に $x,\\ y$ を代入して $a$ を求める。',
-      steps: [`${m(`${tnum(q)}=a\\times (${p})`)} → ${m(`a=${tnum(a)}`)}`],
+      steps: [`比例の式は ${m('y=ax')}（${m('a')} は比例定数）`, `${m(`x=${p},\\ y=${tnum(q)}`)} を代入: ${m(`${tnum(q)}=a\\times (${p})`)}`, `両辺を ${m(tpar(p))} でわる: ${m(`a=${tnum(a)}`)} → ${m(directTex(a))}`],
       check: { kind: 'graph', pts: [[p, q.num()], [2 * p, 2 * q.num()]] },
     };
   }
@@ -68,7 +69,7 @@ function genFormula(rng) {
       { tex: invTex(-a), msg: '符号を確認！' },
     ]),
     hint: '反比例は $a=xy$。',
-    steps: [`${m(`a=${p}\\times ${q < 0 ? `(${q})` : q}=${a}`)} → ${m(invTex(a))}`],
+    steps: [`反比例の式は ${m('y=\\frac{a}{x}')}。両辺に ${m('x')} をかけると ${m('a=xy')}`, `${m(`a=${p}\\times ${q < 0 ? `(${q})` : q}=${a}`)}（${m('x')} と ${m('y')} をかけるだけ）`, `${m(invTex(a))}`],
     check: { kind: 'graph', pts: [[p, q], [2 * p, q / 2]] },
   };
 }
@@ -89,7 +90,7 @@ function genGraph(rng) {
         { tex: invTex(p * q), msg: '原点を通る直線は比例 $y=ax$。' },
       ]),
       hint: `原点と点 ${m(`(${p},\\ ${q})`)} を通る → ${m('a=\\frac{y}{x}')}`,
-      steps: [`${m(`a=\\frac{${q}}{${p}}`)} → ${m(directTex(a))}`],
+      steps: [`原点を通る直線 → 比例 ${m('y=ax')}`, `グラフは点 ${m(`(${p},\\ ${q})`)} を通る: ${m(`${q}=a\\times ${p}`)}`, `${m(`a=\\frac{${q}}{${p}}`)}（${m('x')} が1ふえると ${m('y')} は ${m(tnum(a))} ふえる）→ ${m(directTex(a))}`],
       check: { kind: 'graph', pts: [[p, q], [0, 0]] },
     };
   }
@@ -107,7 +108,7 @@ function genGraph(rng) {
       { tex: invTex(a * 2), msg: '$a=xy$ を点の座標で計算しよう。' },
     ]),
     hint: `点 ${m(`(${p},\\ ${q})`)} を通る → ${m('a=xy')}`,
-    steps: [`${m(`a=${p}\\times ${q < 0 ? `(${q})` : q}=${a}`)} → ${m(invTex(a))}`],
+    steps: [`双曲線 → 反比例 ${m('y=\\frac{a}{x}')}、${m('a=xy')}`, `グラフは点 ${m(`(${p},\\ ${q})`)} を通る: ${m(`a=${p}\\times ${q < 0 ? `(${q})` : q}=${a}`)}`, `${m(invTex(a))}（${a > 0 ? '右上と左下' : '左上と右下'}にあるので ${m(`a${a > 0 ? '>' : '<'}0`)} も合う）`],
     check: { kind: 'graph', pts: [[p, q], [q, p]] },
   };
 }

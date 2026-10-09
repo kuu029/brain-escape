@@ -1,5 +1,5 @@
 import { F, Surd, sqrtSplit, isSquare } from '../../core/frac.js';
-import { surdTex, tnum } from '../../core/fmt.js';
+import { surdTex, tnum, tpar } from '../../core/fmt.js';
 import { numAns, choice, ONE, m } from '../kit.js';
 
 const FREE = [2, 3, 5, 6, 7];
@@ -121,31 +121,48 @@ function genMul(rng) {
 
 function genExpand(rng) {
   const form = rng.int(0, 2);
-  let tex, ans, wrongs;
+  let tex, ans, wrongs, steps;
   const a = rng.pick(FREE);
+  // k√a を「+3√2」「-√2」のように（解き方の表示用）
+  const kr = (k) => `${k < 0 ? '-' : '+'}${Math.abs(k) === 1 ? '' : Math.abs(k)}${rt(a)}`;
+  const num = (n, first = false) => (n < 0 ? `${n}` : `${first ? '' : '+'}${n}`);
   if (form === 0) {
     const b = rng.nz(-5, 5);
     tex = `(${rt(a)}${b > 0 ? '+' : '-'}${Math.abs(b)})^{2}`;
     ans = S(a + b * b).add(S(2 * b, a));
     wrongs = [{ s: S(a + b * b), msg: '真ん中の $2ab$ を忘れずに！ $(a+b)^{2}=a^{2}+2ab+b^{2}$' }, { s: S(a + b * b).add(S(b, a)), msg: '真ん中は2倍！' }, { s: S(a - b * b).add(S(2 * b, a)), msg: '$b^{2}$ は必ずプラス。' }];
+    steps = [
+      `公式 ${m('(A+B)^{2}=A^{2}+2AB+B^{2}')} で、${m(`A=${rt(a)}`)}、${m(`B=${b}`)}`,
+      `${m(`A^{2}=(${rt(a)})^{2}=${a}`)}（2乗すると √ が外れる）、${m(`2AB=2\\times ${rt(a)}\\times ${tpar(b)}=${kr(2 * b).replace(/^\+/, '')}`)}、${m(`B^{2}=${tpar(b)}^{2}=${b * b}`)}`,
+      `数どうしをまとめる: ${m(`${a}+${b * b}=${a + b * b}`)} → ${m(ST(ans))}`,
+    ];
   } else if (form === 1) {
     const c = rng.pick(FREE.filter((x) => x !== a));
     const big = Math.max(a, c), small = Math.min(a, c);
     tex = `(${rt(big)}+${rt(small)})(${rt(big)}-${rt(small)})`;
     ans = S(big - small);
     wrongs = [{ s: S(big + small), msg: '$(a+b)(a-b)=a^{2}-b^{2}$。最後はひき算！' }, { s: S(big - small).add(S(2, big * small)), msg: '和と差の積は真ん中が消える。' }];
+    steps = [
+      `公式 ${m('(A+B)(A-B)=A^{2}-B^{2}')} で、${m(`A=${rt(big)}`)}、${m(`B=${rt(small)}`)}`,
+      `${m(`(${rt(big)})^{2}-(${rt(small)})^{2}=${big}-${small}=${big - small}`)}（√ の2乗は中身）`,
+    ];
   } else {
     let p, q;
     do { p = rng.nz(-5, 5); q = rng.nz(-5, 5); } while (p + q === 0);
     tex = `(${rt(a)}${p > 0 ? '+' : '-'}${Math.abs(p)})(${rt(a)}${q > 0 ? '+' : '-'}${Math.abs(q)})`;
     ans = S(a + p * q).add(S(p + q, a));
     wrongs = [{ s: S(a + p * q), msg: '真ん中の項を忘れずに。' }, { s: S(a * a + p * q).add(S(p + q, a)), msg: `${m(`${rt(a)}\\times ${rt(a)}=${a}`)}（2乗すると √ が外れる）。` }];
+    steps = [
+      `${m(rt(a))} を文字 ${m('x')} だと思って、${m('(x+p)(x+q)=x^{2}+(p+q)x+pq')} で展開`,
+      `${m(`(${rt(a)})^{2}=${a}`)}、${m(`p+q=${p}${num(q)}=${p + q}`)}、${m(`pq=${tpar(p)}\\times ${tpar(q)}=${p * q}`)}`,
+      `${m(`${a}${kr(p + q)}${num(p * q)}`)} → 数どうしをまとめて ${m(ST(ans))}`,
+    ];
   }
   return {
     stem: `計算せよ。 ${m(tex)}`,
     ...surdChoice(rng, ans, wrongs),
     hint: '√ を文字だと思って乗法公式で展開。$\\sqrt{a}\\times \\sqrt{a}=a$',
-    steps: [`乗法公式で展開して、${m(`${rt(a)}^{2}=${a}`)} を使う → ${m(ST(ans))}`],
+    steps,
     check: V(tex),
   };
 }

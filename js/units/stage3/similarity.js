@@ -99,7 +99,7 @@ function genMid(rng) {
       fig: geo({ ...spec, lens: [{ a: 'B', b: 'C', label: `${x * 2 * k}cm`, side: -1 }] }),
       ...lenAns(x * k, [{ v: x * 4 * k, msg: 'MN は BC の「半分」。' }]),
       hint: '中点連結定理: MN ∥ BC、MN = BC の半分',
-      steps: [`${m(`MN=${x * 2 * k}\\div 2=${x * k}`)}`],
+      steps: ['中点連結定理: 2辺の中点を結んだ線分 MN は、残りの辺 BC と平行で、長さは BC の半分', `${m(`MN=${x * 2 * k}\\div 2=${x * k}`)} cm`],
       check: measuredLen(() => dist(M, N)),
     };
   }
@@ -109,7 +109,7 @@ function genMid(rng) {
       fig: geo({ ...spec, lens: [{ a: 'M', b: 'N', label: `${x * k}cm`, side: -1 }] }),
       ...lenAns(x * 2 * k, [{ v: x * k / 2, msg: 'BC は MN の2倍。' }].filter((w) => Number.isInteger(w.v))),
       hint: '中点連結定理: BC = MN の2倍',
-      steps: [`${m(`BC=${x * k}\\times 2=${x * 2 * k}`)}`],
+      steps: ['中点連結定理: MN は BC の半分 → 逆に、BC は MN の2倍', `${m(`BC=${x * k}\\times 2=${x * 2 * k}`)} cm`],
       check: measuredLen(() => dist(t.B, t.C)),
     };
   }
@@ -119,7 +119,7 @@ function genMid(rng) {
     fig: geo({ pts: Q, segs: [...seg3('A', 'B', 'C'), ...seg3('L', 'M', 'N')], polys: [['L', 'M', 'N']], lens: [{ a: 'A', b: 'B', label: `${z * 2 * k}cm` }, { a: 'B', b: 'C', label: `${x * 2 * k}cm`, side: -1 }, { a: 'C', b: 'A', label: `${y * 2 * k}cm` }] }),
     ...lenAns((x + y + z) * k, [{ v: (x + y + z) * 2 * k, msg: 'それは △ABC の周。それぞれ半分になる。' }]),
     hint: '中点連結定理で、△LMN の各辺は △ABC の辺の半分。',
-    steps: [`${m(`(${z * 2 * k}+${x * 2 * k}+${y * 2 * k})\\div 2=${(x + y + z) * k}`)}`],
+    steps: ['中点連結定理で、△LMN の3つの辺は、それぞれ向かい合う △ABC の辺の半分', `△ABC の周は ${m(`${z * 2 * k}+${x * 2 * k}+${y * 2 * k}=${(x + y + z) * 2 * k}`)}`, `その半分: ${m(`${(x + y + z) * 2 * k}\\div 2=${(x + y + z) * k}`)} cm`],
     check: measuredLen(() => dist(L, M) + dist(M, N) + dist(N, L)),
   };
 }
