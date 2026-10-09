@@ -99,14 +99,23 @@ export function answerPad(p, onSubmit, opts = {}) {
     b.classList.toggle('active', i === active);
     b.querySelector('.fval').innerHTML = showValue(vals[fields[i].key]);
   });
+  // 分数は「下（分母）→ 分数キー → 上（分子）」の順に入れる（○分の○ の読み方どおり）。
+  // 中の文字列はこれまでどおり "分子/分母"（"-3/4" など）。分母だけのときは "/4"
   const type = (k) => {
     const key = fields[active].key;
     let s = vals[key];
-    if (k === 'del') s = s.slice(0, -1);
-    else if (k === '-') s = s.startsWith('-') ? s.slice(1) : '-' + s;
-    else if (k === '/') { if (s && !s.includes('/') && !s.includes('.') && s !== '-') s += '/'; }
-    else if (k === '.') { if (!s.includes('.') && !s.includes('/')) s += s === '' || s === '-' ? '0.' : '.'; }
-    else if (s.replace('-', '').length < 7) s += k;
+    const neg = s.startsWith('-');
+    const body = neg ? s.slice(1) : s;
+    const frac = body.includes('/');
+    const [nu, de] = frac ? body.split('/') : [body, ''];
+    const put = (b) => (neg ? '-' : '') + b;
+    if (k === 'del') s = frac ? (nu ? put(`${nu.slice(0, -1)}/${de}`) : put(de)) : s.slice(0, -1);
+    else if (k === 'clr') s = '';
+    else if (k === '-') s = neg ? body : '-' + body;
+    else if (k === '/') { if (!frac && body && !body.includes('.') && body !== '0') s = put(`/${body}`); }
+    else if (k === '.') { if (!frac && !body.includes('.')) s = put(body === '' ? '0.' : `${body}.`); }
+    else if (frac) { if (nu.length < 6) s = put(`${nu}${k}/${de}`); }
+    else if (body.length < 7) s = put(body + k);
     vals[key] = s;
     paint();
   };
@@ -121,27 +130,31 @@ export function answerPad(p, onSubmit, opts = {}) {
     class: 'key fire',
     type: 'button',
     onclick: () => {
-      const empty = fields.findIndex((f) => !vals[f.key] || vals[f.key] === '-' || vals[f.key].endsWith('/'));
+      // 未完成: 空・マイナスだけ・分数の上（分子）がまだ
+      const unfinished = (v) => !v || v === '-' || /^-?\//.test(v);
+      const empty = fields.findIndex((f) => unfinished(vals[f.key]));
       if (empty >= 0) {
+        // いまの欄が入っていれば、空いている次の欄へ進む（「次の欄」キーのかわり）
+        const moveOn = !unfinished(vals[fields[active].key]);
         active = empty;
         paint();
-        boxes[empty].classList.remove('shake');
-        void boxes[empty].offsetWidth;
-        boxes[empty].classList.add('shake');
+        if (!moveOn) {
+          boxes[empty].classList.remove('shake');
+          void boxes[empty].offsetWidth;
+          boxes[empty].classList.add('shake');
+        } else sfx('tap');
         return;
       }
       sfx('tap');
       submit({ ...vals });
     },
   }, fireLabel);
-  const nextKey = fields.length > 1
-    ? h('button', { class: 'key fn', type: 'button', onclick: () => { sfx('tap'); active = (active + 1) % fields.length; paint(); } }, '次の欄')
-    : h('button', { class: 'key fn', type: 'button', onclick: () => { sfx('tap'); vals[fields[0].key] = ''; paint(); } }, 'C');
+  // スマホの電話キーと同じ並び（1 2 3 が上）。右の列は ⌫ ± 分数 決定
   const pad = h('div', { class: 'keys' },
-    key('7', '7'), key('8', '8'), key('9', '9'), key('⌫', 'del', 'fn'),
+    key('1', '1'), key('2', '2'), key('3', '3'), key('⌫', 'del', 'fn'),
     key('4', '4'), key('5', '5'), key('6', '6'), key('±', '-', 'fn'),
-    key('1', '1'), key('2', '2'), key('3', '3'), key('分数', '/', 'fn'),
-    key('0', '0'), key('.', '.'), nextKey, fire);
+    key('7', '7'), key('8', '8'), key('9', '9'), key(h('span', { class: 'k-frac' }, '分数', h('small', {}, '下→上')), '/', 'fn'),
+    key('.', '.'), key('0', '0'), key('C', 'clr', 'fn'), fire);
   // join: 2つの欄のあいだに式を置く（例: [  ] ≦ y ≦ [  ]）
   const row = p.input.join && boxes.length === 2
     ? h('div', { class: 'fields join' }, boxes[0], h('span', { class: 'fjoin' }, p.input.join), boxes[1])

@@ -118,6 +118,17 @@ export const CARDS = [
   { id: 'risu', emoji: '🐿️', name: 'リス・トーケイ', rarity: 3, text: 'どんぐりを集めて、箱ひげ図にしている。' },
   { id: 'kujira', emoji: '🐳', name: 'クジラ・ブンショーダイ', rarity: 3, text: '自由の海の門番。問題文がとにかく長い。' },
   { id: 'wani', emoji: '🐊', name: 'ワニ・ツナギーノ', rarity: 3, text: '2つの文を口でくわえてつなぐ。because が好物。' },
+  // ガチャの高レアなかま（★3・★4）。強いかわりに、呼ぶのに正解が多くいる
+  { id: 'kaminari', emoji: '🌩️', name: 'カミナリ・ドンガラーノ', rarity: 3, gacha: true, text: '雷雲に乗った看守。おへそを取るのが趣味。' },
+  { id: 'ninja', emoji: '🥷', name: 'ニンジャ・ケシゴムーノ', rarity: 3, gacha: true, text: '消しゴムで足あとを消して、敵を迷わせる。' },
+  { id: 'pudding', emoji: '🍮', name: 'プリン・バリアーナ', rarity: 3, gacha: true, text: 'ぷるぷるのバリアで出口をふさぐ。カラメルは苦め。' },
+  { id: 'kingyo', emoji: '🐠', name: 'キンギョ・ザクザクーノ', rarity: 3, gacha: true, text: '金魚すくいの名人。すくうのはなぜかコイン。' },
+  { id: 'dragon', emoji: '🐉', name: 'ドラゴン・ケイサンキング', rarity: 4, gacha: true, text: '九九を火で吐く伝説の竜。7の段だけ苦手。' },
+  { id: 'ufo', emoji: '🛸', name: 'UFO・アブダクター', rarity: 4, gacha: true, text: '敵をビームで吸いこんで、どこかへ連れていく。' },
+  // 暗号室（暗号ディフェンス）のボス。倒すとカード（なかまにすると必殺技）
+  { id: 'golem', emoji: '📚', name: 'ジショ・ゴーレム', rarity: 3, text: '辞書を積み上げてできた巨人。ページをめくる音で攻撃してくる。' },
+  { id: 'bushou', emoji: '🏯', name: 'ブショー・ネンピョーノ', rarity: 3, text: '年表を巻物にして背負った武将。年号をまちがえると怒る。' },
+  { id: 'hakase', emoji: '🧪', name: 'フラスコ・ハカセーノ', rarity: 3, text: 'フラスコから謎の気体を出す博士。石灰水がにごると喜ぶ。' },
 ];
 // ボス撃破でもらえるカード
 export const BOSS_CARD = {
@@ -129,7 +140,10 @@ export const BOSS_CARD = {
   'proportion': 'hashigo', 'linear-function': 'coaster', 'quadratic-function': 'basket', 'angles': 'hasami', 'congruence': 'puzzle', 'circle-angle': 'mezamashi', 'similarity': 'matryoshka', 'pythagoras': 'tent', 'solids': 'hako', 'probability': 'coin', 'data': 'risu', 'word-mix': 'kujira',
 };
 // ガチャに出るカード（ボス・称号以外）
-export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2).map((c) => c.id);
+export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2 || c.gacha).map((c) => c.id);
+// ボスカード（ボス撃破・まれにドロップ）。なかまとして呼ぶと必殺技（正解が多くいる）
+export const MEM_BOSS_CARDS = ['golem', 'bushou', 'hakase'];
+export const BOSS_CARD_IDS = [...new Set([...Object.values(BOSS_CARD), 'crown', ...MEM_BOSS_CARDS])];
 
 // タワー
 export const TOWER_LOOK = {

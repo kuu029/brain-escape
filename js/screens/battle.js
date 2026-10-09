@@ -15,7 +15,7 @@ import { towerSprite, enemyLook, cardSprite } from '../game/art.js';
 import { sfx } from '../core/sound.js';
 import { bump } from '../game/missions.js';
 import { go } from '../core/router.js';
-import { finishWave, pickReviews, towerSkin, party, tickets, useTicket, equippedTool } from '../game/progress.js';
+import { finishWave, pickReviews, towerSkin, party, tickets, useTicket, equippedTool, useConsumable } from '../game/progress.js';
 
 const MODE_LABEL = { practice: '練習ウェーブ', boss: 'ボスウェーブ', review: 'リベンジウェーブ', diagnosis: '看守チェック' };
 // 放置の見張り: この時間さわらないと「寝てない？」と聞き、さらに IDLE_GRACE 秒こたえがなければウェーブを抜ける
@@ -89,6 +89,7 @@ export function render(el, params) {
   const closeHint = () => { hintLayer.innerHTML = ''; hintLayer.classList.remove('on'); };
 
   function paintHud() {
+    if (!diagMode) paintReserve();
     hudLives.textContent = st.lives === Infinity ? '❤️ ∞' : `❤️ ${st.lives}`;
     hudCoins.textContent = diagMode ? '' : `🪙 ${st.coins}`;
     hudCombo.textContent = st.combo >= 2 ? `⚡${st.combo}` : '';
@@ -133,8 +134,8 @@ export function render(el, params) {
       const key = `ally:${id}`;
       toolbar.append(h('button', { class: `tool ally${ready ? ' ready' : ''}${armed === key ? ' armed' : ''}`, type: 'button', disabled: used || n <= 0 || !!st.over, onclick: () => tapAlly(id) },
         h('span', { class: 'ally-face', html: cardSprite(id) }),
-        h('span', { class: 'ally-gauge' }, h('i', { style: { width: `${Math.min(1, (st.gauge || 0) / E.GAUGE_NEED) * 100}%` } })),
-        h('small', {}, armed === key ? 'もう1回!' : used ? '出番ずみ' : n <= 0 ? 'チケット0' : ready ? `よべる! ×${n}` : `${st.gauge || 0}/${E.GAUGE_NEED} ×${n}`)));
+        h('span', { class: 'ally-gauge' }, h('i', { style: { width: `${Math.min(1, (st.gauge || 0) / E.gaugeNeed(id)) * 100}%` } })),
+        h('small', {}, armed === key ? 'もう1回!' : used ? '出番ずみ' : n <= 0 ? 'チケット0' : ready ? `よべる! ×${n}` : `${st.gauge || 0}/${E.gaugeNeed(id)} ×${n}`)));
     }
     for (const [id, ok] of Object.entries(st.tools)) {
       const t = TOOLS[id];
@@ -159,6 +160,7 @@ export function render(el, params) {
     clearTimeout(armTimer);
     board.finish();
     const evs = E.useTool(st, id);
+    useConsumable(id); // へそくりは使い捨て（1枚へる）
     sfx('tool');
     castFx(board.el, { em: TOOLS[id].emoji, name: TOOLS[id].name, kind: 'tool' });
     paintHud();
@@ -172,7 +174,7 @@ export function render(el, params) {
       clearTimeout(armTimer);
       armTimer = setTimeout(() => { armed = null; paintTools(); }, 3500);
       sfx('tap');
-      toast(E.canSummon(st, id) ? `${c.name}：${E.SUMMON[id].desc}（もう1回タップで召喚）` : `${c.name}：${E.SUMMON[id].desc}（正解 ${E.GAUGE_NEED} 回でゲージ満タン）`, 2400);
+      toast(E.canSummon(st, id) ? `${c.name}：${E.SUMMON[id].desc}（もう1回タップで召喚）` : `${c.name}：${E.SUMMON[id].desc}（正解 ${E.gaugeNeed(id)} 回でゲージ満タン）`, 2400);
       paintTools();
       return;
     }
@@ -187,20 +189,49 @@ export function render(el, params) {
     paintHud();
     board.play(evs, { after: afterPlayback });
   }
+  // 自動建設の設定（ウェーブをまたいで保存）: ON/OFF・優先タワー・自動強化・予約建設
+  function autoCfg() { return (S().settings.autoCfg ||= { prio: 'mix', upgrade: true, reserve: {} }); }
+  const PRIO_LABEL = { mix: '🔀 ミックス', beam: `${TOWER_LOOK.beam.emoji} ビーム`, frost: `${TOWER_LOOK.frost.emoji} こおり`, bomb: `${TOWER_LOOK.bomb.emoji} ばくだん` };
+  // 予約したマス（まだ建っていない）に、うすくタワーの絵文字を出す
+  function paintReserve() {
+    const R = autoCfg().reserve;
+    E.SLOTS.forEach((_, i) => {
+      const el = board.slotEl(i);
+      if (!el) return;
+      if (R[i] && !st.slots[i]) el.dataset.res = TOWER_LOOK[R[i]].emoji;
+      else delete el.dataset.res;
+    });
+  }
   function toggleAuto() {
-    S().settings.autoBuild = !S().settings.autoBuild;
-    save();
     sfx('tap');
-    if (S().settings.autoBuild) autoBuild();
-    paintHud();
+    const c = autoCfg();
+    const body = h('div', { class: 'auto-cfg' });
+    const paint = () => {
+      const on = !!S().settings.autoBuild;
+      const nRes = Object.values(c.reserve).filter(Boolean).length;
+      const seg = (items, cur, set) => h('div', { class: 'ac-seg' }, items.map(([v, label]) => h('button', { class: `ac-opt${cur === v ? ' on' : ''}`, type: 'button', onclick: () => { set(v); save(); sfx('tap'); paint(); } }, label)));
+      body.replaceChildren(
+        h('b', {}, '自動建設'), seg([[true, 'ON'], [false, 'OFF']], on, (v) => { S().settings.autoBuild = v; }),
+        h('b', {}, '優先タワー（予約していないマス）'), seg(E.AUTO_PRIO.map((p) => [p, PRIO_LABEL[p]]), c.prio, (v) => { c.prio = v; }),
+        h('b', {}, '自動アップグレード（マスが全部うまったら強化）'), seg([[true, 'する'], [false, 'しない']], c.upgrade !== false, (v) => { c.upgrade = v; }),
+        h('b', {}, `📌 予約建設（${nRes}マス）`),
+        h('small', { class: 'note' }, '空きマスをタップ →「📌 予約」で「ここにこれを建てる」を決められる。予約したマスがいちばん先（コインが足りなければ、ためて待つ）。'),
+        nRes > 0 ? btn('予約を全部けす', () => { c.reserve = {}; save(); paintReserve(); paint(); }, 'ghost small') : '');
+    };
+    paint();
+    modal({ title: '🏗️ 自動建設の設定', body, buttons: [{ label: 'とじる', value: true, cls: 'primary' }] }).then(() => {
+      if (S().settings.autoBuild) autoBuild();
+      paintHud();
+    });
   }
   function autoBuild() {
     if (diagMode || st.over || !S().settings.autoBuild) return;
     const before = st.built;
-    if (E.autoSpend(st)) {
+    if (E.autoSpend(st, autoCfg())) {
       bump('built', st.built - before);
       sfx('build');
       board.sync(true);
+      paintReserve();
       refreshPrediction();
     }
   }
@@ -256,6 +287,18 @@ export function render(el, params) {
           },
         }, h('span', { class: 'bp-art', html: towerSprite(type, 1, towerSkin(type).id) }), h('b', {}, TOWER_LOOK[type].name), h('small', {}, `🪙${def.cost}`));
       }),
+      // 予約建設: ここに建てるタワーを決めておく（自動建設がいちばん先に建てる。次のウェーブでも同じマスに）
+      h('div', { class: 'bp-res' }, h('small', {}, '📌 予約'),
+        ...Object.keys(E.TOWERS).map((type) => h('button', { class: `bp-rbtn${autoCfg().reserve[si] === type ? ' on' : ''}`, type: 'button', onclick: () => {
+          const R = autoCfg().reserve;
+          R[si] = R[si] === type ? null : type;
+          save();
+          sfx('tap');
+          closePopover();
+          paintReserve();
+          if (R[si] && !S().settings.autoBuild) toast('📌 予約した！ 自動建設をONにすると、ここに建てるよ', 2200);
+          autoBuild();
+        } }, TOWER_LOOK[type].emoji))),
       h('div', { class: 'bp-desc' }, '★ビーム=1体に強い ／ ❄️=足止め ／ 💣=まとめて'));
     // 盤面の中で、マスの上か下に出す
     const below = r.top - b.top < b.height / 2;

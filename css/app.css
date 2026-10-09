@@ -1297,3 +1297,80 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .gacha-btns.tix { margin-bottom: 4px; }
 @media (prefers-reduced-motion: reduce) { .lb-get { animation: none; } }
 .lb-day.big.now { border-color: var(--accent); }
+/* テンキーの「分数」キー: 入れる順番を小さく添える */
+.k-frac { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.k-frac small { font-size: 10.5px; opacity: .8; font-weight: 700; }
+.drop-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; } .drop-list h3 { flex-basis: 100%; } .bonus-chip.drop { animation: lbPop .5s ease-out; } .warn-text { display: block; color: var(--warn); }
+/* コレクションのタブ: 5つあるので横スクロール */
+.tabs { overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs .tab { flex-shrink: 0; }
+/* ごほうび（カラーフィルタ解除券） */
+.reward-box { display: flex; flex-direction: column; gap: 10px; }
+.rw-list, .rw-log { display: flex; flex-direction: column; gap: 6px; }
+.rw-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--panel); border: 2px solid var(--line); }
+.rw-row.r4 { border-color: #ffd640; box-shadow: 0 0 12px #ffd64044; }
+.rw-row.r3 { border-color: #b98bff; }
+.rw-row > div { flex: 1; display: flex; flex-direction: column; }
+.rw-row small { color: var(--dim); font-size: 13px; }
+.rw-em { font-size: 30px; }
+.rw-big { font-size: 64px; line-height: 1; }
+.rw-show .rw-min { font-size: 56px; font-weight: 900; color: var(--accent); }
+.rw-log div { font-size: 14px; color: var(--dim); padding: 4px 8px; border-left: 3px solid var(--line); }
+.tabs .tab { padding: 0 12px; }
+/* 予約建設のマス（まだ建っていない）: うすくタワーの絵文字 */
+.cell.slot[data-res]:not(.built)::after { content: attr(data-res); position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--cell) * .5); opacity: .45; pointer-events: none; }
+.cell.slot[data-res]:not(.built) { outline: 2px dashed #ffd64088; outline-offset: -3px; }
+.cell.slot[data-res]:not(.built) .plus { opacity: 0; }
+.bp-res { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.bp-res small { font-size: 12.5px; color: var(--dim); }
+.bp-rbtn { min-width: 44px; min-height: 40px; border-radius: 10px; border: 2px dashed var(--line); background: var(--bg2); font-size: 18px; }
+.bp-rbtn.on { border-style: solid; border-color: var(--accent); background: #ffd64026; }
+/* 自動建設の設定 */
+.auto-cfg { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.auto-cfg > b { margin-top: 6px; font-size: 14px; }
+.ac-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.ac-opt { flex: 1 1 auto; min-height: 44px; padding: 4px 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg2); color: var(--text); font-weight: 800; font-size: 14px; }
+.ac-opt.on { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.bonus-chip.drop.rare { background: linear-gradient(135deg, #ffd640, #ff7ad9); color: #2a1d00; font-weight: 900; }
+/* ガチャの種類 */
+.gt-seg { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.gt-opt { min-height: 44px; padding: 4px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg2); color: var(--text); font-weight: 800; font-size: 14px; }
+.gt-opt.on { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.gt-opt.rw { border-color: #ff7ad9aa; }
+.gt-desc { font-weight: 800; color: var(--accent); }
+.gacha-machine.gt-skin { filter: hue-rotate(160deg); }
+.gacha-machine.gt-ally { filter: hue-rotate(-60deg) saturate(1.3); }
+/* 暗号ディフェンス */
+.mm-def { border-color: #ff8a5c; }
+.md-intro p { text-align: center; }
+.md-boss { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px; background: #ff8a5c1f; border: 2px solid #ff8a5c88; }
+.md-boss.got { border-color: var(--accent); background: #ffd64022; }
+.md-boss > div { display: flex; flex-direction: column; text-align: left; }
+.md-boss small { color: var(--dim); font-size: 12.5px; }
+.md-boss-face { width: 56px; height: 56px; font-size: 44px; display: grid; place-items: center; }
+.md-boss-face img, .md-boss-face svg { width: 100%; height: 100%; object-fit: contain; }
+.md-lane { position: relative; height: 128px; margin: 6px 0 10px; border-radius: 16px; overflow: hidden; background: linear-gradient(90deg, #ff4d6d33 0 18%, transparent 30%), repeating-linear-gradient(90deg, #ffffff08 0 24px, transparent 24px 48px), #1a1230; border: 2px solid var(--line); }
+.md-lane.shake { animation: shake .35s; }
+.md-gate { position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 30px; }
+.md-cannon { position: absolute; left: 4px; bottom: 6px; font-size: 18px; transform: scaleX(-1); }
+.md-enemy { position: absolute; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; transition: left .1s linear; }
+.md-face { font-size: 34px; line-height: 1; display: grid; place-items: center; }
+.md-face img, .md-face svg { width: 44px; height: 44px; object-fit: contain; }
+.md-enemy.boss .md-face { font-size: 54px; }
+.md-enemy.boss .md-face img, .md-enemy.boss .md-face svg { width: 72px; height: 72px; }
+.md-enemy.target::after { content: "▼"; position: absolute; top: -16px; color: var(--accent); font-size: 14px; animation: nodeBounce 1s ease-in-out infinite; }
+.md-enemy.danger .md-face { filter: drop-shadow(0 0 6px #ff4d6d); }
+.md-enemy.hit { animation: mdHit .25s; }
+.md-enemy.gone.pop { animation: mdPop .45s forwards; }
+.md-enemy.gone.leak { animation: mdLeak .45s forwards; }
+.md-hp { width: 64px; height: 6px; border-radius: 3px; background: #0006; overflow: hidden; margin-top: 2px; }
+.md-hp i { display: block; height: 100%; background: linear-gradient(90deg, #ff4d6d, #ffd640); transition: width .2s; }
+.md-beam { position: absolute; left: 24px; top: 50%; height: 4px; transform: translateY(-50%); background: linear-gradient(90deg, #ffd640, #fff); box-shadow: 0 0 10px #ffd640; border-radius: 2px; animation: mdBeam .26s forwards; pointer-events: none; }
+.md-card.boss { border-color: #ff8a5c; }
+.md-wait { min-height: 60px; }
+@keyframes mdHit { 50% { transform: translate(-50%, -50%) scale(1.25); filter: brightness(2); } }
+@keyframes mdPop { to { transform: translate(-50%, -90%) scale(1.6); opacity: 0; } }
+@keyframes mdLeak { to { transform: translate(-150%, -50%) scale(.6); opacity: 0; } }
+@keyframes mdBeam { from { opacity: 1; } to { opacity: 0; } }
+.tabs .tab { white-space: nowrap; flex: 1 0 auto; }

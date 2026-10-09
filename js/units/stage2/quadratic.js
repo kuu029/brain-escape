@@ -183,7 +183,7 @@ function genFormulaR(rng) {
   const tex = eq0(P);
   const r1 = F(-q1, p1), r2 = F(-q2, p2);
   return {
-    stem: `方程式を解け。（分数は ${m('3/4')} のように入力） ${m(tex)}`,
+    stem: `方程式を解け。（分数は「分数」キーで、下→上の順に入力） ${m(tex)}`,
     ...roots2(r1, r2, [{ vals: { x1: r1.neg(), x2: r2.neg() }, msg: '符号を確認！ $-b$ から始まる。' }]),
     hint: '解の公式を使う。√ の中が平方数なら、√ が外れて分数の解になる。',
     steps: formulaRSteps(P),

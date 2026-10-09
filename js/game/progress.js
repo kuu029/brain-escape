@@ -1,7 +1,7 @@
 // 進行と報酬（ロック判定・ウェーブ終了時の報酬・ガチャ）
 import { S, unitState, cleared, save, saveNow, today, dayDiff } from '../core/store.js';
 import { UNIT, GEN, SUBJECTS, unitsOf } from '../units/registry.js';
-import { BOSS_CARD, GACHA_CARDS, SKINS, CARDS, GACHA_RATES, TOWER_TYPES, SKIN_ITEMS, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from './content.js';
+import { BOSS_CARD, BOSS_CARD_IDS, GACHA_CARDS, SKINS, CARDS, GACHA_RATES, TOWER_TYPES, SKIN_ITEMS, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from './content.js';
 import { bump } from './missions.js';
 import { claimActivity } from './bonus.js';
 
@@ -41,10 +41,12 @@ export function addCard(id) {
   const c = S().collection.cards;
   const isNew = !c[id];
   c[id] = (c[id] || 0) + 1;
-  // ガチャのキャラは「召喚チケット」も1枚ふえる（なかまとして呼ぶと1枚へる）
-  if (GACHA_CARDS.includes(id)) t[id] = (t[id] || 0) + 1;
+  // なかまにできるキャラ（ガチャ・ボス）は「召喚チケット」も1枚ふえる（なかまとして呼ぶと1枚へる）
+  if (isAlly(id)) t[id] = (t[id] || 0) + 1;
   return isNew;
 }
+// なかまにできるカード: ガチャのキャラ＋ボスカード
+export const isAlly = (id) => GACHA_CARDS.includes(id) || BOSS_CARD_IDS.includes(id);
 
 // ---------- なかま（ガチャのキャラを召喚） ----------
 // collection.tickets = { id: 枚数 }、collection.party = [id, id]（ウェーブに連れていく2体）
@@ -53,6 +55,8 @@ export function tickets() {
   const c = S().collection;
   // はじめて使うとき: いま持っているキャラの枚数を、そのままチケットにする
   if (!c.tickets) c.tickets = Object.fromEntries(GACHA_CARDS.filter((id) => c.cards[id]).map((id) => [id, c.cards[id]]));
+  // ボスカードがなかまになる前から持っていた分も、1回だけチケットにする
+  if (!c.bossTix) { for (const id of BOSS_CARD_IDS) if (c.cards[id] && c.tickets[id] === undefined) c.tickets[id] = c.cards[id]; c.bossTix = true; }
   return c.tickets;
 }
 export function party() {
@@ -65,7 +69,7 @@ export function toggleParty(id) {
   const p = party();
   const i = p.indexOf(id);
   if (i >= 0) p.splice(i, 1);
-  else if (S().collection.cards[id] && GACHA_CARDS.includes(id)) { p.push(id); if (p.length > PARTY_MAX) p.shift(); }
+  else if (S().collection.cards[id] && isAlly(id)) { p.push(id); if (p.length > PARTY_MAX) p.shift(); }
   save();
   return p.includes(id);
 }
@@ -88,6 +92,7 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
   bump('combo', st.maxCombo);
   bump('reviewKills', st.reviewKills);
   bump('built', st.built);
+  out.drops = win ? rollDrops(mode === 'boss') : [];
   if (win) {
     s.stats.waves++;
     bump('waves');
@@ -104,6 +109,10 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
       // 脱獄王: 数学の全ボス撃破
       const mathBoss = Object.entries(BOSS_CARD).filter(([u]) => UNIT[u]?.subject === 'math').map(([, c]) => c);
       if (mathBoss.every((c) => s.collection.cards[c]) && addCard('crown')) out.cards.push('crown');
+    } else if (unitId && BOSS_CARD[unitId] && unitState(unitId).bossCleared && Math.random() < BOSS_DROP) {
+      // レアドロップ: ボスを倒したことのある単元の練習で、まれにボスカード（召喚チケット +1）
+      addCard(BOSS_CARD[unitId]);
+      out.drops.push(`card:${BOSS_CARD[unitId]}`);
     } else if (Math.random() < 0.35) {
       const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)];
       if (addCard(id)) out.cards.push(id);
@@ -121,15 +130,25 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
 export const GACHA_COST = 30;
 export const GACHA5_COST = 140;
 export const GACHA10_COST = 270;
-export const gachaCost = (n) => (n === 10 ? GACHA10_COST : n === 5 ? GACHA5_COST : GACHA_COST * n);
-function rollOne(rand = Math.random) {
-  const total = GACHA_RATES.reduce((a, r) => a + r.weight, 0);
-  let x = rand() * total;
-  const tier = GACHA_RATES.find((r) => (x -= r.weight) < 0) || GACHA_RATES[0];
-  const pool = [
-    ...CARDS.filter((c) => GACHA_CARDS.includes(c.id) && c.rarity === tier.rarity).map((c) => ({ kind: 'card', id: c.id })),
-    ...SKIN_ITEMS.filter((sk) => sk.rarity === tier.rarity).map((sk) => ({ kind: 'skin', id: sk.id })),
+// ガチャの種類: ノーマル（カード＋スキン）／スキン特化（★3・★4 スキンだけ・高い）／なかま特化（★2〜★4 のなかまだけ・高い）
+export const GACHA_TYPES = {
+  normal: { name: 'ノーマル', emoji: '🎰', cost: { 1: GACHA_COST, 5: GACHA5_COST, 10: GACHA10_COST }, rates: GACHA_RATES, cards: true, skins: true, desc: 'キャラもスキンも出る。ガチャ券が使える' },
+  skin: { name: 'スキン特化', emoji: '🎨', cost: { 1: 60, 10: 540 }, rates: [{ rarity: 3, weight: 72, shards: 5 }, { rarity: 4, weight: 28, shards: 10 }], cards: false, skins: true, desc: '★3・★4 のタワースキンだけ！' },
+  ally: { name: 'なかま特化', emoji: '🤝', cost: { 1: 80, 10: 720 }, rates: [{ rarity: 2, weight: 52, shards: 2 }, { rarity: 3, weight: 36, shards: 5 }, { rarity: 4, weight: 12, shards: 10 }], cards: true, skins: false, desc: '★2〜★4 のなかまだけ！ 高レアが出やすい' },
+};
+export const gachaCost = (n, type = 'normal') => GACHA_TYPES[type].cost[n] ?? (n === 10 ? GACHA10_COST : n === 5 ? GACHA5_COST : GACHA_COST * n);
+function rollOne(rand = Math.random, type = 'normal') {
+  const T = GACHA_TYPES[type];
+  // その種類で出るものがない段は、くじから外す
+  const poolOf = (rarity) => [
+    ...(T.cards ? CARDS.filter((c) => GACHA_CARDS.includes(c.id) && c.rarity === rarity).map((c) => ({ kind: 'card', id: c.id })) : []),
+    ...(T.skins ? SKIN_ITEMS.filter((sk) => sk.rarity === rarity).map((sk) => ({ kind: 'skin', id: sk.id })) : []),
   ];
+  const rates = T.rates.filter((r) => poolOf(r.rarity).length);
+  const total = rates.reduce((a, r) => a + r.weight, 0);
+  let x = rand() * total;
+  const tier = rates.find((r) => (x -= r.weight) < 0) || rates[0];
+  const pool = poolOf(tier.rarity);
   const item = pool[Math.floor(rand() * pool.length)];
   return { ...item, rarity: tier.rarity, dupShards: tier.shards };
 }
@@ -153,20 +172,20 @@ export function claimLogin(d = today()) {
 }
 
 // n 回まわす。戻り値: [{ kind, id, rarity, isNew, shards }]（宝石・券が足りなければ null）
-// ticket: true なら💎のかわりにガチャ券を n 枚使う
-export function gacha(n = 1, { ticket = false } = {}) {
+// ticket: true なら💎のかわりにガチャ券を n 枚使う（ノーマルだけ）。type: GACHA_TYPES のキー
+export function gacha(n = 1, { ticket = false, type = 'normal' } = {}) {
   const s = S();
   if (ticket) {
-    if (gachaTickets() < n) return null;
+    if (type !== 'normal' || gachaTickets() < n) return null;
     s.collection.gachaTickets -= n;
   } else {
-    const cost = gachaCost(n);
+    const cost = gachaCost(n, type);
     if (s.gems < cost) return null;
     s.gems -= cost;
   }
   const out = [];
   for (let i = 0; i < n; i++) {
-    const r = rollOne();
+    const r = rollOne(Math.random, type);
     let isNew;
     if (r.kind === 'card') isNew = addCard(r.id);
     let star = 0;
@@ -239,23 +258,55 @@ export function starUpSkin(itemId) {
 }
 export const _rollOne = rollOne; // テスト用
 
+// ---------- 使い捨ての道具（へそくり）----------
+// へそくり（コイン +40）は強すぎるので、使うたびに1枚へる。訓練で2枚、ウェーブ勝利でたまにドロップ
+// collection.toolStock = { coins: 枚数 }。前のデータで持っていた人には2枚くばる
+export const CONSUMABLE = { coins: true };
+export const COINS_GRANT = 2;
+export function toolStock() {
+  const s = S();
+  const c = s.collection;
+  if (!c.toolStock) c.toolStock = { coins: s.tools.includes('coins') ? COINS_GRANT : 0 };
+  return c.toolStock;
+}
+export const usable = (id) => !CONSUMABLE[id] || (toolStock()[id] || 0) > 0;
+export function useConsumable(id) {
+  if (!CONSUMABLE[id]) return;
+  const st = toolStock();
+  st[id] = Math.max(0, (st[id] || 0) - 1);
+  save();
+}
+
 // 訓練で道具をもらう
 export function grantTool(unitId) {
   const t = UNIT[unitId]?.tool;
   const s = S();
   if (!t || s.tools.includes(t)) return null;
+  toolStock();
   s.tools.push(t);
+  if (CONSUMABLE[t]) toolStock()[t] = (toolStock()[t] || 0) + COINS_GRANT;
   if (!s.toolOn) s.toolOn = t;
   save();
   return t;
 }
 // ウェーブに持っていける道具は1つだけ（コレクションの「道具」でえらぶ）。えらんでいなければ最後にもらった道具
+// 使い捨ての道具が0枚なら持っていけない（ほかの道具にかわる）
 export const TOOL_MAX = 1;
 export function equippedTool() {
   const s = S();
-  if (!s.tools.length) return null;
-  if (!s.tools.includes(s.toolOn)) s.toolOn = s.tools[s.tools.length - 1];
-  return s.toolOn;
+  const ok = s.tools.filter(usable);
+  if (!ok.length) return null;
+  return ok.includes(s.toolOn) ? s.toolOn : ok[ok.length - 1];
+}
+
+// ウェーブ勝利のドロップ（たまに）: へそくり・ガチャ券。ボス撃破は券が出やすい
+export const DROP = { coins: 0.12, ticket: 0.06, bossTicket: 0.3 };
+export const BOSS_DROP = 0.05; // 練習ウェーブでボスカードが落ちる確率（ボス撃破ずみの単元）
+export function rollDrops(boss, rand = Math.random) {
+  const out = [];
+  if (S().tools.includes('coins') && rand() < DROP.coins) { toolStock().coins = (toolStock().coins || 0) + 1; out.push('coins'); }
+  if (rand() < (boss ? DROP.bossTicket : DROP.ticket)) { S().collection.gachaTickets = gachaTickets() + 1; out.push('ticket'); }
+  return out;
 }
 export function equipTool(id) {
   const s = S();

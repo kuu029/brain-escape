@@ -1,4 +1,5 @@
 // ターン制タワーディフェンスの本体（DOM なし。Node のテストからも動かせる）
+import { BOSS_CARD } from './content.js';
 // 1問 = 1ターン。正解 → コイン＋こうげき、不正解 → 敵だけ進む。
 
 // 盤面 4×4。通路はくねくね、出口は左下。
@@ -104,7 +105,7 @@ export function answer(st, { correct, retry = false, targetId = null }) {
   const ev = [];
   if (st.over) return ev;
   if (correct) {
-    st.gauge = Math.min(GAUGE_NEED, (st.gauge || 0) + 1);
+    st.gauge = Math.min(GAUGE_MAX, (st.gauge || 0) + 1);
     if (!retry) {
       st.combo++;
       st.maxCombo = Math.max(st.maxCombo, st.combo);
@@ -253,8 +254,29 @@ export const SUMMON = {
   robot: { desc: '先頭の敵に4ダメージ', run: (st, ev) => { const f = front(st); if (f) hit(st, f, 4, ev, 'ally'); } },
   sushi: { desc: '先頭に3ダメージ、2番目に1ダメージ', run: (st, ev) => { const [a, b] = alive(st).sort((x, y) => y.pos - x.pos); if (a) hit(st, a, 3, ev, 'ally'); if (b) hit(st, b, 1, ev, 'ally'); } },
   'banana-car': { desc: '敵ぜんぶを1マス押し戻す', run: (st, ev) => alive(st).forEach((e) => back(st, e, 1, ev)) },
+  // ★3・★4 のガチャなかま: 強いかわりに、ゲージが多くいる
+  kaminari: { need: 4, desc: '先頭の敵に6ダメージ', run: (st, ev) => { const f = front(st); if (f) hit(st, f, 6, ev, 'ally'); } },
+  ninja: { need: 4, desc: '敵ぜんぶを2マス押し戻す', run: (st, ev) => alive(st).forEach((e) => back(st, e, 2, ev)) },
+  pudding: { need: 4, desc: 'ライフ +1 ＆ 出口に来た敵を1体ブロック', run: (st) => { st.lives = Math.min(MAX_LIVES, st.lives + 1); st.wall = Math.max(st.wall, 1); } },
+  kingyo: { need: 4, desc: 'コイン +60', run: (st) => { st.coins += 60; } },
+  dragon: { need: 5, desc: '火をふいて敵ぜんぶに3ダメージ', run: (st, ev) => alive(st).forEach((e) => hit(st, e, 3, ev, 'ally')) },
+  ufo: { need: 5, desc: '前の2体に8ダメージ（ほぼ一撃）', run: (st, ev) => alive(st).sort((x, y) => y.pos - x.pos).slice(0, 2).forEach((e) => hit(st, e, 8, ev, 'ally')) },
 };
-export const canSummon = (st, id) => !!SUMMON[id] && !st.over && (st.gauge || 0) >= GAUGE_NEED && !st.summoned?.[id];
+// ボスカードの必殺技（ゲージ6）: 数学のボスは全体こうげき、英語のボスは足止め＋こうげき、★4（総長・脱獄王）は大技
+for (const [unit, id] of Object.entries(BOSS_CARD)) {
+  if (SUMMON[id]) continue;
+  SUMMON[id] = unit.startsWith('en-')
+    ? { need: 6, boss: true, desc: '必殺: 敵ぜんぶ2ターン停止＋2ダメージ', run: (st, ev) => { st.frozen = Math.max(st.frozen, 2); alive(st).forEach((e) => hit(st, e, 2, ev, 'ally')); } }
+    : { need: 6, boss: true, desc: '必殺: 敵ぜんぶに4ダメージ', run: (st, ev) => alive(st).forEach((e) => hit(st, e, 4, ev, 'ally')) };
+}
+// 暗号室のボス: 英単語は足止め、社会は押し戻し、理科は全体こうげき
+SUMMON.golem = { need: 6, boss: true, desc: '必殺: 敵ぜんぶ3ターン停止', run: (st) => { st.frozen = Math.max(st.frozen, 3); } };
+SUMMON.bushou = { need: 6, boss: true, desc: '必殺: 敵ぜんぶを3マス押し戻す＋1ダメージ', run: (st, ev) => alive(st).forEach((e) => { back(st, e, 3, ev); hit(st, e, 1, ev, 'ally'); }) };
+SUMMON.hakase = { need: 6, boss: true, desc: '必殺: 謎の気体で敵ぜんぶに3ダメージ＋コイン +30', run: (st, ev) => { alive(st).forEach((e) => hit(st, e, 3, ev, 'ally')); st.coins += 30; } };
+for (const id of ['kaeru', 'crown']) SUMMON[id] = { need: 6, boss: true, desc: '大必殺: 敵ぜんぶに6ダメージ＋ライフ +1', run: (st, ev) => { alive(st).forEach((e) => hit(st, e, 6, ev, 'ally')); st.lives = Math.min(MAX_LIVES, st.lives + 1); } };
+export const gaugeNeed = (id) => SUMMON[id]?.need || GAUGE_NEED;
+export const GAUGE_MAX = 6;
+export const canSummon = (st, id) => !!SUMMON[id] && !st.over && (st.gauge || 0) >= gaugeNeed(id) && !st.summoned?.[id];
 export function summon(st, id) {
   const ev = [];
   if (!canSummon(st, id)) return ev;
@@ -269,18 +291,34 @@ export function summon(st, id) {
   return ev;
 }
 
-// 自動プレイ（テスト・「おまかせ建設」ボタン用）: 置ける所に置く → 安い強化
-const AUTO_ORDER = [1, 4, 2, 0, 5, 3];
-export function autoSpend(st) {
+// 自動プレイ（テスト・「おまかせ建設」ボタン用）
+// cfg: { reserve: { マス番号: タワー }, prio: 'mix'|'beam'|'frost'|'bomb', upgrade: true/false }
+//   1) 予約したマスがいちばん先。予約マスが空いていてコインが足りないときは、ほかに使わずためる
+//   2) 予約のないマスに、優先タワー（mix はビーム2：こおり1 のくり返し）
+//   3) 全部のマスが埋まったら、安い強化から（upgrade:false なら強化しない）
+export const AUTO_ORDER = [1, 4, 2, 0, 5, 3];
+export const AUTO_PRIO = ['mix', 'beam', 'frost', 'bomb'];
+export function autoSpend(st, cfg = {}) {
+  const reserve = cfg.reserve || {};
+  const prio = cfg.prio || 'mix';
   let did = false;
   for (;;) {
-    const empty = AUTO_ORDER.find((i) => !st.slots[i]);
-    if (empty !== undefined && st.coins >= TOWERS.beam.cost) {
-      const type = st.slots.filter(Boolean).length % 3 === 2 ? 'frost' : 'beam';
-      if (build(st, empty, st.coins >= TOWERS[type].cost ? type : 'beam')) { did = true; continue; }
+    const resv = AUTO_ORDER.find((i) => !st.slots[i] && TOWERS[reserve[i]]);
+    if (resv !== undefined) {
+      if (build(st, resv, reserve[resv])) { did = true; continue; }
+      break; // 予約のためにコインをためる
     }
+    const empty = AUTO_ORDER.find((i) => !st.slots[i]);
+    if (empty !== undefined) {
+      const want = prio === 'mix' ? (st.slots.filter(Boolean).length % 3 === 2 ? 'frost' : 'beam') : prio;
+      // 優先タワーが買えないときは、mix ならビームで代わりに。指定したタワーはためて待つ
+      const type = st.coins >= TOWERS[want].cost ? want : prio === 'mix' ? 'beam' : null;
+      if (type && build(st, empty, type)) { did = true; continue; }
+      break;
+    }
+    if (cfg.upgrade === false) break;
     const ups = st.slots.map((tw, i) => [i, upgradeCost(st, i)]).filter(([, c]) => c !== null && c <= st.coins).sort((a, b) => a[1] - b[1]);
-    if (ups.length && empty === undefined) {
+    if (ups.length) {
       upgrade(st, ups[0][0]);
       did = true;
       continue;

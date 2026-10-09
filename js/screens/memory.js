@@ -14,6 +14,8 @@ import { addCard } from '../game/progress.js';
 import { GACHA_CARDS, CARDS as GAME_CARDS } from '../game/content.js';
 import * as ME from '../memory/engine.js';
 import { flowQuestion, flowGuide, hasFlow, FLOW_N } from '../memory/flow.js';
+import { defenseView } from './memdef.js';
+import { MEM_BOSS } from '../memory/defense.js';
 import { claimActivity } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
@@ -31,6 +33,7 @@ export function render(el, params = {}) {
   if (params.phase === 'result') return resultView(el, subject, params.r);
   if (params.phase === 'deck') return deckView(el, subject, params.deck);
   if (params.phase === 'flow') return flowView(el, subject);
+  if (params.phase === 'defense') return defenseView(el, subject);
   return topView(el, subject);
 }
 
@@ -106,6 +109,8 @@ function topView(el, subject) {
           h('span', { class: T.stage === 'review' ? 'now' : T.stage === 'done' ? 'done' : '' }, `② 復習 ${T.review ? `あと${T.review}` : ''}`)),
         nextButtons(subject, T, M),
         weak > 0 && btn(`😵 苦手だけ（${weak}枚）`, () => startRush(subject, { weak: true }), 'ghost small')),
+      // 暗号ディフェンス（リアルタイムのゲーム）
+      btn(h('span', {}, '🛡️ 暗号ディフェンス', h('small', {}, `せまる看守を暗号で撃退！ 最後に「${MEM_BOSS[subject].name}」（約1〜2分）`)), () => { sfx('tap'); go('memory', { phase: 'defense', subject }); }, 'ghost mm-go mm-def'),
       // 流れでつなげる（社会・理科）: 年表・時代・分野と結びつけて覚える
       hasFlow(subject) && btn(h('span', {}, '🧭 流れでつなげる', h('small', {}, subject === 'soc' ? `年表・時代・地方・州・三権・原因と結果（${FLOW_N}問）` : `分野・単位・なかま分け・原因と結果（${FLOW_N}問）`)), () => { sfx('tap'); go('memory', { phase: 'flow', subject }); }, 'ghost mm-go mm-flow'),
       h('h3', { class: 'sec' }, '難易度'),
