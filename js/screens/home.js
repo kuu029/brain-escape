@@ -2,7 +2,7 @@
 import { h, btn, toast, modal } from '../core/ui.js';
 import { S, streakAlive, dayLog, cleared, save } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
-import { nextUnit, GACHA10_COST } from '../game/progress.js';
+import { nextUnit, GACHA10_COST, claimLogin, gachaTickets, LOGIN_CAL } from '../game/progress.js';
 import { BOSSES } from '../game/content.js';
 import { spriteHTML, bgUrl } from '../game/art.js';
 import { backdrop } from '../ui/deco.js';
@@ -26,6 +26,7 @@ export function topBar(back = null) {
 
 export function render(el) {
   const s = S();
+  const lb = claimLogin(); // 先にもらっておく（ナビの「券あり」吹き出しに反映するため）
   const mins = Math.floor(dayLog().seconds / 60);
   const mlist = h('div', { class: 'missions' });
   const paintM = () => {
@@ -72,8 +73,22 @@ export function render(el) {
       [['🎰', 'ガチャ', 'collection', { tab: 'gacha' }], ['🃏', 'コレクション', 'collection', {}], ['📊', '記録', 'records', {}], ['⚙️', '設定', 'settings', {}]].map(([em, label, to, p]) =>
         btn(h('span', { class: 'nav-in' }, h('span', { class: 'nav-em' }, em), h('span', {}, label),
           // 10連ぶんの💎がたまったら、吹き出しでお知らせ
-          label === 'ガチャ' && s.gems >= GACHA10_COST ? h('span', { class: 'nav-bubble' }, '10連できるぞ！') : null), () => go(to, p), `nav${label === 'ガチャ' ? ' nav-gacha' : ''}`))),
+          label === 'ガチャ' && (gachaTickets() > 0 || s.gems >= GACHA10_COST) ? h('span', { class: 'nav-bubble' }, gachaTickets() > 0 ? `🎟 券 ×${gachaTickets()}` : '10連できるぞ！') : null), () => go(to, p), `nav${label === 'ガチャ' ? ' nav-gacha' : ''}`))),
   );
+  // ログインボーナス（その日はじめて）: ガチャ券。7日カレンダーで今日の位置を見せる
+  if (lb) {
+    sfx('coin');
+    const cal = h('div', { class: 'lb-cal' }, LOGIN_CAL.map((n, i) => h('div', { class: `lb-day${i + 1 < lb.day ? ' past' : i + 1 === lb.day ? ' now' : ''}${i === LOGIN_CAL.length - 1 ? ' big' : ''}` }, h('small', {}, `${i + 1}日目`), h('b', {}, `🎟×${n}`))));
+    modal({
+      title: '🎁 ログインボーナス',
+      body: h('div', { class: 'modal-body center' },
+        h('div', { class: 'lb-get' }, `🎟 ガチャ券 ×${lb.got}`),
+        h('p', {}, `連続 ${lb.count}日目！ いま ${lb.total}枚持ってる`),
+        cal,
+        h('small', { class: 'note' }, lb.day === LOGIN_CAL.length ? '7日目達成！ 明日からまた1日目。' : `明日も開くと 🎟×${lb.next}（7日目は ×${LOGIN_CAL[LOGIN_CAL.length - 1]}）。1日あけると1日目にもどるよ`)),
+      buttons: [{ label: 'あとで', value: false }, { label: '🎰 ガチャへ', value: true, cls: 'primary' }],
+    }).then((v) => { if (v) go('collection', { tab: 'gacha' }); });
+  }
   // 学習のかたよりのおすすめ（1日1回）
   setTimeout(() => {
     if (!el.isConnected || document.querySelector('.modal-back')) return;

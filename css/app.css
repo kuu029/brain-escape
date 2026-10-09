@@ -1283,3 +1283,17 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .cap-party .btn { width: auto; flex: 0 0 auto; min-height: 44px; padding: 4px 10px; font-size: 13px; }
 .cap-party .cp-face { width: 24px; height: 24px; }
 .gacha-stage { overflow-y: auto; justify-content: safe center; }
+/* ログインボーナス */
+.lb-get { font-size: 26px; font-weight: 900; color: var(--accent); margin: 4px 0; animation: lbPop .5s ease-out; }
+@keyframes lbPop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: none; opacity: 1; } }
+.lb-cal { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 6px; }
+.lb-day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; background: #0003; border: 2px solid var(--line); }
+.lb-day small { font-size: 11.5px; color: var(--dim); }
+.lb-day b { font-size: 14px; }
+.lb-day.past { opacity: .5; }
+.lb-day.past b::after { content: " ✓"; color: var(--good); }
+.lb-day.now { border-color: var(--accent); background: #ffd64026; box-shadow: 0 0 10px #ffd64055; }
+.lb-day.big { grid-column: span 2; border-color: #ff7ad9aa; }
+.gacha-btns.tix { margin-bottom: 4px; }
+@media (prefers-reduced-motion: reduce) { .lb-get { animation: none; } }
+.lb-day.big.now { border-color: var(--accent); }

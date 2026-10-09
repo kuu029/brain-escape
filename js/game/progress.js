@@ -1,5 +1,5 @@
 // 進行と報酬（ロック判定・ウェーブ終了時の報酬・ガチャ）
-import { S, unitState, cleared, save, saveNow } from '../core/store.js';
+import { S, unitState, cleared, save, saveNow, today, dayDiff } from '../core/store.js';
 import { UNIT, GEN, SUBJECTS, unitsOf } from '../units/registry.js';
 import { BOSS_CARD, GACHA_CARDS, SKINS, CARDS, GACHA_RATES, TOWER_TYPES, SKIN_ITEMS, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from './content.js';
 import { bump } from './missions.js';
@@ -133,12 +133,37 @@ function rollOne(rand = Math.random) {
   const item = pool[Math.floor(rand() * pool.length)];
   return { ...item, rarity: tier.rarity, dupShards: tier.shards };
 }
-// n 回まわす。戻り値: [{ kind, id, rarity, isNew, shards }]（宝石が足りなければ null）
-export function gacha(n = 1) {
+// ---------- ログインボーナス（ガチャ券） ----------
+// その日はじめてホームを開くと、ガチャ券（1枚 = ガチャ1回）がもらえる。
+// 連続ログインの日数で7日周期のカレンダー: 1・1・2・1・1・2・5枚（7日目は5枚 = 5連ぶん）。1日あいたら1日目にもどる
+// collection.gachaTickets = 枚数、login = { last: 'YYYY-MM-DD', count: 連続日数 }
+export const LOGIN_CAL = [1, 1, 2, 1, 1, 2, 5];
+export const gachaTickets = () => S().collection.gachaTickets || 0;
+export function claimLogin(d = today()) {
   const s = S();
-  const cost = gachaCost(n);
-  if (s.gems < cost) return null;
-  s.gems -= cost;
+  const L = (s.login ||= { last: null, count: 0 });
+  if (L.last === d) return null;
+  L.count = L.last && dayDiff(L.last, d) === 1 ? L.count + 1 : 1;
+  L.last = d;
+  const day = ((L.count - 1) % LOGIN_CAL.length) + 1;
+  const got = LOGIN_CAL[day - 1];
+  s.collection.gachaTickets = gachaTickets() + got;
+  saveNow();
+  return { day, got, count: L.count, total: s.collection.gachaTickets, next: LOGIN_CAL[day % LOGIN_CAL.length] };
+}
+
+// n 回まわす。戻り値: [{ kind, id, rarity, isNew, shards }]（宝石・券が足りなければ null）
+// ticket: true なら💎のかわりにガチャ券を n 枚使う
+export function gacha(n = 1, { ticket = false } = {}) {
+  const s = S();
+  if (ticket) {
+    if (gachaTickets() < n) return null;
+    s.collection.gachaTickets -= n;
+  } else {
+    const cost = gachaCost(n);
+    if (s.gems < cost) return null;
+    s.gems -= cost;
+  }
   const out = [];
   for (let i = 0; i < n; i++) {
     const r = rollOne();

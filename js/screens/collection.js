@@ -4,7 +4,7 @@ import { S, save } from '../core/store.js';
 import { CARDS, SKINS, TOOLS, BOSS_CARD, SKIN_ITEMS, TOWER_TYPES, TOWER_LOOK, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from '../game/content.js';
 import { UNIT } from '../units/registry.js';
 import { backdrop } from '../ui/deco.js';
-import { gacha, gachaCost, GACHA_COST, GACHA5_COST, GACHA10_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX, equippedTool, equipTool } from '../game/progress.js';
+import { gachaTickets, gacha, gachaCost, GACHA_COST, GACHA5_COST, GACHA10_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX, equippedTool, equipTool } from '../game/progress.js';
 import { SUMMON, GAUGE_NEED } from '../game/engine.js';
 import { cardSprite, towerSprite, spriteHTML } from '../game/art.js';
 import { go } from '../core/router.js';
@@ -128,15 +128,19 @@ export function render(el, { tab = 'cards' } = {}) {
         h('div', { class: 'card-grid' }, list.map(cardView)),
       ]));
   } else if (tab === 'gacha') {
-    const pull = async (n) => {
-      const res = gacha(n);
-      if (!res) return toast(`💎が足りない（あと ${gachaCost(n) - s.gems}）`);
+    const pull = async (n, ticket = false) => {
+      const res = gacha(n, { ticket });
+      if (!res) return toast(ticket ? '🎟 ガチャ券が足りない' : `💎が足りない（あと ${gachaCost(n) - s.gems}）`);
       await gachaStage(res);
       go('collection', { tab: 'gacha' });
     };
     content.append(h('div', { class: 'gacha-box' },
       h('div', { class: 'gacha-machine', html: spriteHTML('gacha-machine', '🎰', 'ガチャマシン') }),
-      h('p', {}, `💎 ${s.gems}　🧩 かけら ${shards}`),
+      h('p', {}, `💎 ${s.gems}　🎟 ガチャ券 ${gachaTickets()}　🧩 かけら ${shards}`),
+      // ガチャ券（ログインボーナス）: 1枚で1回。5枚あれば5連も
+      gachaTickets() > 0 && h('div', { class: 'gacha-btns tix' },
+        btn(`🎟 券で1回（のこり ${gachaTickets()}枚）`, () => pull(1, true), 'primary'),
+        gachaTickets() >= 5 && btn('🎟 券5枚で5回', () => pull(5, true), 'boss')),
       h('div', { class: 'gacha-btns' },
         btn(`1回 💎${GACHA_COST}`, () => pull(1), 'primary'),
         btn(`5回 💎${GACHA5_COST}`, () => pull(5), 'boss'),
