@@ -11,7 +11,7 @@ import { answerPad } from '../ui/answer.js';
 import { bump } from '../game/missions.js';
 import { addCard, party, towerSkin } from '../game/progress.js';
 import { claimActivity } from '../game/bonus.js';
-import { cardSprite, enemySprite, towerSprite, spriteHTML, bgUrl } from '../game/art.js';
+import { cardSprite, enemySprite, towerSprite, spriteHTML, bgUrl, hasArt } from '../game/art.js';
 import { CARDS as GAME_CARDS } from '../game/content.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
@@ -48,7 +48,7 @@ export function defenseView(el, subject, started = false) {
   const total = D.DEF_N + 1;
   const hud = h('span', { class: 'mr-prog' });
   // 門（砦）と大砲: 画像があれば画像、なければ CSS の石の門
-  const fort = h('div', { class: 'md-fort', html: `${spriteHTML('def-gate', '', '門', 'md-gate-img')}<span class="md-cannon">${towerSprite('beam', 2, towerSkin('beam').id)}</span>` });
+  const fort = h('div', { class: `md-fort${hasArt('def-gate') ? ' has-img' : ''}`, html: `${spriteHTML('def-gate', '', '門', 'md-gate-img')}<span class="md-cannon">${towerSprite('beam', 2, towerSkin('beam').id)}</span>` });
   const field = h('div', { class: 'md-field' }, ...[0, 1, 2].map((l) => h('div', { class: 'md-row', style: { top: `${l * 33.33}%` } })), fort);
   const bg = bgUrl('bg-defense');
   if (bg) field.style.backgroundImage = `linear-gradient(#0b071666, #0b071699), url(${bg})`;

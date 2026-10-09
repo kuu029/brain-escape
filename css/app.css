@@ -1422,3 +1422,12 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 @keyframes mdPop { to { transform: translate(-50%, -90%) scale(1.6); opacity: 0; } }
 @keyframes mdLeak { to { transform: translate(-150%, -50%) scale(.6); opacity: 0; } }
 @keyframes mdBeam { from { opacity: 1; } to { opacity: 0; } }
+/* 門の画像があるとき: CSS の門は消して、画像を丸ごと見せる */
+.md-fort.has-img { width: 64px; background: linear-gradient(90deg, #2a1f40, #2a1f4000); border-right: 0; box-shadow: none; }
+.md-fort.has-img::before, .md-fort.has-img::after { display: none; }
+.md-fort.has-img .md-gate-img { object-fit: contain; inset: auto; left: -6px; top: 50%; width: 76px; height: auto; transform: translateY(-50%); filter: drop-shadow(4px 0 8px #000a); }
+.md-fort.has-img .md-cannon { right: -18px; top: auto; bottom: 8px; }
+.md-fort.has-img { width: 74px; }
+.md-fort.has-img .md-gate-img { left: -10px; width: 96px; }
+.md-fort.has-img .md-cannon { right: -22px; bottom: auto; top: calc(50% + 4px); }
+.md-fort.has-img .md-gate-img { left: -22px; width: 118px; }

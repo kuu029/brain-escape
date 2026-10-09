@@ -72,6 +72,7 @@ export const ART_KEYS = [
   "skin-lava-frost",
   "skin-lava-bomb",
   "gacha-machine",
+  "def-gate",
   "card-broccoli",
   "card-onigiri",
   "card-toast",
@@ -105,5 +106,6 @@ export const BG_KEYS = [
   "banner-math",
   "banner-en",
   "banner-memory",
-  "banner-exam"
+  "banner-exam",
+  "bg-defense"
 ];

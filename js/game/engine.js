@@ -326,6 +326,39 @@ export const DEPLOY = {
   ninja: { kind: 'raider', hp: 3, dmg: 3 },
   ufo: { kind: 'raider', hp: 4, dmg: 5 },
   bushou: { kind: 'raider', hp: 5, dmg: 3 },
+  // ふつうのなかま（追加）
+  broccoli: { kind: 'tower', dmg: 1, splash: true, turns: 5 }, // 重低音スピーカー
+  kutsushita: { kind: 'guard', hp: 2, dmg: 1, turns: 6 },
+  reizouko: { kind: 'guard', hp: 5, dmg: 1, turns: 8 }, // かたい
+  pigeon: { kind: 'raider', hp: 2, dmg: 2 }, // 手紙を運んで飛んでいく
+  sushi: { kind: 'raider', hp: 2, dmg: 3 }, // 回転パンチ
+  // ボスカード（ゲージ6）: 見た目や性格に合わせて、強めに
+  // 🏰 タワー型
+  bucket: { kind: 'tower', dmg: 2, splash: true, turns: 8 }, // ドラムの音でまとめて
+  kanzume: { kind: 'tower', dmg: 2, splash: true, turns: 8 }, // 海賊の大砲
+  basket: { kind: 'tower', dmg: 3, turns: 8 }, // 放物線シュート
+  coin: { kind: 'tower', dmg: 3, turns: 8 },
+  kirin: { kind: 'tower', dmg: 3, turns: 9 }, // 長い首で遠くまで見はる
+  ika: { kind: 'tower', dmg: 2, splash: true, turns: 8 }, // 10本の足
+  hakase: { kind: 'tower', dmg: 3, splash: true, turns: 6 }, // 謎の気体
+  hachi: { kind: 'tower', dmg: 2, splash: true, turns: 8 }, // 3本の針
+  // 🛡️ ガード型
+  kani: { kind: 'guard', hp: 7, dmg: 2, turns: 10 }, // 磁石で引きつける
+  katatsumuri: { kind: 'guard', hp: 8, dmg: 1, turns: 12 }, // かたい殻
+  tent: { kind: 'guard', hp: 7, dmg: 2, turns: 10 },
+  hako: { kind: 'guard', hp: 9, dmg: 1, turns: 12 },
+  puzzle: { kind: 'guard', hp: 7, dmg: 2, turns: 10 }, // ぴったりふさぐ
+  zou: { kind: 'guard', hp: 9, dmg: 2, turns: 12 },
+  kame: { kind: 'guard', hp: 10, dmg: 1, turns: 12 },
+  wani: { kind: 'guard', hp: 6, dmg: 3, turns: 10 }, // かみつく
+  // 🏃 出撃型
+  hasami: { kind: 'raider', hp: 3, dmg: 5 },
+  coaster: { kind: 'raider', hp: 5, dmg: 3 }, // ジェットコースターで突進
+  kujira: { kind: 'raider', hp: 5, dmg: 4 }, // 大波
+  hebi: { kind: 'raider', hp: 4, dmg: 3 },
+  kangaroo: { kind: 'raider', hp: 4, dmg: 4 }, // ジャンプキック
+  washi: { kind: 'raider', hp: 3, dmg: 6 }, // 急降下
+  hamster: { kind: 'raider', hp: 5, dmg: 3 }, // 回し車でダッシュ
 };
 export const DEPLOY_LABEL = { tower: '🏰 タワー型', guard: '🛡️ ガード型', raider: '🏃 出撃型' };
 function deploy(st, id, d, ev) {
