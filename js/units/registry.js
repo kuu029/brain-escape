@@ -1,5 +1,6 @@
 // 単元の登録所。新しい単元は import して UNITS に1行足すだけ。
 import { makeRng } from '../core/rng.js';
+import { enrichSteps } from './english/explain.js';
 import signedNumbers from './stage1/signed-numbers.js';
 import fractionsDecimals from './stage1/fractions-decimals.js';
 import expressions from './stage1/expressions.js';
@@ -122,7 +123,9 @@ export const GEN = {};
 for (const u of UNITS) {
   for (const [id, g] of Object.entries(u.generators || {})) {
     if (GEN[id]) throw new Error(`generator id 重複: ${id}`);
-    GEN[id] = { unit: u.id, lang: u.subject, source: 'original', ...g };
+    // 英語の文法問題は、解き方に「ルール・注意・完成した文」を足す（explain.js）
+    const gen = u.subject === 'english' ? (rng) => enrichSteps(id, g.gen(rng)) : g.gen;
+    GEN[id] = { unit: u.id, lang: u.subject, source: 'original', ...g, gen };
   }
   // 過去問（固定問題）: unit.pastExams = [{ id, origin, difficulty, problem: () => ({...}) }]
   for (const px of u.pastExams || []) {
