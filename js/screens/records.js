@@ -46,7 +46,7 @@ function dayDetail(s, date) {
         h('span', { class: 'dd-time' }, hm(x.at)),
         h('span', { class: 'dd-em' }, em),
         h('span', { class: 'dd-body' },
-          h('b', { html: `${u ? u.title : x.subject === 'english' ? '英語' : '数学'}${L ? `｜${rich(L.title)}` : ''}${x.kind === 'exam' ? (x.lesson === 'full' ? ' フル模試' : ' ミニ模試') : ''}` }),
+          h('b', { html: `${u ? u.title : { english: '英語', social: '社会', science: '理科' }[x.subject] || '数学'}${L ? `｜${rich(L.title)}` : ''}${x.kind === 'exam' ? (x.lesson === 'full' ? ' フル模試' : ' ミニ模試') : ''}` }),
           h('small', {}, `${kind}・${x.asked ? `${x.correct}/${x.asked}問 正解（${acc}%）` : '問題なし'}・${minText(x.seconds)}`)),
         h('span', { class: `dd-res ${rc}` }, res));
     }));

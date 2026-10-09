@@ -20,6 +20,8 @@ import { flyGems } from '../ui/gems.js';
 const POS = { n: '名詞', v: '動詞', adj: '形容詞', adv: '副詞', prep: '前置詞', conj: '接続詞', wh: '疑問詞', pron: '代名詞', int: 'あいさつ等', num: '数', idiom: '熟語' };
 const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science' };
 const mem = () => S().memory;
+// 数え方: 英単語は「語」、社会・理科の用語は「枚」
+const unitOf = (subject) => (subject === 'en' ? '語' : '枚');
 
 export function render(el, params = {}) {
   const subject = params.subject || 'en';
@@ -61,15 +63,15 @@ function todayState(M, subject, now) {
 // 次にやることのボタン（いちばん大事なものだけ黄色）
 function nextButtons(subject, T, M) {
   const extra = () => { ME.addExtra(M, subject, Date.now()); save(); startRush(subject, { intro: true }); };
-  const introBtn = (cls) => btn(h('span', {}, '🆕 顔合わせ', h('small', {}, T.day.motivation ? `今日の新しい暗号 あと ${T.introLeft} 語（${ME.INTRO_SIZE}語ずつ）` : '今日の新しい暗号を、まず全部1回ずつ見る')), () => startRush(subject, { intro: true }), cls);
+  const introBtn = (cls) => btn(h('span', {}, '🆕 顔合わせ', h('small', {}, T.day.motivation ? `今日の新しい暗号 あと ${T.introLeft} ${unitOf(subject)}（${ME.INTRO_SIZE}${unitOf(subject)}ずつ）` : '今日の新しい暗号を、まず全部1回ずつ見る')), () => startRush(subject, { intro: true }), cls);
   const reviewBtn = (cls) => btn(h('span', {}, '🔁 復習ラッシュ', h('small', {}, `復習どき ${T.review} 枚（最大${ME.RUSH_SIZE}枚・4分）`)), () => startRush(subject), cls);
   if (T.stage === 'intro') return [introBtn('primary big mm-go'), T.review > 0 && reviewBtn('ghost mm-go')];
-  if (T.stage === 'review') return [reviewBtn('primary big mm-go'), ME.unseenLeft(M, subject) > 0 && btn(`＋${ME.EXTRA_STEP}語 追加で覚える`, extra, 'ghost small')];
+  if (T.stage === 'review') return [reviewBtn('primary big mm-go'), ME.unseenLeft(M, subject) > 0 && btn(`＋${ME.EXTRA_STEP}${unitOf(subject)} 追加で覚える`, extra, 'ghost small')];
   const nd = ME.nextDue(M, subject);
   const mins = nd ? Math.max(1, Math.round((nd - Date.now()) / 60000)) : null;
   return [
     h('div', { class: 'mm-clear' }, h('b', {}, '✅ 今日の分はクリア！'), h('small', {}, mins ? `次の復習どきは ${mins >= 120 ? `${Math.round(mins / 60)}時間` : `${mins}分`}後` : '')),
-    ME.unseenLeft(M, subject) > 0 && btn(`🔥 もっとやる: ＋${ME.EXTRA_STEP}語 追加で覚える`, extra, 'primary mm-go'),
+    ME.unseenLeft(M, subject) > 0 && btn(`🔥 もっとやる: ＋${ME.EXTRA_STEP}${unitOf(subject)} 追加で覚える`, extra, 'primary mm-go'),
   ];
 }
 
@@ -94,7 +96,8 @@ function topView(el, subject) {
   el.append(topBar(() => go('home')),
     h('div', { class: 'mem-top' },
       h('div', { class: 'mm-hero' }, h('div', { class: 'mm-title' }, '🔐 暗号室'), h('p', {}, '看守たちの合言葉（暗号）を解読して、扉を開けろ。忘れかけたころに、また出てくるぞ。')),
-      h('div', { class: 'mm-subj' }, Object.values(ME.MEM_SUBJECTS).map((x) => h('button', { class: `mm-tab${x.id === subject ? ' on' : ''}${x.ready ? '' : ' off'}`, type: 'button', onclick: () => (x.ready ? go('memory', { subject: x.id }) : toast(`${x.name}の暗号は準備中…`)) }, `${x.emoji} ${x.name}${x.ready ? '' : ' 🔒'}`))),
+      h('div', { class: 'mm-subj' }, Object.values(ME.MEM_SUBJECTS).map((x) => h('button', { class: `mm-tab${x.id === subject ? ' on' : ''}${x.ready ? '' : ' off'}`, type: 'button', onclick: () => (x.ready ? go('memory', { subject: x.id }) : toast(`${x.name}の暗号は準備中…`)) }, `${x.emoji} ${x.name}${x.ready ? (x.beta ? ' β' : '') : ' 🔒'}`))),
+      sj.beta && h('p', { class: 'note mm-beta' }, `β版：${sj.name}の用語は手作りのデータです。まちがいを見つけたら教えてね（おうちの人に確かめてもらうと安心）。`),
       h('div', { class: 'mm-today' },
         h('div', { class: 'mt-flow' },
           h('span', { class: T.stage === 'intro' ? 'now' : 'done' }, `① 顔合わせ ${T.day.motivation ? `${T.done}/${T.limit}` : ''}`),
@@ -209,8 +212,9 @@ function rushView(el, subject, opts) {
     studyBegin(30);
     stage.replaceChildren(h('div', { class: 'mr-card intro' },
       h('span', { class: 'mr-new' }, 'NEW 新しい暗号'),
-      h('div', { class: 'mr-word en' }, card.q),
-      h('div', { class: 'mr-mean' }, card.a),
+      card.kind === 'term' && h('small', { class: 'mr-read' }, card.read),
+      h('div', { class: `mr-word ${card.kind === 'term' ? 'ja' : 'en'}` }, card.q),
+      h('div', { class: `mr-mean${card.kind === 'term' ? ' term' : ''}` }, card.a),
       card.pos && h('small', { class: 'mr-pos' }, POS[card.pos] || card.pos)),
       h('p', { class: 'note center' }, '声に出して1回読もう。4枚見たら、まとめてテスト！'),
       btn('覚えた！ ▶', () => { sfx('tap'); next(); }, 'primary big'));
@@ -226,7 +230,8 @@ function rushView(el, subject, opts) {
     const start = Date.now();
     studyBegin(30);
     const bar = h('div', { class: 'mr-time' }, h('i', { style: { animationDuration: `${limit}ms` } }));
-    const big = form === 'e2j' ? h('div', { class: 'mr-word en' }, q.stem) : h('div', { class: 'mr-word ja' }, q.stem);
+    const lang = form === 'e2j' && card.kind !== 'term' ? 'en' : 'ja';
+    const big = h('div', { class: `mr-word ${lang}${q.stem.length > 14 ? ' long' : ''}` }, q.stem);
     const cardEl = h('div', { class: `mr-card f-${form}` }, big, h('small', { class: 'mr-ask' }, q.ask), bar);
     let done = false;
     // hinted: 💡ヒントを使った正解は「あやしい」あつかい（レベルを上げない）
@@ -261,7 +266,7 @@ function rushView(el, subject, opts) {
     };
     stage.replaceChildren(cardEl);
     if (form === 'input') {
-      const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', placeholder: '英語で入力' });
+      const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', placeholder: card.kind === 'term' ? '用語を入力（ひらがなでもOK）' : '英語で入力', ...(card.kind === 'term' ? { lang: 'ja' } : {}) });
       const submit = () => { const v = inp.value; if (!v.trim()) return; inp.blur(); finishQ(ME.textOk(q, v), v); };
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
       stage.append(inp, h('div', { class: 'mr-ctrl' }, btn('わからない', () => finishQ(false, null), 'ghost'), btn('決定', submit, 'primary')));

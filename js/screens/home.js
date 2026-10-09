@@ -99,14 +99,14 @@ function bannerAttrs(key, cls) {
 // 暗号室（暗記）のポスター: 復習どきの枚数
 function memoryCard() {
   const M = S().memory;
-  const due = dueList(M, 'en', Date.now()).length;
+  const due = ['en', 'soc', 'sci'].reduce((a, sj) => a + dueList(M, sj, Date.now()).length, 0);
   const seen = Object.keys(M.cards || {}).length;
   return h('button', { class: 'game-card memory', type: 'button', ...bannerAttrs('banner-memory', 'memory'), onclick: () => { sfx('tap'); go('memory'); } },
     h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
     h('div', { class: 'gc-body' },
       h('div', { class: 'gc-sub' }, '暗記 ｜ 暗号ラッシュ'),
       h('div', { class: 'gc-title' }, '暗号室'),
-      h('div', { class: 'gc-next' }, due ? `🔔 復習どき ${due} 枚` : seen ? `解読した暗号 ${seen} 枚` : '英単語から。1回2〜4分'),
+      h('div', { class: 'gc-next' }, due ? `🔔 復習どき ${due} 枚` : seen ? `解読した暗号 ${seen} 枚` : '英単語・社会・理科。1回2〜4分'),
       h('span', { class: 'gc-go' }, 'START ▶')),
     h('div', { class: 'gc-em' }, '🔐'));
 }

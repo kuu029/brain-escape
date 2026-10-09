@@ -8,6 +8,7 @@
 import { today } from '../core/store.js';
 import { textChoice, spellAns, orderAns } from '../units/english/kit-en.js';
 import { EN_DECKS, EN_CARDS, enDistinct } from './decks/en.js';
+import { SOC, SCI, termDistinct, normJa } from './decks/terms.js';
 import { COURSES } from './courses.js';
 
 const MIN = 60 * 1000;
@@ -18,8 +19,9 @@ export const MAX_LV = 6;
 
 export const MEM_SUBJECTS = {
   en: { id: 'en', name: '英単語', emoji: '🔤', newBase: 50, ready: true, distinct: enDistinct },
-  soc: { id: 'soc', name: '社会', emoji: '🗾', newBase: 15, ready: false },
-  sci: { id: 'sci', name: '理科', emoji: '🔬', newBase: 15, ready: false },
+  // 社会・理科は β（手で書いた用語データ。家族にも確かめてもらう）
+  soc: { id: 'soc', name: '社会', emoji: '🗾', newBase: 15, ready: true, beta: true, distinct: termDistinct },
+  sci: { id: 'sci', name: '理科', emoji: '🔬', newBase: 15, ready: true, beta: true, distinct: termDistinct },
 };
 export const MODES = {
   easy: { name: 'イージー', desc: '4択だけ', mult: 1 },
@@ -43,8 +45,8 @@ export const SLOW_MS = { e2j: 6000, j2e: 6000, tile: 15000, input: 20000 };
 // 時間のバーの長さ
 export const LIMIT_MS = { e2j: 8000, j2e: 8000, tile: 18000, input: 25000 };
 
-export const DECKS = [...EN_DECKS];
-export const CARDS = [...EN_CARDS];
+export const DECKS = [...EN_DECKS, ...SOC.decks, ...SCI.decks];
+export const CARDS = [...EN_CARDS, ...SOC.cards, ...SCI.cards];
 export const CARD = Object.fromEntries(CARDS.map((c) => [c.id, c]));
 export const DECK = Object.fromEntries(DECKS.map((d) => [d.id, { ...d, cards: CARDS.filter((c) => c.deck === d.id) }]));
 
@@ -165,6 +167,7 @@ function distractors(card, rng, n = 3) {
 
 // 問題オブジェクト（answerPad で出せる形）。input のときは { kind: 'text' }
 export function makeQuestion(card, form, rng) {
+  if (card.kind === 'term') return termQuestion(card, form, rng);
   if (form === 'e2j') {
     const ds = distractors(card, rng);
     return { form, stem: card.q, ask: '意味は？', ...textChoice(rng, card.a, ds.map((d) => ({ t: d.a }))), others: ds.map((d) => d.id) };
@@ -179,9 +182,27 @@ export function makeQuestion(card, form, rng) {
   }
   return { form, stem: card.a, ask: '英語で入力', input: { kind: 'text', accept: card.accept }, answerText: card.q };
 }
-// 文字入力の判定（大文字・小文字、前後の空白、連続した空白、’ はゆるす）
+
+// 社会・理科の用語: e2j = 用語 → 説明、j2e = 説明 → 用語、tile = 1文字ずつのタイル、input = 文字入力（ひらがなでもOK）
+function termQuestion(card, form, rng) {
+  if (form === 'e2j' || form === 'j2e') {
+    const ds = distractors(card, rng);
+    if (form === 'e2j') return { form, stem: card.q, ask: 'どういう意味？', ...textChoice(rng, card.a, ds.map((d) => ({ t: d.a }))), others: ds.map((d) => d.id) };
+    return { form, stem: card.a, ask: 'この用語は？', ...textChoice(rng, card.q, ds.map((d) => ({ t: d.q }))), others: ds.map((d) => d.id) };
+  }
+  if (form === 'tile') {
+    const chars = [...card.q];
+    // まぎらわしい文字（同じデッキのほかの用語の文字）を少しまぜる
+    const pool = [...new Set(CARDS.filter((c) => c.deck === card.deck && c.id !== card.id).flatMap((c) => [...c.q]))].filter((ch) => !chars.includes(ch) && ch !== '・');
+    const decoys = rng.shuffle(pool).slice(0, chars.length > 8 ? 2 : 3).map((t) => ({ t }));
+    return { form, stem: card.a, ask: `文字をならべて用語に（${chars.length}文字）`, ...orderAns(rng, chars, { end: '', decoys }) };
+  }
+  return { form, stem: card.a, ask: '用語を入力（ひらがなでもOK）', input: { kind: 'text', accept: card.accept, ja: true }, answerText: card.q };
+}
+
+// 文字入力の判定（大文字・小文字、前後の空白、連続した空白、’ はゆるす）。社会・理科はカタカナ・ひらがな・「・」のちがいもゆるす
 export const normText = (s) => String(s || '').trim().toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ');
-export const textOk = (q, s) => q.input.accept.some((a) => normText(a) === normText(s));
+export const textOk = (q, s) => (q.input.ja ? q.input.accept.some((a) => normJa(a) === normJa(s)) : q.input.accept.some((a) => normText(a) === normText(s)));
 
 // ---------- 結果を記録 ----------
 // 戻り値: { from, to, isNew, early, gotSel, gotWr }

@@ -1223,3 +1223,8 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 /* 暗号室・模試の入り口にバナー画像があるとき */
 .game-card.memory.has-img, .game-card.exam.has-img { background-size: cover; background-position: center; }
 .game-card.memory.has-img .gc-em, .game-card.exam.has-img .gc-em { display: none; }
+/* 暗号室: 社会・理科の用語（説明は長いので小さめ） */
+.mr-word.ja.long { font-size: 18px; line-height: 1.5; font-weight: 800; text-align: left; }
+.mr-read { color: var(--dim); font-size: 13px; letter-spacing: .05em; }
+.mr-mean.term { font-size: 16px; line-height: 1.5; text-align: left; }
+.mm-beta { margin: 0; padding: 6px 10px; border-radius: 10px; background: #ffd64014; border: 1px dashed #ffd64066; font-size: 12px; }
