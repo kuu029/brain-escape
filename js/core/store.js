@@ -86,11 +86,16 @@ export function dayLog(date = today()) {
   if (!state.log[date]) state.log[date] = { seconds: 0, byUnit: {} };
   return state.log[date];
 }
+// 2時間ごとの枠の番号（0〜11。6〜8時なら 3）: 2時間ボーナス用に、勉強時間を枠ごとにも数える
+export const slotOf = (d = new Date()) => Math.floor(d.getHours() / 2);
 // n がマイナスのときは取り消し（放置していたぶんを引く）
 export function addSeconds(n) {
   if (!state || !n) return;
   const lg = dayLog();
   lg.seconds = Math.max(0, lg.seconds + n);
+  const sl = slotOf();
+  lg.slots ||= {};
+  lg.slots[sl] = Math.max(0, (lg.slots[sl] || 0) + n);
   if (active) active.seconds = Math.max(0, active.seconds + n);
   save();
 }

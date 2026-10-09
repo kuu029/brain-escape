@@ -71,6 +71,18 @@ function gachaStage(results) {
       if (caps.every((x) => x.opened)) {
         msg.textContent = results.length > 1 ? 'ぜんぶあけた！' : v.text;
         allBtn?.remove();
+        // 出たなかまキャラは、その場で「なかまにする」（コレクション画面まで行かなくていい）
+        const allyIds = [...new Set(results.filter((x) => x.kind !== 'skin' && SUMMON[x.id]).map((x) => x.id))];
+        if (allyIds.length) {
+          const row = h('div', { class: 'cap-party' });
+          const paint = () => row.replaceChildren(h('small', {}, `🤝 なかまにする（最大${PARTY_MAX}体）`), ...allyIds.map((id) => {
+            const c = CARDS.find((x) => x.id === id);
+            const on = party().includes(id);
+            return btn(h('span', {}, h('span', { class: 'cp-face', html: cardSprite(id) }), on ? `✓ ${c.name}` : c.name), () => { toggleParty(id); sfx('build'); paint(); }, `small ${on ? 'primary' : 'ghost'}`);
+          }));
+          paint();
+          okBtn.before(row);
+        }
         okBtn.classList.remove('hidden');
       }
     }

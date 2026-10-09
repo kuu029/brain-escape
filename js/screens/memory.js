@@ -265,10 +265,12 @@ function rushView(el, subject, opts) {
     if (!R.test && left <= 0) over = true;
   }, 500);
 
-  const paintHead = () => {
-    const qn = queue.filter((x) => !x.intro).length;
-    prog.textContent = `${Math.min(R.asked + 1, qn)}/${qn}`;
-    combo.textContent = R.combo >= 2 ? `🔥${R.combo}` : '';
+  // カードを見ているあいだは「見た枚数」、問題のときは「何問目」
+  const paintHead = (item) => {
+    const intros = queue.filter((x) => x.intro);
+    const qn = queue.length - intros.length;
+    prog.textContent = item?.intro ? `👀 ${intros.indexOf(item) + 1}/${intros.length}` : `${Math.min(R.asked + 1, qn)}/${qn}`;
+    combo.textContent = R.combo >= 2 ? `⚡${R.combo}` : '';
   };
 
   async function quit() {
@@ -282,7 +284,7 @@ function rushView(el, subject, opts) {
     if (k >= queue.length || over) return finish();
     const item = queue[k++];
     const card = ME.CARD[item.id];
-    paintHead();
+    paintHead(item);
     if (item.intro) return showIntro(card);
     showQ(card, item);
   }

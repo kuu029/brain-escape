@@ -9,6 +9,7 @@ import { studyBegin, studyEnd } from '../core/timer.js';
 import { go } from '../core/router.js';
 import { sfx } from '../core/sound.js';
 import { problemCard, answerPad, stepsView } from '../ui/answer.js';
+import { askBtn } from '../ui/asklater.js';
 import { UNIT } from '../units/registry.js';
 import { topBar } from './home.js';
 import { backdrop } from '../ui/deco.js';
@@ -319,7 +320,8 @@ function resultView(el, id, fresh = false) {
           !g.paper && h('div', { class: 'er-line', rich: `あなたの答え: ${inputText(q.p, rec.answers[q.id])}` }),
           g.note && h('div', { class: 'er-line warn' }, g.note),
           h('div', { class: 'er-line good', rich: `正解: ${g.paper ? q.paper.model.join('\n') : q.p.answerText}` }),
-          !g.paper && (q.p.steps || []).length > 0 && h('div', { class: 'er-steps' }, h('small', {}, '解き方'), stepsView(q.p))));
+          !g.paper && (q.p.steps || []).length > 0 && h('div', { class: 'er-steps' }, h('small', {}, '解き方'), stepsView(q.p)),
+          askBtn({ ...q.p, stem: g.paper ? q.paper.ask : q.p.stem, fig: q.p.fig || sec.fig, answerText: g.paper ? q.paper.model.join('\n') : q.p.answerText }, `模試 ${q.label}`, sec.intro && !/^次の/.test(sec.intro) ? sec.intro : '')));
     })));
 
   backdrop(el, G.score100 >= 70 ? 'win' : 'desk');

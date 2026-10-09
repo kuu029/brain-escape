@@ -5,6 +5,7 @@ import { CARDS, BOSSES } from '../game/content.js';
 import { go } from '../core/router.js';
 import { canBoss } from '../game/progress.js';
 import { answerLine } from '../ui/answer.js';
+import { askBtn } from '../ui/asklater.js';
 import { cardSprite, spriteHTML } from '../game/art.js';
 import { backdrop, confetti } from '../ui/deco.js';
 import { sfx } from '../core/sound.js';
@@ -83,7 +84,7 @@ export function render(el, r) {
     wrong.length > 0 && h('div', { class: 'wrong-list' },
       h('h3', { class: 'sec' }, `👻 リベンジリスト（${wrong.length}問）`),
       h('p', { class: 'note' }, 'まちがえた問題は、あとのウェーブに「リベンジおばけ」として戻ってくる。2回正解で成仏。'),
-      wrong.map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), answerLine(p)))),
+      wrong.map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), answerLine(p), h('ol', { class: 'steps' }, (p.steps || []).map((s) => h('li', { rich: s }))), askBtn(p, 'ウェーブ')))),
     h('div', { class: 'up-btns' },
       // 勝ったら、単元シートの「次はこれ」と同じ行き先を主役に（同じウェーブのくり返しなら「もう1回」）
       nextCta ? btn(h('span', { class: 'cta-in' }, h('small', {}, nextCta.small), h('span', { html: nextCta.label })), () => go(...nextCta.to), `${nextCta.cls} big`) : btn(r.win ? 'もう1回' : 'リベンジ！', again, 'primary big'),
@@ -94,5 +95,5 @@ export function render(el, r) {
   flyGems(r.gems + (r.bonus?.gems || 0), gemStat, 1300);
 }
 
-// 習慣ボーナス（1時間ごと・はじめての模試）の表示
+// 習慣ボーナス（2時間ボーナス・はじめての模試）の表示
 export const bonusChips = (b) => b?.items?.length > 0 && h('div', { class: 'bonus-list' }, b.items.map((x) => h('span', { class: 'bonus-chip' }, `${x.label} 💎+${x.gems}`)));

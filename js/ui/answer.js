@@ -89,6 +89,7 @@ export function answerPad(p, onSubmit, opts = {}) {
       : h('span', { class: 'flabel', html: `<span class="math">${tex(f.label)}<span class="mo">=</span></span>` });
     const box = h('button', { class: 'fbox', type: 'button', onclick: () => { active = i; paint(); } },
       p.input.unordered && i > 0 ? h('span', { class: 'flabel dim' }, 'と') : null,
+      f.cap ? h('small', { class: 'fcap' }, f.cap) : null, // 欄の意味（例: いちばん小さい y）
       label,
       h('span', { class: 'fval' }),
       f.suffix ? h('span', { class: 'fsuffix' }, f.suffix) : null);
@@ -141,7 +142,11 @@ export function answerPad(p, onSubmit, opts = {}) {
     key('4', '4'), key('5', '5'), key('6', '6'), key('±', '-', 'fn'),
     key('1', '1'), key('2', '2'), key('3', '3'), key('分数', '/', 'fn'),
     key('0', '0'), key('.', '.'), nextKey, fire);
-  root = h('div', { class: 'pad' }, h('div', { class: `fields n${fields.length}` }, boxes), pad);
+  // join: 2つの欄のあいだに式を置く（例: [  ] ≦ y ≦ [  ]）
+  const row = p.input.join && boxes.length === 2
+    ? h('div', { class: 'fields join' }, boxes[0], h('span', { class: 'fjoin' }, p.input.join), boxes[1])
+    : h('div', { class: `fields n${fields.length}` }, boxes);
+  root = h('div', { class: 'pad' }, row, pad);
   paint();
   return {
     el: root,

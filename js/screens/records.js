@@ -1,6 +1,6 @@
 // 記録（脱獄日誌）: 称号、日別の勉強時間とその日の挑戦の内訳、単元別の進み具合と理解度、復習の件数
 import { h, btn } from '../core/ui.js';
-import { S, today, streakAlive, mastery, MASTERY_LABEL, cleared } from '../core/store.js';
+import { S, save, today, streakAlive, mastery, MASTERY_LABEL, cleared } from '../core/store.js';
 import { UNIT, makeProblem, SUBJECTS, unitsOf, lessonOf } from '../units/registry.js';
 import { BOSSES } from '../game/content.js';
 import { isUnlocked } from '../game/progress.js';
@@ -10,6 +10,7 @@ import { topBar } from './home.js';
 import { backdrop } from '../ui/deco.js';
 import { rich } from '../core/mathml.js';
 import { histRow } from './exam.js';
+import { askList, askItem } from '../ui/asklater.js';
 
 const GOAL_MIN = 15; // 1日の目安（グラフに点線で出す）
 // 称号: ウェーブ突破 + ボス撃破×3 のポイントで上がる
@@ -146,6 +147,10 @@ export function render(el) {
       detailBox,
       (s.exams || []).length > 0 && h('h3', { class: 'sec' }, '📝 模試の記録'),
       (s.exams || []).length > 0 && h('div', { class: 'ex-hist' }, s.exams.slice(-6).reverse().map(histRow)),
+      // あとで聞く: 解説でもわからなかった問題（家族に質問する用）
+      askList().length > 0 && h('h3', { class: 'sec' }, `❓ あとで聞く（${askList().length}問）`),
+      askList().length > 0 && h('p', { class: 'note' }, '解説を読んでもわからなかった問題。おうちの人や先生に聞いてみよう。タップで問題と解き方が開くよ。'),
+      askList().length > 0 && h('div', { class: 'wrong-list' }, askList().map((x) => askItem(x, () => { const l = askList(); l.splice(l.indexOf(x), 1); save(); go('records'); }))),
       h('h3', { class: 'sec' }, '📚 単元ごと'),
       subjBlocks,
       h('h3', { class: 'sec' }, `👻 リベンジ待ち ${s.reviewQueue.length} 問`),

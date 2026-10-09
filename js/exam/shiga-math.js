@@ -330,7 +330,7 @@ function sec4Cuboid(rng) {
   return {
     title: '空間図形',
     intro: `図のような直方体 ABCD-EFGH があり、${m(`AB=${a}`)} cm、${m(`AD=${b}`)} cm、${m(`AE=${c}`)} cm である。`,
-    fig: solid('cuboid', { a: `${a}cm`, b: `${b}cm`, c: `${c}cm`, v: true }),
+    fig: solid('cuboid', { a: `${a}cm`, b: `${b}cm`, c: `${c}cm`, v: true, dims: [a, b, c] }),
     qs: [
       { pts: 4, p: { unit: 'pythagoras', stem: '線分 AC の長さを求めなさい。', ...rootChoice(rng, AC, [a + b, AC * 2, Math.abs(a * a - b * b)]), hint: '△ABC は直角三角形。', steps: [`${m(`AC^{2}=${a}^{2}+${b}^{2}=${AC}`)}`], check: { kind: 'value', expr: `\\sqrt{${a}^{2}+${b}^{2}}` } } },
       { pts: 5, p: { unit: 'pythagoras', stem: '線分 AG の長さを求めなさい。', ...rootChoice(rng, AG, [AC, a * a + b * b + c, (a + b + c) ** 2 > 400 ? 0 : (a + b + c) ** 2]), hint: '△ACG は ∠ACG=90° の直角三角形。', steps: [`${m(`AG^{2}=AC^{2}+CG^{2}=${AC}+${c * c}=${AG}`)}`], check: { kind: 'value', expr: `\\sqrt{${a}^{2}+${b}^{2}+${c}^{2}}` } } },

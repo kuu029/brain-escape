@@ -7,6 +7,7 @@ import { unitState, saveNow, beginSession, tallySession, closeSession } from '..
 import { studyBegin, studyEnd } from '../core/timer.js';
 import { UNIT, lessonOf } from '../units/registry.js';
 import { answerPad, answerLine } from '../ui/answer.js';
+import { askBtn } from '../ui/asklater.js';
 import { go } from '../core/router.js';
 import { sfx } from '../core/sound.js';
 import { bump } from '../game/missions.js';
@@ -92,7 +93,7 @@ export function render(el, { unit, lesson }) {
       wrongs++;
       if (q.input.kind === 'choice') { pad.mark(input, false); pad.disable(input); }
       const box = h('div', { class: 'fb bad' }, h('div', { class: 'fb-msg', rich: r.msg || 'ちがうみたい。説明をもう一度読んでみよう。' }));
-      if (wrongs >= 2) box.append(h('div', { class: 'fb-sub' }, '答えはこれ👇 入れてみて、次へ進もう。'), answerLine(q));
+      if (wrongs >= 2) box.append(h('div', { class: 'fb-sub' }, '答えはこれ👇 入れてみて、次へ進もう。'), answerLine(q), askBtn(q, '訓練'));
       else if (q.hint) box.append(h('div', { class: 'fb-hint', rich: `💡 ${q.hint}` }));
       fb.append(box);
     });

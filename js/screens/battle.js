@@ -8,6 +8,7 @@ import { checkAnswer } from '../core/check.js';
 import { S, recordAnswer, unitState, save, beginSession, closeSession } from '../core/store.js';
 import { studyBegin, studyEnd, studyPause, studyResume, idleFor } from '../core/timer.js';
 import { problemCard, answerPad, stepsView, answerLine } from '../ui/answer.js';
+import { askBtn } from '../ui/asklater.js';
 import { boardView } from '../ui/board.js';
 import { TOOLS, TOWER_LOOK, CARDS } from '../game/content.js';
 import { towerSprite, enemyLook, cardSprite } from '../game/art.js';
@@ -377,12 +378,12 @@ export function render(el, params) {
       const stepsBox = h('div', { class: 'fb-steps hidden' }, stepsView(p));
       box.append(stepsBox,
         h('div', { class: 'fb-btns' },
-          btn('解き方を見る', (e) => { stepsBox.classList.toggle('hidden'); e.target.remove(); }, 'ghost small'),
+          btn('解き方を見る', (e) => { stepsBox.classList.toggle('hidden'); e.target.remove(); stepsBox.append(askBtn(p, 'ウェーブ')); }, 'ghost small'),
           btn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small')));
       box.append(h('p', { class: 'fb-sub' }, 'このまま下で答えを入れ直してもOK'));
     } else {
       // 2回まちがえたら、解き方と答えを見せて次へ（この問題はあとでリベンジおばけになる）
-      box.append(h('div', { class: 'fb-sub' }, '解き方はこう👇 この問題はあとで「リベンジおばけ」になって戻ってくるよ。'), stepsView(p), answerLine(p),
+      box.append(h('div', { class: 'fb-sub' }, '解き方はこう👇 この問題はあとで「リベンジおばけ」になって戻ってくるよ。'), stepsView(p), answerLine(p), askBtn(p, 'ウェーブ'),
         h('div', { class: 'fb-btns' }, readBtn('わかった！ 次へ', () => nextProblem(), 'primary small', 3000)));
       cur.pad.el.classList.add('done');
     }

@@ -53,12 +53,14 @@ function rangeQ(rng) {
   const all = has0 ? [...vs, F(0)] : vs;
   const lo = all.reduce((x, y) => (y.lt(x) ? y : x)), hi = all.reduce((x, y) => (x.lt(y) ? y : x));
   const naiveLo = vs[0].lt(vs[1]) ? vs[0] : vs[1], naiveHi = vs[0].lt(vs[1]) ? vs[1] : vs[0];
+  const ans = numAns([{ key: 'lo', text: '', cap: 'いちばん小さい y' }, { key: 'hi', text: '', cap: 'いちばん大きい y' }], { lo, hi }, { wrong: [
+    has0 && { vals: { lo: naiveLo, hi: naiveHi }, msg: `${m('x')} の変域に 0 がふくまれる！ グラフの頂点（${m('y=0')}）を通るので、${a.n > 0 ? '最小' : '最大'}は 0。` },
+  ] });
+  ans.input.join = '≦ y ≦';
   return {
     stem: `${m(paraTex(a))} で ${m('x')} の変域が ${m(`${p}\\le x\\le ${q}`)} のとき、${m('y')} の変域は？`,
     fig: plane({ x: [-5, 5], y: a.n > 0 ? [-1, 9] : [-9, 1], fns: [{ f: (x) => a.num() * x * x, dom: [p, q] }, { f: (x) => a.num() * x * x, dash: true }], grid: true }),
-    ...numAns([{ key: 'lo', text: '', suffix: '≦ y ≦' }, { key: 'hi', text: '' }], { lo, hi }, { wrong: [
-      has0 && { vals: { lo: naiveLo, hi: naiveHi }, msg: `${m('x')} の変域に 0 がふくまれる！ グラフの頂点（${m('y=0')}）を通るので、${a.n > 0 ? '最小' : '最大'}は 0。` },
-    ] }),
+    ...ans,
     hint: 'グラフをかいて考える。$x$ の変域に 0 がふくまれるときは、$y=0$ が最小（$a<0$ なら最大）。',
     steps: [`${m(`x=${p}`)} のとき ${m(`y=${tnum(vs[0])}`)}、${m(`x=${q}`)} のとき ${m(`y=${tnum(vs[1])}`)}`, has0 ? `0 をふくむので ${m('y=0')} も通る` : '0 はふくまない', `${m(`${tnum(lo)}\\le y\\le ${tnum(hi)}`)}`],
     // 区間を細かく調べて最小・最大を確かめる

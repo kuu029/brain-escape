@@ -1263,3 +1263,23 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 /* 暗号室の ① → ② は「ボタン」ではなく流れの表示（矢印でつなぐ） */
 .mt-flow::after { content: "▶"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--dim); font-size: 12px; }
 .mt-flow span.done::before { content: "✓ "; }
+/* ガチャ結果: その場でなかまにする */
+.cap-party { position: relative; z-index: 1; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 360px; }
+.cap-party > small { flex-basis: 100%; text-align: center; font-weight: 800; color: #ffe8b8; }
+.cap-party .btn > span { display: inline-flex; align-items: center; gap: 6px; }
+.cp-face { display: inline-block; width: 30px; height: 30px; }
+.cp-face svg, .cp-face img { width: 100%; height: 100%; object-fit: contain; }
+/* 2つの欄を式でつなぐ（[  ] ≦ y ≦ [  ]） */
+.fields.join { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; }
+.fjoin { font-size: 18px; font-weight: 900; white-space: nowrap; }
+.fcap { display: block; width: 100%; font-size: 11.5px; color: var(--dim); margin-bottom: 2px; }
+.fields.join .fbox { flex-wrap: wrap; row-gap: 0; }
+/* あとで聞く（わからなかった問題を保存） */
+.ask-btn { align-self: flex-start; min-height: 44px; margin-top: 4px; padding: 6px 14px; border-radius: 12px; border: 2px dashed #b9a6ff88; background: #ffffff0d; color: #e2d9ff; font-size: 14px; font-weight: 800; }
+.ask-btn.on { border-style: solid; border-color: var(--good); background: #3ee08f1f; color: #c9ffe3; }
+.ask-item summary { display: flex; flex-direction: column; gap: 2px; }
+.ask-meta { color: var(--dim); font-size: 12px; }
+.ask-item .qfig { margin: 6px 0; }
+.cap-party .btn { width: auto; flex: 0 0 auto; min-height: 44px; padding: 4px 10px; font-size: 13px; }
+.cap-party .cp-face { width: 24px; height: 24px; }
+.gacha-stage { overflow-y: auto; justify-content: safe center; }

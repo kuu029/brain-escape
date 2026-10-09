@@ -244,8 +244,20 @@ export function solid(kind, labels = {}, { w = 220, h = 170 } = {}) {
   const t = (x, y, s) => (s ? `<text class="g-len" x="${x}" y="${y}">${esc(s)}</text>` : '');
   const L = (x1, y1, x2, y2, dash) => `<line class="g-line${dash ? ' dash' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
   if (kind === 'cuboid' || kind === 'prism3' || kind === 'pyramid4') {
-    const F = [[40, 140], [140, 140], [140, 60], [40, 60]];
-    const dx = 50, dy = -34;
+    let F = [[40, 140], [140, 140], [140, 60], [40, 60]];
+    let dx = 50, dy = -34;
+    // 直方体で dims: [よこ AB, おくゆき AD, 高さ AE] があれば、その比で描く（見取図の決まりで、おくゆきは半分の長さ・斜め約34°）
+    let pos = { a: [90, 158], b: [178, 120], c: [24, 104] };
+    if (kind === 'cuboid' && labels.dims) {
+      const [da, db, dc] = labels.dims;
+      const cs = 0.83, sn = 0.56;
+      const k = Math.min(150 / (da + 0.5 * db * cs), 118 / (dc + 0.5 * db * sn));
+      const W = da * k, H = dc * k, D = Math.max(0.5 * db * k, 24); // おくゆきが短すぎると斜めの辺が見えないので最低 24px
+      dx = D * cs; dy = -D * sn;
+      const x0 = (w - (W + dx)) / 2, y0 = h - 24;
+      F = [[x0, y0], [x0 + W, y0], [x0 + W, y0 - H], [x0, y0 - H]];
+      pos = { a: [x0 + W / 2, y0 + 17], b: [Math.min(x0 + W + dx / 2 + 22, w - 16), y0 + dy / 2 + 21], c: [x0 - 20, y0 - H / 2 + 4] };
+    }
     const B = F.map(([x, y]) => [x + dx, y + dy]);
     if (kind === 'cuboid') {
       out += `<polygon class="g-fill" points="${F.map((p) => p.join(',')).join(' ')}"/>`;
@@ -253,11 +265,11 @@ export function solid(kind, labels = {}, { w = 220, h = 170 } = {}) {
       out += L(...F[1], ...B[1]) + L(...F[2], ...B[2]) + L(...F[3], ...B[3]) + L(...B[1], ...B[2]) + L(...B[2], ...B[3]);
       out += L(...F[0], ...B[0], true) + L(...B[0], ...B[1], true) + L(...B[0], ...B[3], true);
       if (labels.diag) out += L(...F[0], ...B[2], true).replace('g-line dash', 'g-line hl');
-      out += t(90, 158, labels.a) + t(178, 120, labels.b) + t(24, 104, labels.c);
+      out += t(...pos.a, labels.a) + t(...pos.b, labels.b) + t(...pos.c, labels.c);
       // 直方体 ABCD-EFGH（上の面 ABCD、A の真下が E）
       if (labels.v) {
         const V = { A: B[3], B: B[2], C: F[2], D: F[3], E: B[0], F: B[1], G: F[1], H: F[0] };
-        const off = { A: [-8, -6], B: [8, -6], C: [10, 4], D: [-10, -2], E: [-10, -4], F: [10, 12], G: [10, 12], H: [-10, 12] };
+        const off = { A: [-8, -6], B: [8, -6], C: [10, 4], D: [-10, -2], E: [-10, -4], F: [12, labels.dims ? 2 : 12], G: [10, 12], H: [-10, 12] };
         for (const [n, p] of Object.entries(V)) out += `<text class="g-pt" x="${p[0] + off[n][0]}" y="${p[1] + off[n][1]}">${n}</text>`;
         if (labels.hl) for (const [a, b] of labels.hl) out += L(...V[a], ...V[b]).replace('g-line', 'g-line hl');
       }

@@ -96,7 +96,7 @@ function genSpace(rng) {
     const N = a * a + b * b + c * c;
     return {
       stem: `たて ${m(b)} cm、よこ ${m(a)} cm、高さ ${m(c)} cm の直方体の対角線の長さは？`,
-      fig: solid('cuboid', { a: `${a}cm`, b: `${b}cm`, c: `${c}cm`, diag: true }),
+      fig: solid('cuboid', { a: `${a}cm`, b: `${b}cm`, c: `${c}cm`, diag: true, dims: [a, b, c] }),
       ...lenQ(rng, N, [{ n: a * a + b * b, msg: 'それは底面の対角線。高さもふくめて3つの2乗をたす。' }, { n: (a + b + c) ** 2, msg: '2乗してたす。' }], () => Math.hypot(a, b, c)),
       hint: '直方体の対角線 $=\\sqrt{a^{2}+b^{2}+c^{2}}$（底面の対角線 → 高さ の順に三平方を2回）',
       steps: [`${m(`${a}^{2}+${b}^{2}+${c}^{2}=${N}`)}`, `${m(rootTex(N))}`],
@@ -180,7 +180,7 @@ export default {
           { text: 'よこの長さ（$x$ 座標の差）は？', q: { ...numAns([{ key: 'v', text: 'よこ' }], { v: dx }), check: { kind: 'value', expr: `${B[0]}-(${A[0]})` } } },
           { text: 'たての長さ（$y$ 座標の差）は？', q: { ...numAns([{ key: 'v', text: 'たて' }], { v: dy }), check: { kind: 'value', expr: `${B[1]}-(${A[1]})` } } },
           { text: 'AB の長さは？', q: lenQ(rng, dx * dx + dy * dy, [{ n: (dx + dy) ** 2 }], () => dist(A, B)) },
-          { text: `直方体の対角線は、3辺の2乗をたして √。たて ${a}、よこ ${b}、高さ ${c} なら？`, fig: solid('cuboid', { a: `${b}cm`, b: `${a}cm`, c: `${c}cm`, diag: true }), q: lenQ(rng, a * a + b * b + c * c, [{ n: a * a + b * b, msg: '高さも入れる。' }], () => Math.hypot(a, b, c)) },
+          { text: `直方体の対角線は、3辺の2乗をたして √。たて ${a}、よこ ${b}、高さ ${c} なら？`, fig: solid('cuboid', { a: `${b}cm`, b: `${a}cm`, c: `${c}cm`, diag: true, dims: [b, a, c] }), q: lenQ(rng, a * a + b * b + c * c, [{ n: a * a + b * b, msg: '高さも入れる。' }], () => Math.hypot(a, b, c)) },
         ];
       },
     },

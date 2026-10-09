@@ -3,6 +3,7 @@ import { h, btn } from '../core/ui.js';
 import { S, unitState, saveNow } from '../core/store.js';
 import { UNIT, unitsOf, makeProblem } from '../units/registry.js';
 import { answerLine } from '../ui/answer.js';
+import { askBtn } from '../ui/asklater.js';
 import { diagnosisProblems } from '../game/waves.js';
 import { go } from '../core/router.js';
 
@@ -54,7 +55,7 @@ export function render(el, { phase = 'intro', results = {}, subject = 'math', mi
       // まちがえた問題の答え（タップで開く）
       misses.length > 0 && h('div', { class: 'wrong-list' },
         h('h3', { class: 'sec' }, `📝 まちがえた問題の答え（${misses.length}問）`),
-        misses.map((w) => makeProblem(w.generatorId, w.seed)).filter(Boolean).map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), answerLine(p)))),
+        misses.map((w) => makeProblem(w.generatorId, w.seed)).filter(Boolean).map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), answerLine(p), askBtn(p, '看守チェック')))),
       btn('マップへ', () => go('map', { subject }), 'primary big')),
   );
 }

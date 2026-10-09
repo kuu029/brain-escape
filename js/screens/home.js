@@ -12,7 +12,7 @@ import { sfx } from '../core/sound.js';
 import { dueList } from '../memory/engine.js';
 import { flyGems } from '../ui/gems.js';
 import { takeAdvice } from '../game/advice.js';
-import { hourOpen, HOUR_GEMS } from '../game/bonus.js';
+import { slotStatus, SLOT_GEMS, SLOT_MAX } from '../game/bonus.js';
 import { unitNext } from './map.js';
 
 export function topBar(back = null) {
@@ -108,13 +108,14 @@ function todayCard() {
     h('span', { class: 'tc-go' }, '▶'));
 }
 
-// 1時間ごとのボーナスの表示（この時間にまだ何もクリアしていなければ「チャンス」）
+// 2時間ボーナスの表示: この2時間の勉強時間が10分たまるとゲット（1日3回まで）
 function hourLine() {
-  const hr = hourOpen();
-  if (hr === null) return h('p', { class: 'hour-line off' }, '⏰ 1時間ボーナスは 6時〜22時台（夜はしっかり寝よう）');
-  return hr === false
-    ? h('p', { class: 'hour-line done' }, `⏰ ${new Date().getHours()}時台のボーナス ゲット済み！ 次は ${new Date().getHours() + 1}時から`)
-    : h('p', { class: 'hour-line open' }, `⏰ ${hr}時台のボーナス 💎+${HOUR_GEMS}：何か1つクリアでゲット！`);
+  const st = slotStatus();
+  if (st.off) return h('p', { class: 'hour-line off' }, '⏰ 2時間ボーナスは 6時〜22時台（夜はしっかり寝よう）');
+  if (st.full) return h('p', { class: 'hour-line done' }, `⏰ 今日の2時間ボーナス ${SLOT_MAX}/${SLOT_MAX} ぜんぶゲット！ また明日`);
+  if (st.got) return h('p', { class: 'hour-line done' }, `⏰ この枠のボーナス ゲット済み（今日 ${st.count}/${SLOT_MAX}）。次は ${st.next}`);
+  const min = Math.floor(st.sec / 60);
+  return h('p', { class: 'hour-line open' }, `⏰ ${st.label}の間に 10分勉強で 💎+${SLOT_GEMS}（いま ${Math.min(min, 10)}/10分・今日 ${st.count}/${SLOT_MAX}）`);
 }
 
 // バナー画像（art に入っていれば）を背景に。左側を暗くして文字を読みやすく
