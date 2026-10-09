@@ -112,7 +112,7 @@ function topView(el, subject) {
       // 暗号ディフェンス（リアルタイムのゲーム）
       btn(h('span', {}, '🛡️ 暗号ディフェンス', h('small', {}, `せまる看守を暗号で撃退！ 最後に「${MEM_BOSS[subject].name}」（約1〜2分）`)), () => { sfx('tap'); go('memory', { phase: 'defense', subject }); }, 'ghost mm-go mm-def'),
       // 流れでつなげる（社会・理科）: 年表・時代・分野と結びつけて覚える
-      hasFlow(subject) && btn(h('span', {}, '🧭 流れでつなげる', h('small', {}, subject === 'soc' ? `年表・時代・地方・州・三権・経済・原因と結果（${FLOW_N}問）` : `分野・単位・なかま分け・人体・気体・原因と結果（${FLOW_N}問）`)), () => { sfx('tap'); go('memory', { phase: 'flow', subject }); }, 'ghost mm-go mm-flow'),
+      hasFlow(subject) && btn(h('span', {}, '🧭 流れでつなげる', h('small', {}, subject === 'soc' ? `年表・時代・地方・州・気候・三権・経済・原因と結果（${FLOW_N}問）` : `分野・単位・公式・なかま分け・人体・気体・岩石・原因と結果（${FLOW_N}問）`)), () => { sfx('tap'); go('memory', { phase: 'flow', subject }); }, 'ghost mm-go mm-flow'),
       h('h3', { class: 'sec' }, '難易度'),
       seg,
       h('div', { class: 'mm-total' },

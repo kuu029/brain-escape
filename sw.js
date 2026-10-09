@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = 'a964ba5076';
+const VERSION = 'da131546bb';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -59,16 +59,25 @@ const ASSETS = [
   './art/boss-word-mix.png',
   './art/card-banana-car.png',
   './art/card-broccoli.png',
+  './art/card-bushou.png',
   './art/card-cheese.png',
   './art/card-crown.png',
+  './art/card-dragon.png',
   './art/card-duck.png',
+  './art/card-golem.png',
+  './art/card-hakase.png',
+  './art/card-kaminari.png',
+  './art/card-kingyo.png',
   './art/card-moai.png',
+  './art/card-ninja.png',
   './art/card-onigiri.png',
   './art/card-pigeon.png',
+  './art/card-pudding.png',
   './art/card-robot.png',
   './art/card-snail.png',
   './art/card-sushi.png',
   './art/card-toast.png',
+  './art/card-ufo.png',
   './art/enemy-grunt.png',
   './art/enemy-review.png',
   './art/enemy-runner.png',

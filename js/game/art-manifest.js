@@ -83,7 +83,16 @@ export const ART_KEYS = [
   "card-sushi",
   "card-banana-car",
   "card-cheese",
-  "card-crown"
+  "card-crown",
+  "card-kaminari",
+  "card-ninja",
+  "card-pudding",
+  "card-kingyo",
+  "card-dragon",
+  "card-ufo",
+  "card-golem",
+  "card-bushou",
+  "card-hakase"
 ];
 export const BG_KEYS = [
   "bg-home",
