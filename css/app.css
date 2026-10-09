@@ -1228,3 +1228,6 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .mr-read { color: var(--dim); font-size: 13px; letter-spacing: .05em; }
 .mr-mean.term { font-size: 16px; line-height: 1.5; text-align: left; }
 .mm-beta { margin: 0; padding: 6px 10px; border-radius: 10px; background: #ffd64014; border: 1px dashed #ffd64066; font-size: 12px; }
+/* 暗号室: 流れでつなげる */
+.mm-flow { border-color: #5fd6a6; }
+.flow-why { text-align: left; line-height: 1.6; }

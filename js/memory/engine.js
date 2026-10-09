@@ -144,6 +144,8 @@ export function buildRush(M, subject, rng, now, opts = {}) {
 // 答え方: e2j（意味を選ぶ）/ j2e（英語を選ぶ）/ tile（文字・語のタイル）/ input（文字入力）
 export function formFor(card, cs, mode, rng) {
   const lv = cs?.lv || 0;
+  // 社会・理科の用語は一問一答: 説明を見て用語を選ぶ → 覚えてきたら用語を入力（ヒントつき）
+  if (card.kind === 'term') return mode === 'easy' ? 'j2e' : mode === 'hard' ? (lv === 0 ? 'j2e' : 'input') : lv <= 3 ? 'j2e' : 'input';
   if (mode === 'easy') return lv <= 1 ? 'e2j' : rng.chance(0.7) ? 'j2e' : 'e2j';
   if (mode === 'hard') return lv === 0 ? 'e2j' : lv <= 4 ? 'tile' : 'input';
   return lv <= 1 ? 'e2j' : lv <= 3 ? 'j2e' : 'tile';
@@ -187,18 +189,24 @@ export function makeQuestion(card, form, rng) {
 function termQuestion(card, form, rng) {
   if (form === 'e2j' || form === 'j2e') {
     const ds = distractors(card, rng);
-    if (form === 'e2j') return { form, stem: card.q, ask: 'どういう意味？', ...textChoice(rng, card.a, ds.map((d) => ({ t: d.a }))), others: ds.map((d) => d.id) };
-    return { form, stem: card.a, ask: 'この用語は？', ...textChoice(rng, card.q, ds.map((d) => ({ t: d.q }))), others: ds.map((d) => d.id) };
+    if (form === 'e2j') return { form, stem: card.q, ask: card.read === null ? 'この年のできごとは？' : 'どういう意味？', ...textChoice(rng, card.a, ds.map((d) => ({ t: d.a }))), others: ds.map((d) => d.id) };
+    return { form, stem: card.a, ask: card.read === null ? '何年？' : 'この用語は？', ...textChoice(rng, card.q, ds.map((d) => ({ t: d.q }))), others: ds.map((d) => d.id) };
   }
   if (form === 'tile') {
     const chars = [...card.q];
     // まぎらわしい文字（同じデッキのほかの用語の文字）を少しまぜる
     const pool = [...new Set(CARDS.filter((c) => c.deck === card.deck && c.id !== card.id).flatMap((c) => [...c.q]))].filter((ch) => !chars.includes(ch) && ch !== '・');
     const decoys = rng.shuffle(pool).slice(0, chars.length > 8 ? 2 : 3).map((t) => ({ t }));
-    return { form, stem: card.a, ask: `文字をならべて用語に（${chars.length}文字）`, ...orderAns(rng, chars, { end: '', decoys }) };
+    return { form, stem: card.a, ask: card.read === null ? `数字をならべて年号に（${chars.length}文字）` : `文字をならべて用語に（${chars.length}文字）`, ...orderAns(rng, chars, { end: '', decoys }) };
   }
-  return { form, stem: card.a, ask: '用語を入力（ひらがなでもOK）', input: { kind: 'text', accept: card.accept, ja: true }, answerText: card.q };
+  // 入力: 最初の1文字と文字数をヒントに出す（年号は数字なので出さない）
+  const hint = card.read === null ? '' : `（ヒント: 「${[...card.q][0]}」で始まる${[...card.q].length}文字）`;
+  return { form, stem: card.a, ask: card.read === null ? '何年？（数字を入力）' : `用語を入力${hint}`, input: { kind: 'text', accept: card.accept, ja: true }, answerText: card.q };
 }
+// 「あやしい正解」の時間と、時間のバーの長さ。用語は説明を読むので長めにする
+const TERM_SLOW = 1.7;
+export const slowOf = (card, form) => SLOW_MS[form] * (card.kind === 'term' ? TERM_SLOW : 1);
+export const limitOf = (card, form) => LIMIT_MS[form] * (card.kind === 'term' ? TERM_SLOW : 1);
 
 // 文字入力の判定（大文字・小文字、前後の空白、連続した空白、’ はゆるす）。社会・理科はカタカナ・ひらがな・「・」のちがいもゆるす
 export const normText = (s) => String(s || '').trim().toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ');
@@ -215,7 +223,7 @@ export function applyResult(M, card, { ok, form, ms }, now) {
     day.newCount[card.subject] = (day.newCount[card.subject] || 0) + 1;
   }
   const from = cs.lv;
-  const slow = ms > SLOW_MS[form];
+  const slow = ms > slowOf(card, form);
   const early = cs.lv >= 2 && cs.due - now > 12 * 60 * MIN; // まだ期限まで間がある
   cs.n++;
   if (day.warm.n < WARM_N && !isNew) {

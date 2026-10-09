@@ -13,6 +13,7 @@ import { bump } from '../game/missions.js';
 import { addCard } from '../game/progress.js';
 import { GACHA_CARDS, CARDS as GAME_CARDS } from '../game/content.js';
 import * as ME from '../memory/engine.js';
+import { flowQuestion, hasFlow, FLOW_N } from '../memory/flow.js';
 import { claimActivity } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
@@ -28,6 +29,7 @@ export function render(el, params = {}) {
   if (params.phase === 'rush') return rushView(el, subject, params);
   if (params.phase === 'result') return resultView(el, subject, params.r);
   if (params.phase === 'deck') return deckView(el, subject, params.deck);
+  if (params.phase === 'flow') return flowView(el, subject);
   return topView(el, subject);
 }
 
@@ -104,6 +106,8 @@ function topView(el, subject) {
           h('span', { class: T.stage === 'review' ? 'now' : T.stage === 'done' ? 'done' : '' }, `② 復習 ${T.review ? `あと${T.review}` : ''}`)),
         nextButtons(subject, T, M),
         weak > 0 && btn(`😵 苦手だけ（${weak}枚）`, () => startRush(subject, { weak: true }), 'ghost small')),
+      // 流れでつなげる（社会・理科）: 年表・時代・分野と結びつけて覚える
+      hasFlow(subject) && btn(h('span', {}, '🧭 流れでつなげる', h('small', {}, subject === 'soc' ? `年表ならべかえ・どっちが先？・時代あて（${FLOW_N}問）` : `この用語はどの分野？（${FLOW_N}問）`)), () => { sfx('tap'); go('memory', { phase: 'flow', subject }); }, 'ghost mm-go mm-flow'),
       h('h3', { class: 'sec' }, '難易度'),
       seg,
       h('div', { class: 'mm-total' },
@@ -118,6 +122,65 @@ function topView(el, subject) {
           h('span', { class: 'md-bar' }, h('i', { class: 'sel', style: { width: `${(p.sel / p.n) * 100}%` } }), h('i', { class: 'wr', style: { width: `${(p.wr / p.n) * 100}%` } })),
           h('small', { class: 'md-sub' }, `★選べる ${p.sel}　✍️書ける ${p.wr}`));
       }))));
+}
+
+// ---------- 流れでつなげる（社会・理科）----------
+// 間隔反復とは別の練習。1問ごとに「なぜその答えか」（年表・時代）を見せてから次へ
+function flowView(el, subject) {
+  const rng = makeRng(newSeed());
+  let k = 0;
+  let ok = 0;
+  beginSession({ kind: 'memory', subject: SUBJ_LANG[subject], lesson: 'flow' });
+  const prog = h('span', { class: 'mr-prog' });
+  const stage = h('div', { class: 'mr-stage' });
+  el.classList.add('mem-rush-screen');
+  el.append(h('header', { class: 'mr-head' },
+    h('button', { class: 'hud-exit', type: 'button', 'aria-label': 'やめる', onclick: async () => { if (await confirmBox('やめる？', 'ここまでの正解は記録されているよ。', 'やめる', '続ける')) { studyEnd(); closeSession('quit'); go('memory', { subject }); } } }, '✕'),
+    h('b', {}, '🧭 流れでつなげる'), prog), stage);
+
+  function next() {
+    if (k >= FLOW_N) return finish();
+    const p = flowQuestion(subject, rng);
+    k++;
+    prog.textContent = `${k}/${FLOW_N}`;
+    studyBegin(90);
+    if (location.hostname === 'localhost') window.__flow = { p };
+    const fb = h('div', { class: 'feedback' });
+    const pad = answerPad(p, (input) => {
+      const r = checkAnswer(p, input);
+      if (r.invalid) { toast(r.msg, 1600); return; }
+      if (p.input.kind === 'choice') pad.mark(input, r.ok);
+      pad.el.classList.add('done');
+      tallySession(r.ok);
+      if (r.ok) { ok++; sfx('ok'); bump('correct'); } else sfx('ng');
+      fb.replaceChildren(h('div', { class: `fb ${r.ok ? 'good' : 'bad'}` },
+        h('div', { class: 'fb-head' }, r.ok ? '⭕ 正解！' : '❌ おしい'),
+        h('div', { class: 'answer-line flow-why', rich: p.why }),
+        btn(k >= FLOW_N ? '結果へ ▶' : '次へ ▶', next, 'primary')));
+      fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, { fire: '決定' });
+    stage.replaceChildren(h('div', { class: 'mr-card' }, h('div', { class: 'mr-word ja long' }, p.stem), h('small', { class: 'mr-ask' }, p.ask)), pad.el, fb);
+    window.scrollTo(0, 0);
+  }
+  function finish() {
+    studyEnd();
+    const gems = Math.max(1, ok);
+    S().gems += gems;
+    const bonus = claimActivity('memory');
+    closeSession('clear');
+    saveNow();
+    sfx('win');
+    const gemEl = h('p', { class: 'note center' }, `💎 +${gems}`);
+    stage.replaceChildren(h('div', { class: 'center-col' },
+      h('div', { class: 'big-em' }, ok >= FLOW_N - 1 ? '🧭' : '📜'),
+      h('h2', {}, `${ok} / ${FLOW_N} 問 正解`),
+      gemEl,
+      bonusChips(bonus),
+      btn('🧭 もう1回', () => go('memory', { phase: 'flow', subject }), 'primary big'),
+      btn('🔐 暗号室へ', () => go('memory', { subject }), 'ghost')));
+    flyGems(gems + (bonus?.gems || 0), gemEl, 400);
+  }
+  next();
 }
 
 // ---------- 暗号ノート（デッキ） ----------
@@ -212,7 +275,7 @@ function rushView(el, subject, opts) {
     studyBegin(30);
     stage.replaceChildren(h('div', { class: 'mr-card intro' },
       h('span', { class: 'mr-new' }, 'NEW 新しい暗号'),
-      card.kind === 'term' && h('small', { class: 'mr-read' }, card.read),
+      card.read && h('small', { class: 'mr-read' }, card.read),
       h('div', { class: `mr-word ${card.kind === 'term' ? 'ja' : 'en'}` }, card.q),
       h('div', { class: `mr-mean${card.kind === 'term' ? ' term' : ''}` }, card.a),
       card.pos && h('small', { class: 'mr-pos' }, POS[card.pos] || card.pos)),
@@ -222,11 +285,12 @@ function rushView(el, subject, opts) {
 
   function showQ(card, item) {
     const cs = M.cards[card.id];
-    // デッキ試験はヒントなし: そのモードのいちばん難しい答え方
-    const form = R.test ? (mode === 'easy' ? 'j2e' : mode === 'hard' ? 'input' : 'tile') : item.afterIntro ? 'e2j' : ME.formFor(card, cs, mode, rng);
+    // デッキ試験はヒントなし: そのモードのいちばん難しい答え方（用語はタイルがないので入力）。顔合わせの直後は、用語なら「説明 → 用語」
+    const testForm = mode === 'easy' ? 'j2e' : mode === 'hard' || card.kind === 'term' ? 'input' : 'tile';
+    const form = R.test ? testForm : item.afterIntro ? (card.kind === 'term' ? 'j2e' : 'e2j') : ME.formFor(card, cs, mode, rng);
     const q = ME.makeQuestion(card, form, rng);
     if (location.hostname === 'localhost') window.__rush = { card, q, form, R }; // 開発用（自動テスト）
-    const limit = ME.LIMIT_MS[form];
+    const limit = ME.limitOf(card, form);
     const start = Date.now();
     studyBegin(30);
     const bar = h('div', { class: 'mr-time' }, h('i', { style: { animationDuration: `${limit}ms` } }));
@@ -251,8 +315,8 @@ function rushView(el, subject, opts) {
       if (ok) {
         sfx('ok', Math.min(R.combo, 8));
         cardEl.classList.add('good');
-        setTimeout(next, ms > ME.SLOW_MS[form] ? 900 : 280);
-        if (ms > ME.SLOW_MS[form] && !res.isNew) cardEl.append(h('small', { class: 'mr-slow' }, hinted ? '正解！ ヒントを使ったので、早めにまた出すね' : '正解！ でも少しあやしい → 早めにまた出すね'));
+        setTimeout(next, ms > ME.slowOf(card, form) ? 900 : 280);
+        if (ms > ME.slowOf(card, form) && !res.isNew) cardEl.append(h('small', { class: 'mr-slow' }, hinted ? '正解！ ヒントを使ったので、早めにまた出すね' : '正解！ でも少しあやしい → 早めにまた出すね'));
         return;
       }
       sfx('ng');
@@ -266,7 +330,7 @@ function rushView(el, subject, opts) {
     };
     stage.replaceChildren(cardEl);
     if (form === 'input') {
-      const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', placeholder: card.kind === 'term' ? '用語を入力（ひらがなでもOK）' : '英語で入力', ...(card.kind === 'term' ? { lang: 'ja' } : {}) });
+      const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', placeholder: card.read === null ? '数字を入力（例: 1600）' : card.kind === 'term' ? '用語を入力（ひらがなでもOK）' : '英語で入力', ...(card.kind === 'term' ? { lang: 'ja' } : {}), ...(card.read === null ? { inputmode: 'numeric' } : {}) });
       const submit = () => { const v = inp.value; if (!v.trim()) return; inp.blur(); finishQ(ME.textOk(q, v), v); };
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
       stage.append(inp, h('div', { class: 'mr-ctrl' }, btn('わからない', () => finishQ(false, null), 'ghost'), btn('決定', submit, 'primary')));
