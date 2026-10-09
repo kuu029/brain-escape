@@ -140,7 +140,7 @@ export function streakAlive() {
 }
 
 // 1回の解答を記録。review: 復習キューから出た問題か
-export function recordAnswer({ unit, generatorId, seed, correct, firstTry, review = false }) {
+export function recordAnswer({ unit, generatorId, seed, correct, firstTry, review = false, noReview = false }) {
   touchStreak();
   if (firstTry) {
     tallySession(correct);
@@ -161,7 +161,7 @@ export function recordAnswer({ unit, generatorId, seed, correct, firstTry, revie
       r.need--;
       if (r.need <= 0) state.reviewQueue.splice(qi, 1);
     } else r.need = 2;
-  } else if (!correct && firstTry && qi < 0) {
+  } else if (!correct && firstTry && qi < 0 && !noReview) {
     state.reviewQueue.push({ generatorId, seed, unit, need: 2, added: today() });
     if (state.reviewQueue.length > 60) state.reviewQueue.shift();
   }

@@ -7,7 +7,7 @@ function build(subject, src) {
   const decks = [];
   const cards = [];
   for (const d of src) {
-    decks.push({ id: d.id, subject, title: d.title, beta: true });
+    decks.push({ id: d.id, subject, title: d.title });
     for (const [q, read, a, alts = []] of d.list) {
       cards.push({ id: `${subject}:${q}`, deck: d.id, subject, kind: 'term', q, a, read, accept: [q, read, ...alts].filter(Boolean) });
     }

@@ -17,6 +17,7 @@ import { flowQuestion, flowGuide, hasFlow, FLOW_N } from '../memory/flow.js';
 import { claimActivity } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
+import { canSpeak, speakLines, stopSpeech } from '../ui/speech.js';
 
 const POS = { n: '名詞', v: '動詞', adj: '形容詞', adv: '副詞', prep: '前置詞', conj: '接続詞', wh: '疑問詞', pron: '代名詞', int: 'あいさつ等', num: '数', idiom: '熟語' };
 const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science' };
@@ -60,15 +61,15 @@ function todayState(M, subject, now) {
   const done = day.newCount[subject] || 0;
   const introLeft = day.motivation ? Math.min(ME.newLeft(M, subject, now), ME.unseenLeft(M, subject)) : Math.min(1, ME.unseenLeft(M, subject));
   const review = ME.dueList(M, subject, now).length + ME.pendingCount(M, subject);
-  return { day, limit, done, introLeft, review, stage: introLeft > 0 ? 'intro' : review > 0 ? 'review' : 'done' };
+  return { day, limit, done, introLeft, review, stage: introLeft > 0 && review < 10 ? 'intro' : review > 0 ? 'review' : introLeft > 0 ? 'intro' : 'done' };
 }
 // 次にやることのボタン（いちばん大事なものだけ黄色）
 function nextButtons(subject, T, M) {
   const extra = () => { ME.addExtra(M, subject, Date.now()); save(); startRush(subject, { intro: true }); };
-  const introBtn = (cls) => btn(h('span', {}, '🆕 顔合わせ', h('small', {}, T.day.motivation ? `今日の新しい暗号 あと ${T.introLeft} ${unitOf(subject)}（${ME.INTRO_SIZE}${unitOf(subject)}ずつ）` : '今日の新しい暗号を、まず全部1回ずつ見る')), () => startRush(subject, { intro: true }), cls);
+  const introBtn = (cls) => btn(h('span', {}, '🆕 顔合わせ', h('small', {}, T.day.motivation ? `今回は ${Math.min(ME.INTRO_SIZE, T.introLeft)}${unitOf(subject)}だけ（約2分）` : '今日の新しい暗号を、まず全部1回ずつ見る')), () => startRush(subject, { intro: true }), cls);
   const reviewBtn = (cls) => btn(h('span', {}, '🔁 復習ラッシュ', h('small', {}, `復習どき ${T.review} 枚（最大${ME.RUSH_SIZE}枚・4分）`)), () => startRush(subject), cls);
   if (T.stage === 'intro') return [introBtn('primary big mm-go'), T.review > 0 && reviewBtn('ghost mm-go')];
-  if (T.stage === 'review') return [reviewBtn('primary big mm-go'), ME.unseenLeft(M, subject) > 0 && btn(`＋${ME.EXTRA_STEP}${unitOf(subject)} 追加で覚える`, extra, 'ghost small')];
+  if (T.stage === 'review') return [reviewBtn('primary big mm-go'), T.introLeft > 0 ? introBtn('ghost mm-go') : ME.unseenLeft(M, subject) > 0 && btn(`＋${ME.EXTRA_STEP}${unitOf(subject)} 追加で覚える`, extra, 'ghost small')];
   const nd = ME.nextDue(M, subject);
   const mins = nd ? Math.max(1, Math.round((nd - Date.now()) / 60000)) : null;
   return [
@@ -98,11 +99,10 @@ function topView(el, subject) {
   el.append(topBar(() => go('home')),
     h('div', { class: 'mem-top' },
       h('div', { class: 'mm-hero' }, h('div', { class: 'mm-title' }, '🔐 暗号室'), h('p', {}, '看守たちの合言葉（暗号）を解読して、扉を開けろ。忘れかけたころに、また出てくるぞ。')),
-      h('div', { class: 'mm-subj' }, Object.values(ME.MEM_SUBJECTS).map((x) => h('button', { class: `mm-tab${x.id === subject ? ' on' : ''}${x.ready ? '' : ' off'}`, type: 'button', onclick: () => (x.ready ? go('memory', { subject: x.id }) : toast(`${x.name}の暗号は準備中…`)) }, `${x.emoji} ${x.name}${x.ready ? (x.beta ? ' β' : '') : ' 🔒'}`))),
-      sj.beta && h('p', { class: 'note mm-beta' }, `β版：${sj.name}の用語は手作りのデータです。まちがいを見つけたら教えてね（おうちの人に確かめてもらうと安心）。`),
+      h('div', { class: 'mm-subj' }, Object.values(ME.MEM_SUBJECTS).map((x) => h('button', { class: `mm-tab${x.id === subject ? ' on' : ''}${x.ready ? '' : ' off'}`, type: 'button', onclick: () => (x.ready ? go('memory', { subject: x.id }) : toast(`${x.name}の暗号は準備中…`)) }, `${x.emoji} ${x.name}${x.ready ? '' : ' 🔒'}`))),
       h('div', { class: 'mm-today' },
         h('div', { class: 'mt-flow' },
-          h('span', { class: T.stage === 'intro' ? 'now' : 'done' }, `① 顔合わせ ${T.day.motivation ? `${T.done}/${T.limit}` : ''}`),
+          h('span', { class: T.stage === 'intro' ? 'now' : T.introLeft > 0 ? '' : 'done' }, `① 顔合わせ ${T.day.motivation ? `${T.done}/${T.limit}` : ''}`),
           h('span', { class: T.stage === 'review' ? 'now' : T.stage === 'done' ? 'done' : '' }, `② 復習 ${T.review ? `あと${T.review}` : ''}`)),
         nextButtons(subject, T, M),
         weak > 0 && btn(`😵 苦手だけ（${weak}枚）`, () => startRush(subject, { weak: true }), 'ghost small')),
@@ -111,8 +111,7 @@ function topView(el, subject) {
       h('h3', { class: 'sec' }, '難易度'),
       seg,
       h('div', { class: 'mm-total' },
-        [['見た', total.seen], ['★ 選べる', total.sel], ['✍️ 書ける', total.wr], ['🔒 定着', total.solid]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))),
-        h('small', { class: 'mm-of' }, `全 ${total.n} 枚`)),
+        [['見た', total.seen], ['★ 選べる', total.sel], ['✍️ 書ける', total.wr], ['🔒 定着', total.solid]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k)))),
       h('h3', { class: 'sec' }, `📒 暗号ノート（${sj.name}）`),
       h('div', { class: 'mm-decks' }, decks.map((d) => {
         const p = ME.deckProgress(M, d);
@@ -149,7 +148,7 @@ function flowView(el, subject) {
     const pad = answerPad(p, (input) => {
       const r = checkAnswer(p, input);
       if (r.invalid) { toast(r.msg, 1600); return; }
-      if (p.input.kind === 'choice') pad.mark(input, r.ok);
+      if (p.input.kind === 'choice') { pad.mark(input, r.ok); if (!r.ok) pad.mark(p.input.answer, true); }
       pad.el.classList.add('done');
       tallySession(r.ok);
       if (r.ok) { ok++; sfx('ok'); bump('correct'); } else sfx('ng');
@@ -295,9 +294,11 @@ function rushView(el, subject, opts) {
       card.read && h('small', { class: 'mr-read' }, card.read),
       h('div', { class: `mr-word ${card.kind === 'term' ? 'ja' : 'en'}` }, card.q),
       h('div', { class: `mr-mean${card.kind === 'term' ? ' term' : ''}` }, card.a),
-      card.pos && h('small', { class: 'mr-pos' }, POS[card.pos] || card.pos)),
-      h('p', { class: 'note center' }, '声に出して1回読もう。4枚見たら、まとめてテスト！'),
-      btn('覚えた！ ▶', () => { sfx('tap'); next(); }, 'primary big'));
+      card.pos && h('small', { class: 'mr-pos' }, POS[card.pos] || card.pos),
+      // 英単語は発音を聞ける（端末の読み上げ。通信なし）
+      card.kind !== 'term' && canSpeak() && h('button', { class: 'mr-say', type: 'button', 'aria-label': '発音を聞く', onclick: (e) => { e.stopPropagation(); speakLines([{ who: 'A', text: card.q }], { rate: 0.8 }); } }, '🔊')),
+      h('p', { class: 'note center' }, card.kind === 'term' ? '声に出して1回読もう。4枚見たら、まとめてテスト！' : '🔊で発音を聞いて、まねして1回読もう。4枚見たら、まとめてテスト！'),
+      btn('覚えた！ ▶', () => { sfx('tap'); stopSpeech(); next(); }, 'primary big'));
   }
 
   function showQ(card, item) {
@@ -342,8 +343,7 @@ function rushView(el, subject, opts) {
       stage.append(h('div', { class: 'mr-answer' },
         shown != null && h('small', {}, `あなた: ${shown}`),
         h('div', {}, h('b', { class: 'en' }, card.q), ' ＝ ', h('span', {}, card.a)),
-        btn('次へ ▶', () => { clearTimeout(auto); next(); }, 'primary')));
-      const auto = setTimeout(next, 2600);
+        btn('次へ ▶', next, 'primary')));
     };
     stage.replaceChildren(cardEl);
     if (form === 'input') {
@@ -358,7 +358,7 @@ function rushView(el, subject, opts) {
         const r = checkAnswer(p, input);
         if (r.invalid) { toast(r.msg, 1600); return; }
         const shown = p.input.kind === 'choice' ? p.input.choices[input] : p.input.kind === 'order' ? input.map((i) => p.input.tiles[i]).join(' ') : String(input);
-        if (p.input.kind === 'choice') pad.mark(input, r.ok);
+        if (p.input.kind === 'choice') { pad.mark(input, r.ok); if (!r.ok) pad.mark(p.input.answer, true); }
         finishQ(r.ok, r.ok ? null : shown, !!pad.usedHint);
       }, { fire: '決定' });
       stage.append(pad.el, btn('？ わからない', () => finishQ(false, null), 'ghost small mr-idk'));
@@ -411,7 +411,7 @@ function resultView(el, subject, R) {
           h('div', { class: 'es-num' }, h('b', {}, `${R.ok}`), h('span', {}, ` / ${R.asked} 正解`)),
           R.test && h('b', { class: R.passed ? 'mm-pass' : 'mm-fail' }, R.passed ? '🏅 解読成功！（9割以上）' : `あと少し！（${acc}% → 90% で解読）`)),
         h('div', { class: 'mm-total' },
-          [['🆕 新しく覚えた', R.news], ['⬆️ レベルアップ', R.ups], ['🔒 定着した', R.solid], ['✍️ 書けるように', R.wr], ['🔥 最大コンボ', R.maxCombo]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))))),
+          [['🆕 新しく覚えた', R.news], ['⬆️ レベルアップ', R.ups], ['🔒 定着した', R.solid], ['✍️ 書けるように', R.wr], ['⚡ 最大コンボ', R.maxCombo]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))))),
       h('p', { class: 'note center mm-gems' }, `💎 +${R.gems}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
       bonusChips(R.bonus),
       R.cards?.length > 0 && h('p', { class: 'note center' }, `🃏 カードゲット: ${R.cards.map((id) => GAME_CARDS.find((c) => c.id === id)?.name || id).join('、')}`),

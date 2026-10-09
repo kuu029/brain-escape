@@ -148,7 +148,7 @@ export function render(el) {
       (s.exams || []).length > 0 && h('div', { class: 'ex-hist' }, s.exams.slice(-6).reverse().map(histRow)),
       h('h3', { class: 'sec' }, '📚 単元ごと'),
       subjBlocks,
-      h('h3', { class: 'sec' }, `👻 復習待ち ${s.reviewQueue.length} 問`),
+      h('h3', { class: 'sec' }, `👻 リベンジ待ち ${s.reviewQueue.length} 問`),
       s.reviewQueue.length > 0 && btn('リベンジウェーブへ', () => go('battle', { mode: 'review' }), 'warn'),
       recent.length > 0 && h('div', { class: 'wrong-list' },
         h('p', { class: 'note' }, '最近まちがえた問題'),

@@ -204,9 +204,12 @@ function sheetView(el) {
     const v = await modal({
       title: '模試をやめる？',
       body: '「あとで続きから」なら、答えはそのまま残るよ（時間は進み続ける）。',
-      buttons: [{ label: '捨てる', value: 'drop', cls: 'danger' }, { label: 'あとで続きから', value: 'keep' }, { label: '続ける', value: null, cls: 'primary' }],
+      // 安全な「続ける」をいちばん上に。「捨てる」は小さく下に、もう一度確認する
+      buttons: [{ label: '続ける', value: null, cls: 'primary' }, { label: 'あとで続きから', value: 'keep' }, { label: '答えを捨ててやめる', value: 'drop', cls: 'ghost small danger-link' }],
+      cls: 'stack',
     });
     if (!v) return;
+    if (v === 'drop' && !(await confirmBox('ほんとに捨てる？', 'ここまでの答えは消えて、元にもどせないよ。', '捨てる', 'やめない'))) return;
     done = true;
     clearInterval(iv);
     stopSpeech();

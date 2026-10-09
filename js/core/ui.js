@@ -25,20 +25,20 @@ export function btn(label, onclick, cls = '') {
   return h('button', { class: `btn ${cls}`, type: 'button', onclick: (e) => { sfx('tap'); onclick(e); } }, label);
 }
 
-// 解説を読んでほしい場面のボタン。すぐ押せるが、画面に出てから ms 以内に押すと
-// 「ほんとに読んだ？」と一度だけ聞く（読まずに連打で飛ばす対策。正解のあとなどは普通の btn を使う）
+// 解説を読んでほしい場面のボタン。すぐ押せるが、画面に出てから ms 以内に押すと、
+// 1回目だけ軽いトーストで「ひと目見てからもう一回タップ」とうながす（説教っぽいモーダルは出さない）。
+// うながすのは5分に1回まで。正解のあとなどは普通の btn を使う
+let lastNudge = 0;
 export function readBtn(label, onclick, cls = '', ms = 2500, what = '解説') {
   let shown = Infinity;
   let asked = false;
-  const b = btn(label, async (e) => {
-    if (!asked && Date.now() - shown < ms) {
+  const b = btn(label, (e) => {
+    if (!asked && Date.now() - shown < ms && Date.now() - lastNudge > 300000) {
       asked = true;
-      const ok = await modal({
-        title: `ほんとに${what}をよく読んだ？`,
-        body: what === '解説' ? 'まちがえた所をここで読んでおくと、次に同じミスをしにくくなるよ。' : 'ここを読んでおくと、このあとの問題がぐっと楽になるよ。',
-        buttons: [{ label: '読んだ！ 進む', value: true }, { label: 'もう一度読む', value: false, cls: 'primary' }],
-      });
-      if (!ok) return;
+      lastNudge = Date.now();
+      b.classList.add('nudge');
+      toast(`👀 ${what}をサッと見てから、もう一回タップ！`, 1600);
+      return;
     }
     onclick(e);
   }, cls);

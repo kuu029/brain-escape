@@ -19,9 +19,9 @@ export const MAX_LV = 6;
 
 export const MEM_SUBJECTS = {
   en: { id: 'en', name: '英単語', emoji: '🔤', newBase: 50, ready: true, distinct: enDistinct },
-  // 社会・理科は β（手で書いた用語データ。家族にも確かめてもらう）
-  soc: { id: 'soc', name: '社会', emoji: '🗾', newBase: 15, ready: true, beta: true, distinct: termDistinct },
-  sci: { id: 'sci', name: '理科', emoji: '🔬', newBase: 15, ready: true, beta: true, distinct: termDistinct },
+  // 社会・理科は手で書いた用語データ（教科書と照らし合わせて確認済み）
+  soc: { id: 'soc', name: '社会', emoji: '🗾', newBase: 15, ready: true, distinct: termDistinct },
+  sci: { id: 'sci', name: '理科', emoji: '🔬', newBase: 15, ready: true, distinct: termDistinct },
 };
 export const MODES = {
   easy: { name: 'イージー', desc: '4択だけ', mult: 1 },

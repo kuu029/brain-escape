@@ -13,6 +13,7 @@ import { dueList } from '../memory/engine.js';
 import { flyGems } from '../ui/gems.js';
 import { takeAdvice } from '../game/advice.js';
 import { hourOpen, HOUR_GEMS } from '../game/bonus.js';
+import { unitNext } from './map.js';
 
 export function topBar(back = null) {
   const s = S();
@@ -55,15 +56,17 @@ export function render(el) {
           h('span', { class: 'em-label' }, '🔓 脱獄進捗'),
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),
           h('b', { class: 'em-pct' }, `${pct}%`))),
-      gameCard('math', '数学棟', '数学', () => go('map')),
-      gameCard('english', '英語棟', '英語', () => go('map', { subject: 'english' })),
-      memoryCard(),
-      examCard(),
+      todayCard(),
       h('div', { class: 'mboard' },
         h('h3', { class: 'mboard-title' }, '📋 今日の指令'),
         mlist,
         hourLine(),
-        h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ 再襲来待ち 👻${s.reviewQueue.length}`)),
+        h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ リベンジ待ち 👻${s.reviewQueue.length}`)),
+      h('h3', { class: 'sec home-sec' }, '🎮 ぜんぶのモード'),
+      gameCard('math', '数学棟', '数学', () => go('map')),
+      gameCard('english', '英語棟', '英語', () => go('map', { subject: 'english' })),
+      memoryCard(),
+      examCard(),
     ),
     h('nav', { class: 'bottom-nav' },
       [['🎰', 'ガチャ', 'collection', { tab: 'gacha' }], ['🃏', 'コレクション', 'collection', {}], ['📊', '記録', 'records', {}], ['⚙️', '設定', 'settings', {}]].map(([em, label, to, p]) =>
@@ -79,6 +82,30 @@ export function render(el) {
     save();
     modal({ title: a.title, body: a.body, buttons: [{ label: 'あとで', value: false }, { label: a.label, value: true, cls: 'primary' }] }).then((v) => { if (v) go(...a.go); });
   }, 800);
+}
+
+// 今日の1手: 迷わないように「いまやること」を1つだけ大きく出す
+//   暗号の復習が5枚以上たまっていれば暗号室、なければ数学（次に英語）の「次はこれ」
+function todayPick() {
+  const M = S().memory;
+  const dues = ['en', 'soc', 'sci'].map((sj) => [sj, dueList(M, sj, Date.now()).length]).sort((a, b) => b[1] - a[1]);
+  if (dues[0][1] >= 5) {
+    const [sj, n] = dues[0];
+    return { em: '🔐', label: `暗号の復習 ${Math.min(n, 20)}枚`, sub: `${{ en: '英単語', soc: '社会', sci: '理科' }[sj]}・約3分`, to: ['memory', { subject: sj }] };
+  }
+  for (const subj of ['math', 'english']) {
+    const u = nextUnit(subj);
+    const cta = u && unitNext(u.id).cta;
+    if (cta) return { em: u.emoji, label: cta.label.replace(/^\S+\s/, ''), sub: `${subj === 'math' ? '数学' : '英語'}｜${u.title}・約3分`, to: cta.to, html: true };
+  }
+  return { em: '🔐', label: '新しい暗号を覚える', sub: '暗号室・約3分', to: ['memory', {}] };
+}
+function todayCard() {
+  const t = todayPick();
+  return h('button', { class: 'today-card', type: 'button', onclick: () => { sfx('tap'); go(...t.to); } },
+    h('span', { class: 'tc-em' }, t.em),
+    h('span', { class: 'tc-body' }, h('small', {}, '👉 今日の1手'), h('b', t.html ? { html: t.label } : {}, t.html ? '' : t.label), h('small', { class: 'tc-sub' }, t.sub)),
+    h('span', { class: 'tc-go' }, '▶'));
 }
 
 // 1時間ごとのボーナスの表示（この時間にまだ何もクリアしていなければ「チャンス」）

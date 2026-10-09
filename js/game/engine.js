@@ -240,7 +240,7 @@ const back = (st, e, n, ev) => { const from = e.pos; e.pos = Math.max(0, e.pos -
 export const SUMMON = {
   kutsushita: { desc: '先頭の敵を1マス押し戻す', run: (st, ev) => { const f = front(st); if (f) back(st, f, 1, ev); } },
   sanma: { desc: '先頭の敵に2ダメージ', run: (st, ev) => { const f = front(st); if (f) hit(st, f, 2, ev, 'ally'); } },
-  obake: { desc: '再襲来の敵ぜんぶに3ダメージ（いなければ先頭に2）', run: (st, ev) => { const rv = alive(st).filter((e) => e.review); if (rv.length) rv.forEach((e) => hit(st, e, 3, ev, 'ally')); else { const f = front(st); if (f) hit(st, f, 2, ev, 'ally'); } } },
+  obake: { desc: 'リベンジおばけぜんぶに3ダメージ（いなければ先頭に2）', run: (st, ev) => { const rv = alive(st).filter((e) => e.review); if (rv.length) rv.forEach((e) => hit(st, e, 3, ev, 'ally')); else { const f = front(st); if (f) hit(st, f, 2, ev, 'ally'); } } },
   broccoli: { desc: '重低音で敵ぜんぶに1ダメージ', run: (st, ev) => alive(st).forEach((e) => hit(st, e, 1, ev, 'ally')) },
   onigiri: { desc: 'ライフ +1', run: (st) => { st.lives = Math.min(MAX_LIVES, st.lives + 1); } },
   toast: { desc: '次の2回、正解のこうげきが2倍', run: (st) => { st.double = Math.max(st.double, 2); } },

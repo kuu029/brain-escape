@@ -9,6 +9,7 @@ import { cardSprite, spriteHTML } from '../game/art.js';
 import { backdrop, confetti } from '../ui/deco.js';
 import { sfx } from '../core/sound.js';
 import { topBar } from './home.js';
+import { unitNext } from './map.js';
 import { flyGems } from '../ui/gems.js';
 
 // 数字がカチカチ増えていく表示
@@ -51,6 +52,8 @@ export function render(el, r) {
   const cards = r.cards.map((id) => CARDS.find((c) => c.id === id)).filter(Boolean);
   const wrong = r.wrongList.map((w) => makeProblem(w.generatorId, w.seed)).filter(Boolean);
   const again = () => go('battle', { mode: r.mode, unit: r.unitId, subject: r.subject });
+  const nx = r.win && u && r.mode !== 'review' ? unitNext(u.id).cta : null;
+  const nextCta = nx && !(nx.to[0] === 'battle' && nx.to[1].mode === r.mode) ? nx : null;
 
   backdrop(el, r.win ? 'win' : 'lose');
   el.append(topBar(() => go('map', { focus: r.unitId, subject: r.subject })));
@@ -74,16 +77,18 @@ export function render(el, r) {
     h('div', { class: 'stats tickets' },
       h('div', {}, countUp(rate, (v) => `${v}%`, 0), h('small', {}, `正答率（${r.firstCorrect}/${r.asked}）`)),
       gemStat,
-      h('div', {}, countUp(r.maxCombo, (v) => `🔥${v}`, 900), h('small', {}, '最大コンボ'))),
+      h('div', {}, countUp(r.maxCombo, (v) => `⚡${v}`, 900), h('small', {}, '最大コンボ'))),
     cards.length > 0 && h('div', { class: 'new-cards' }, h('h3', { class: 'sec' }, '🃏 新カード！'), cards.map((c) => h('div', { class: `card r${c.rarity} flip-in` }, h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name)))),
     r.opened.length > 0 && h('div', { class: 'opened' }, h('h3', { class: 'sec' }, '🚪 新しいエリアが開いた！'), r.opened.map((id) => h('div', { class: 'op-row' }, h('span', { class: 'op-face', html: spriteHTML(`boss-${id}`, BOSSES[id]?.emoji || UNIT[id].emoji, '') }), h('span', { class: 'op-text' }, h('small', {}, UNIT[id].area), h('b', {}, UNIT[id].title))))),
     wrong.length > 0 && h('div', { class: 'wrong-list' },
-      h('h3', { class: 'sec' }, `👻 再襲来リスト（${wrong.length}問）`),
+      h('h3', { class: 'sec' }, `👻 リベンジリスト（${wrong.length}問）`),
       h('p', { class: 'note' }, 'まちがえた問題は、あとのウェーブに「リベンジおばけ」として戻ってくる。2回正解で成仏。'),
       wrong.map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), answerLine(p)))),
     h('div', { class: 'up-btns' },
-      btn(r.win ? 'もう1回' : 'リベンジ！', again, 'primary big'),
-      r.mode === 'practice' && r.unitId && canBoss(r.unitId) && btn('👑 ボスウェーブへ', () => go('battle', { mode: 'boss', unit: r.unitId }), 'boss'),
+      // 勝ったら、単元シートの「次はこれ」と同じ行き先を主役に（同じウェーブのくり返しなら「もう1回」）
+      nextCta ? btn(h('span', { class: 'cta-in' }, h('small', {}, nextCta.small), h('span', { html: nextCta.label })), () => go(...nextCta.to), `${nextCta.cls} big`) : btn(r.win ? 'もう1回' : 'リベンジ！', again, 'primary big'),
+      nextCta && btn('もう1回', again, 'ghost'),
+      !nextCta && r.mode === 'practice' && r.unitId && canBoss(r.unitId) && btn('👑 ボスウェーブへ', () => go('battle', { mode: 'boss', unit: r.unitId }), 'boss'),
       btn('マップへ', () => go('map', { focus: r.unitId, subject: r.subject }), 'ghost')),
     u && h('p', { class: 'note center' }, `${u.area}｜${u.title}`)));
   flyGems(r.gems + (r.bonus?.gems || 0), gemStat, 1300);

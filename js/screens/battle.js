@@ -90,7 +90,7 @@ export function render(el, params) {
   function paintHud() {
     hudLives.textContent = st.lives === Infinity ? '❤️ ∞' : `❤️ ${st.lives}`;
     hudCoins.textContent = diagMode ? '' : `🪙 ${st.coins}`;
-    hudCombo.textContent = st.combo >= 2 ? `🔥${st.combo}` : '';
+    hudCombo.textContent = st.combo >= 2 ? `⚡${st.combo}` : '';
     hudCombo.classList.toggle('hot', st.combo >= 3);
     hudLeft.textContent = diagMode ? `${Math.min(dIdx, problems.length)}/${problems.length}` : `${MODE_LABEL[mode].replace('ウェーブ', '')} 👾${st.queue.length + E.alive(st).length}`;
     paintTools();
@@ -320,7 +320,7 @@ export function render(el, params) {
       return;
     }
     const firstTry = cur.attempts === 0;
-    recordAnswer({ unit: p.unit, generatorId: p.generatorId, seed: p.seed, correct: res.ok, firstTry, review: !!cur.target });
+    recordAnswer({ unit: p.unit, generatorId: p.generatorId, seed: p.seed, correct: res.ok, firstTry, review: !!cur.target, noReview: diagMode }); // 看守チェックのミスはリベンジに回さない（いきなり大量にたまって落ちこむので）
     if (firstTry) {
       asked++;
       const d = (diag[p.unit] ||= { ok: 0, n: 0 });
@@ -340,7 +340,7 @@ export function render(el, params) {
       floatText(qarea, diagMode ? '⭕' : firstTry ? PRAISE[Math.floor(Math.random() * PRAISE.length)] : 'よし、取り返した！', 'good');
       if (st.combo >= 5 && st.combo % 5 === 0) {
         sfx('combo');
-        floatText(board.el, `🔥${st.combo}コンボ！`, 'combo');
+        floatText(board.el, `⚡${st.combo}コンボ！`, 'combo');
         document.body.classList.remove('combo-flash');
         void document.body.offsetWidth;
         document.body.classList.add('combo-flash');
@@ -378,11 +378,11 @@ export function render(el, params) {
       box.append(stepsBox,
         h('div', { class: 'fb-btns' },
           btn('解き方を見る', (e) => { stepsBox.classList.toggle('hidden'); e.target.remove(); }, 'ghost small'),
-          readBtn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small', 1500)));
+          btn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small')));
       box.append(h('p', { class: 'fb-sub' }, 'このまま下で答えを入れ直してもOK'));
     } else {
-      // 2回まちがえたら、解き方と答えを見せて次へ（この問題はあとで再襲来する）
-      box.append(h('div', { class: 'fb-sub' }, '解き方はこう👇 この問題はあとで「再襲来」してくるよ。'), stepsView(p), answerLine(p),
+      // 2回まちがえたら、解き方と答えを見せて次へ（この問題はあとでリベンジおばけになる）
+      box.append(h('div', { class: 'fb-sub' }, '解き方はこう👇 この問題はあとで「リベンジおばけ」になって戻ってくるよ。'), stepsView(p), answerLine(p),
         h('div', { class: 'fb-btns' }, readBtn('わかった！ 次へ', () => nextProblem(), 'primary small', 3000)));
       cur.pad.el.classList.add('done');
     }
@@ -399,7 +399,7 @@ export function render(el, params) {
     if (diagMode) {
       studyEnd();
       closeSession('clear');
-      go('diagnosis', { phase: 'result', results: diag, subject });
+      go('diagnosis', { phase: 'result', results: diag, subject, misses: wrongList });
       return;
     }
     qarea.classList.add('done');

@@ -3,7 +3,7 @@ import { UNIT, makeProblem, bossPool, GEN } from '../units/registry.js';
 import { newSeed } from '../core/rng.js';
 
 const BASE = [
-  [0, 'grunt'], [1, 'grunt'], [3, 'runner'], [4, 'grunt'], [6, 'tank'], [8, 'runner'],
+  [0, 'grunt'], [1, 'grunt'], [3, 'runner'], [5, 'tank'], [7, 'runner'],
 ];
 const BOSS = [
   [0, 'grunt'], [1, 'runner'], [2, 'grunt'], [4, 'boss'], [5, 'tank'], [7, 'grunt'], [9, 'runner'],

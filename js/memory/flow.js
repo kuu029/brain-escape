@@ -254,7 +254,8 @@ export function flowQuestion(subject, rng) {
   return rng.pick(subject === 'sci' ? SCI_Q : SOC_Q)(rng);
 }
 // 画面下の「順番ガイド」: 問題の種類ごとに、覚える土台になる並びだけを見せる（答えそのものは出さない）
-export const ERA_LINE = ['縄文', '弥生', '古墳', '飛鳥', '奈良', '平安', '鎌倉', '室町', '安土桃山', '江戸', '明治', '大正', '昭和', '平成', '令和'];
+// 時代名＋はじまりの年（年号の問題で「どの時代の出来事か」がわかるように）
+export const ERA_LINE = ['縄文', '弥生', '古墳', '飛鳥 592〜', '奈良 710〜', '平安 794〜', '鎌倉 1185〜', '室町 1338〜', '安土桃山 1573〜', '江戸 1603〜', '明治 1868〜', '大正 1912〜', '昭和 1926〜', '平成 1989〜', '令和 2019〜'];
 const GUIDES = {
   era: { title: '時代の順番', steps: ERA_LINE },
   region: { title: '北から南へ', steps: REGION.map((r) => r.replace(/地方$/, '')) },

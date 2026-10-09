@@ -7,7 +7,7 @@ const ORDER_INST = '日本語に合うように並べかえよう\n';
 export function problemCard(p, { review = false, label = '' } = {}) {
   return h('div', { class: `qcard${review ? ' review' : ''}${p.lang === 'english' ? ' lang-en' : ''}${p.fig ? (p.fig.startsWith('<svg') ? ' has-fig' : ' has-table') : ''}` },
     h('div', { class: 'qcard-tags' },
-      review && h('span', { class: 'tag tag-review' }, '👻 再襲来'),
+      review && h('span', { class: 'tag tag-review' }, '👻 リベンジ'),
       p.source === 'past-exam' && h('span', { class: 'tag' }, `過去問 ${p.origin || ''}`),
       label && h('span', { class: 'tag tag-dim' }, label)),
     // 並べかえの「日本語に合うように並べかえよう」は小さなラベルにして、行を節約する

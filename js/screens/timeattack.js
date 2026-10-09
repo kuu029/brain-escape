@@ -136,7 +136,7 @@ export function render(el, { unit }) {
           h('div', { class: `rs-rank rank-${rank} ta-rank` }, h('small', {}, 'RANK'), h('b', {}, rank))),
         gemEl,
         bonusChips(bonus),
-        misses.length > 0 && h('h3', { class: 'sec' }, '😵 まちがえた問題（あとで「再襲来」するよ）'),
+        misses.length > 0 && h('h3', { class: 'sec' }, '😵 まちがえた問題（あとで「リベンジおばけ」になって戻ってくるよ）'),
         misses.length > 0 && h('div', { class: 'wrong-list' }, misses.map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), h('div', { class: 'answer-line', html: `正解: ${rich(p.answerText)}` })))),
         h('div', { class: 'up-btns' },
           btn('⏱ もう1回', () => startTimeAttack(unit), 'primary'),

@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = 'e253cd13d3';
+const VERSION = 'ecabb51f44';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',

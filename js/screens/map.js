@@ -119,6 +119,22 @@ export function render(el, { focus = null, subject = null } = {}) {
   setTimeout(() => el.querySelector(`[data-unit="${target}"]`)?.scrollIntoView({ block: 'center' }), 30);
 }
 
+// 次にやること: 訓練を全部 → 練習1回 → ボス → （あとは練習で定着）。単元シートと結果画面で同じものを光らせる
+export function unitNext(id) {
+  const u = UNIT[id];
+  const us = unitState(id);
+  const nextLesson = u.lessons.find((l) => !us.lessons[l.id]);
+  const step = !(us.trainingDone || us.diagPassed) ? 'train' : !us.practiced ? 'practice' : !us.bossCleared ? 'boss' : 'free';
+  const cta = step === 'train' && nextLesson
+    ? { small: '👉 次はこれ', label: `📘 訓練${u.lessons.indexOf(nextLesson) + 1}「${rich(nextLesson.title)}」`, to: ['training', { unit: id, lesson: nextLesson.id }], cls: 'primary' }
+    : step === 'boss' && canBoss(id)
+      ? { small: '👉 次はこれ', label: '👑 ボスウェーブに挑む', to: ['battle', { mode: 'boss', unit: id }], cls: 'boss' }
+      : canPractice(id)
+        ? { small: step === 'free' ? '👉 定着をめざそう' : '👉 次はこれ', label: '⚔️ 練習ウェーブ', to: ['battle', { mode: 'practice', unit: id }], cls: 'primary' }
+        : null;
+  return { step, cta };
+}
+
 function openUnit(id) {
   const u = UNIT[id];
   if (u.comingSoon) return toast('このエリアは工事中。もうすぐ開くかも…');
@@ -130,15 +146,8 @@ function openUnit(id) {
     const nav = (name, params) => () => { close(); go(name, params); };
     const practiceOk = canPractice(id);
     const bossOk = canBoss(id);
-    // 次にやること: 訓練を全部 → 練習1回 → ボス → （あとは練習で定着）。それだけを黄色く光らせる
-    const step = !(us.trainingDone || us.diagPassed) ? 'train' : !us.practiced ? 'practice' : !us.bossCleared ? 'boss' : 'free';
-    const cta = step === 'train' && nextLesson
-      ? btn(h('span', { class: 'cta-in' }, h('small', {}, '👉 次はこれ'), h('span', { html: `📘 訓練${u.lessons.indexOf(nextLesson) + 1}「${rich(nextLesson.title)}」` })), nav('training', { unit: id, lesson: nextLesson.id }), 'primary big up-cta')
-      : step === 'boss' && bossOk
-        ? btn(h('span', { class: 'cta-in' }, h('small', {}, '👉 次はこれ'), h('span', {}, '👑 ボスウェーブに挑む')), nav('battle', { mode: 'boss', unit: id }), 'boss big up-cta')
-        : practiceOk
-          ? btn(h('span', { class: 'cta-in' }, h('small', {}, step === 'free' ? '👉 定着をめざそう' : '👉 次はこれ'), h('span', {}, '⚔️ 練習ウェーブ')), nav('battle', { mode: 'practice', unit: id }), 'primary big up-cta')
-          : null;
+    const { step, cta: next } = unitNext(id);
+    const cta = next && btn(h('span', { class: 'cta-in' }, h('small', {}, next.small), h('span', { html: next.label })), nav(...next.to), `${next.cls} big up-cta`);
     return h('div', { class: 'unit-panel' },
       h('div', { class: 'up-head' }, h('span', { class: 'up-em' }, u.emoji), h('div', {}, h('div', { class: 'a-area' }, u.area), h('h2', {}, u.title)), h('span', { class: `badge b-${mastery(id)}` }, MASTERY_LABEL[mastery(id)])),
       recent !== null && h('p', { class: 'note' }, `直近の正答率 ${recent}%（${us.recent.length}問）／ 練習 ${us.practiced}回${us.bossCleared ? ' ／ ボス撃破済み' : ''}`),

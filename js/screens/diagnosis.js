@@ -1,7 +1,8 @@
 // 入口の診断（看守チェック）: 第1段階の単元から各3問。2問以上正解で「突破」
 import { h, btn } from '../core/ui.js';
 import { S, unitState, saveNow } from '../core/store.js';
-import { UNIT, unitsOf } from '../units/registry.js';
+import { UNIT, unitsOf, makeProblem } from '../units/registry.js';
+import { answerLine } from '../ui/answer.js';
 import { diagnosisProblems } from '../game/waves.js';
 import { go } from '../core/router.js';
 
@@ -9,7 +10,7 @@ const DIAG_UNITS = (subject) => unitsOf(subject).filter((u) => u.stage === 1 && 
 // 1単元あたりの問題数（英語は単元が多いので2問）
 const PER = { math: 3, english: 2 };
 
-export function render(el, { phase = 'intro', results = {}, subject = 'math' } = {}) {
+export function render(el, { phase = 'intro', results = {}, subject = 'math', misses = [] } = {}) {
   const en = subject === 'english';
   const units = DIAG_UNITS(subject);
   const per = PER[subject];
@@ -47,8 +48,13 @@ export function render(el, { phase = 'intro', results = {}, subject = 'math' } =
         h('span', { class: 'dr-em' }, UNIT[id].emoji),
         h('span', { class: 'dr-name' }, UNIT[id].title),
         h('span', { class: 'dr-score' }, `${r.ok}/${r.n}`),
-        h('span', { class: 'dr-tag' }, pass ? '突破！' : '要訓練')))),
-      h('p', { rich: fails.length ? `「要訓練」の区画は、マップで訓練からスタートしよう。\n突破した区画はもうクリア扱い。次のエリアへ進める！` : (en ? '全部突破！ 中1の範囲はバッチリ。' : '全部突破！ いきなり本棟（第2段階）へ進めるぞ。') }),
+        h('span', { class: 'dr-tag' }, pass ? '突破！' : 'ここから')))),
+      // 前向きに: 全部ミスでも落ちこませない。診断のミスはリベンジにも回していない
+      h('p', { rich: fails.length ? `${fails.length === rows.length ? '最初はみんなこんなもん！\n' : ''}「ここから」の区画は、短い訓練でコツをつかめば一気に伸びるところ。\nここでのミスはリベンジにも回らないから、気にしなくてOK。${fails.length < rows.length ? '\n突破した区画はもうクリア扱い！' : ''}` : (en ? '全部突破！ 中1の範囲はバッチリ。' : '全部突破！ いきなり本棟（第2段階）へ進めるぞ。') }),
+      // まちがえた問題の答え（タップで開く）
+      misses.length > 0 && h('div', { class: 'wrong-list' },
+        h('h3', { class: 'sec' }, `📝 まちがえた問題の答え（${misses.length}問）`),
+        misses.map((w) => makeProblem(w.generatorId, w.seed)).filter(Boolean).map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), answerLine(p)))),
       btn('マップへ', () => go('map', { subject }), 'primary big')),
   );
 }
