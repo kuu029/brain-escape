@@ -31,10 +31,10 @@ export function defenseView(el, subject, started = false) {
     el.append(h('div', { class: 'center-col md-intro' },
       h('div', { class: 'big-em' }, '🛡️'),
       h('h2', {}, `暗号ディフェンス｜${sj.name}`),
-      h('p', { rich: '3本の道を、看守がまとめて門へせまってくる！\nねらっている看守（▼）の暗号に正解すると撃退。看守をタップすると、ねらいを変えられる。\nまちがえると、その看守がぐっと前へ。門まで来られたら ❤️ −1' }),
+      h('p', { rich: '3本の道を、看守がまとめて門へせまってくる！\nねらっている看守（▼）の暗号に正解すると撃退。看守をタップすると、ねらいを変えられる。\nまちがえると、その看守がぐっと前へ。門まで来られたら ❤️ −1\n場の看守をぜんぶ撃退すると、次の組がすぐ来る（全滅ボーナス）' }),
       h('div', { class: 'md-boss' }, h('span', { class: 'md-boss-face', html: cardSprite(boss.card) }), h('div', {}, h('small', {}, `最後に教科のボスが登場（${D.BOSS_HP}回正解で撃破）`), h('b', {}, boss.name))),
       pt.length
-        ? h('div', { class: 'md-boss md-party' }, ...pt.map((id) => h('span', { class: 'md-boss-face sm', html: cardSprite(id) })), h('div', {}, h('small', {}, '正解でゲージがたまると、門から出撃して看守をたおす（チケットは使わない）'), h('b', {}, '🤝 なかまもいっしょ')))
+        ? h('div', { class: 'md-boss md-party' }, ...pt.map((id) => h('span', { class: 'md-boss-face sm', html: cardSprite(id) })), h('div', {}, h('small', {}, '正解でゲージがたまるたびに、門から出撃して看守をおしもどす＆足止め（たおすのは暗号の正解で。チケットは使わない）'), h('b', {}, '🤝 なかまもいっしょ')))
         : h('p', { class: 'note center' }, '🤝 コレクションで「なかま」を入れると、ここでも出撃してくれるよ'),
       rec && h('p', { class: 'note center' }, `これまでの最高: ${rec.best} 体撃退${rec.wins ? `・ボス撃破 ${rec.wins} 回` : ''}`),
       btn('🛡️ スタート！', () => { el.replaceChildren(); defenseView(el, subject, true); }, 'primary big'),
@@ -83,6 +83,7 @@ export function defenseView(el, subject, started = false) {
       o.style.left = leftOf(e.x);
       o.classList.toggle('target', e === tg);
       o.classList.toggle('danger', e.x > 0.75);
+      o.classList.toggle('stun', e.stun > 0);
       if (e.boss) o.querySelector('.md-hp i').style.width = `${(e.hp / e.maxHp) * 100}%`;
     }
     for (const a of st.allies) {
@@ -104,7 +105,7 @@ export function defenseView(el, subject, started = false) {
   let allySig = '';
   function paintAllies() {
     if (!st.party.length) return;
-    const sig = `${st.gauge}|${Object.keys(st.used).join()}`;
+    const sig = `${st.gauge}|${Object.values(st.used).join()}`;
     if (sig === allySig) return;
     allySig = sig;
     allyBar.replaceChildren(...st.party.map((id) => {
@@ -113,7 +114,7 @@ export function defenseView(el, subject, started = false) {
       const ok = D.canDeploy(st, id);
       return h('button', { class: `md-abtn${ok ? ' ready' : ''}`, type: 'button', disabled: !ok, onclick: () => deploy(id) },
         h('span', { class: 'md-aface', html: cardSprite(id) }),
-        h('span', { class: 'md-acol' }, h('small', {}, st.used[id] ? '出撃ずみ' : ok ? '出撃！' : `${Math.min(st.gauge, need)}/${need}`), h('span', { class: 'md-gauge' }, h('i', { style: { width: `${st.used[id] ? 0 : Math.min(1, st.gauge / need) * 100}%` } })), h('b', {}, c.name)));
+        h('span', { class: 'md-acol' }, h('small', {}, ok ? '出撃！' : `${Math.min(st.gauge, need)}/${need}${st.used[id] ? ` 出撃${st.used[id]}回` : ''}`), h('span', { class: 'md-gauge' }, h('i', { style: { width: `${Math.min(1, st.gauge / need) * 100}%` } })), h('b', {}, c.name)));
     }));
   }
   function deploy(id) {
@@ -123,6 +124,14 @@ export function defenseView(el, subject, started = false) {
     toast(`🤝 ${GAME_CARDS.find((x) => x.id === id).name} 出撃！`, 1200);
     allySig = '';
     paintField();
+  }
+
+  // 全滅ボーナス（ゲージ +1・💎 +1）。次の組はすぐ来る
+  function clearFx() {
+    sfx('combo');
+    toast(`✨ 全滅ボーナス！ ゲージ +${D.CLEAR_GAUGE}・💎 +1`, 1300);
+    allySig = '';
+    paintAllies();
   }
 
   // ねらっている看守の暗号を出す（ねらいが変わったら出しなおす）
@@ -149,6 +158,7 @@ export function defenseView(el, subject, started = false) {
         bump('correct');
         sfx(ev.some((x) => x.t === 'kill') ? 'ok' : 'tap', 3);
         beam(tg);
+        if (ev.some((x) => x.t === 'clear')) clearFx();
       } else {
         sfx('ng');
         toast(`正解: ${q.answerText}`, 1400);
@@ -194,6 +204,7 @@ export function defenseView(el, subject, started = false) {
     if (ev.some((x) => x.t === 'leak')) { sfx('ng'); field.classList.remove('shake'); void field.offsetWidth; field.classList.add('shake'); }
     if (ev.some((x) => x.t === 'boss')) { sfx('combo'); toast(`⚠️ ${boss.name} があらわれた！`, 1600); }
     if (ev.some((x) => x.t === 'ally-hit')) sfx('hit');
+    if (ev.some((x) => x.t === 'clear')) clearFx();
     paintField();
     paintQ();
     if (st.over) { clearInterval(iv); finish(); }
@@ -235,7 +246,7 @@ export function defenseView(el, subject, started = false) {
       el.replaceChildren(h('div', { class: 'center-col' },
         h('div', { class: 'big-em' }, win ? '🏆' : '💥'),
         h('h2', {}, win ? `${boss.name} 撃破！` : '門を突破された…'),
-        h('p', {}, `撃退 ${st.kills} / ${total}　正解 ${st.answered - st.misses} / ${st.answered}`),
+        h('p', {}, `撃退 ${st.kills} / ${total}　正解 ${st.answered - st.misses} / ${st.answered}${st.clears ? `　全滅ボーナス ×${st.clears}` : ''}`),
         gemEl,
         bonusChips(bonus),
         card && h('div', { class: 'md-boss got' }, h('span', { class: 'md-boss-face', html: cardSprite(card) }), h('div', {}, h('small', {}, isNew ? '🃏 新カード！ なかまにすると必殺技' : '🃏 ボスカード（召喚チケット +1）'), h('b', {}, boss.name))),

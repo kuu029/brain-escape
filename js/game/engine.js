@@ -361,9 +361,10 @@ export const DEPLOY = {
   hamster: { kind: 'raider', hp: 5, dmg: 3 }, // 回し車でダッシュ
 };
 export const DEPLOY_LABEL = { tower: '🏰 タワー型', guard: '🛡️ ガード型', raider: '🏃 出撃型' };
-function deploy(st, id, d, ev) {
+function deploy(st, id, d, ev, opt = {}) {
   if (d.kind === 'tower') {
-    const si = AUTO_ORDER.find((i) => !st.slots[i]);
+    // 置くマスはえらべる（opt.slot）。えらばなかったとき・うまっていたときは、おまかせ
+    const si = Number.isInteger(opt.slot) && SLOTS[opt.slot] && !st.slots[opt.slot] ? opt.slot : AUTO_ORDER.find((i) => !st.slots[i]);
     if (si === undefined) { const f = front(st); if (f) hit(st, f, d.dmg * 2, ev, 'ally'); return; } // マスがうまっていたら、その場で一撃
     st.slots[si] = { type: 'ally', id, lvl: 1, dmg: d.dmg, splash: !!d.splash, turns: d.turns };
     ev.push({ t: 'deploy', kind: 'tower', id, slot: si });
@@ -390,13 +391,15 @@ for (const [id, d] of Object.entries(DEPLOY)) {
 export const gaugeNeed = (id) => SUMMON[id]?.need || GAUGE_NEED;
 export const GAUGE_MAX = 6;
 export const canSummon = (st, id) => !!SUMMON[id] && !st.over && (st.gauge || 0) >= gaugeNeed(id) && !st.summoned?.[id];
-export function summon(st, id) {
+// タワー型で、置くマスをえらぶ必要があるか（空きマスがあるとき）
+export const needsPlace = (st, id) => SUMMON[id]?.deploy?.kind === 'tower' && st.slots.some((x) => !x);
+export function summon(st, id, opt = {}) {
   const ev = [];
   if (!canSummon(st, id)) return ev;
   st.gauge = 0;
   (st.summoned ||= {})[id] = true;
   ev.push({ t: 'summon', id });
-  if (SUMMON[id].deploy) deploy(st, id, SUMMON[id].deploy, ev);
+  if (SUMMON[id].deploy) deploy(st, id, SUMMON[id].deploy, ev, opt);
   else SUMMON[id].run(st, ev);
   if (!st.queue.length && !alive(st).length && st.mode !== 'diagnosis') {
     st.over = 'win';

@@ -123,6 +123,7 @@ export function render(el, params) {
   const allies = diagMode ? [] : [...party()];
   let armed = null;
   let armTimer = null;
+  let placing = null; // タワー型のなかまを置くマスをえらんでいる途中
   function paintTools() {
     toolbar.innerHTML = '';
     if (diagMode) return;
@@ -132,10 +133,10 @@ export function render(el, params) {
       const used = !!st.summoned?.[id];
       const ready = !used && n > 0 && E.canSummon(st, id);
       const key = `ally:${id}`;
-      toolbar.append(h('button', { class: `tool ally${ready ? ' ready' : ''}${armed === key ? ' armed' : ''}`, type: 'button', disabled: used || n <= 0 || !!st.over, onclick: () => tapAlly(id) },
+      toolbar.append(h('button', { class: `tool ally${ready ? ' ready' : ''}${armed === key || placing === id ? ' armed' : ''}`, type: 'button', disabled: used || n <= 0 || !!st.over, onclick: () => tapAlly(id) },
         h('span', { class: 'ally-face', html: cardSprite(id) }),
         h('span', { class: 'ally-gauge' }, h('i', { style: { width: `${Math.min(1, (st.gauge || 0) / E.gaugeNeed(id)) * 100}%` } })),
-        h('small', {}, armed === key ? 'もう1回!' : used ? '出番ずみ' : n <= 0 ? 'チケット0' : ready ? `よべる! ×${n}` : `${st.gauge || 0}/${E.gaugeNeed(id)} ×${n}`)));
+        h('small', {}, placing === id ? 'マスをえらぶ' : armed === key ? 'もう1回!' : used ? '出番ずみ' : n <= 0 ? 'チケット0' : ready ? `よべる! ×${n}` : `${st.gauge || 0}/${E.gaugeNeed(id)} ×${n}`)));
     }
     for (const [id, ok] of Object.entries(st.tools)) {
       const t = TOOLS[id];
@@ -169,6 +170,7 @@ export function render(el, params) {
   function tapAlly(id) {
     const c = CARDS.find((x) => x.id === id);
     const key = `ally:${id}`;
+    if (placing) { const was = placing; cancelPlace(); toast('置くのをやめた'); if (was === id) return; }
     if (armed !== key) {
       armed = key;
       clearTimeout(armTimer);
@@ -181,9 +183,31 @@ export function render(el, params) {
     armed = null;
     clearTimeout(armTimer);
     if (!E.canSummon(st, id)) { paintTools(); return; }
-    if (!useTicket(id)) { toast('チケットがない…ガチャで仲間を増やそう'); paintTools(); return; }
+    if ((tickets()[id] || 0) <= 0) { toast('チケットがない…ガチャで仲間を増やそう'); paintTools(); return; }
+    // タワー型: 置くマスをえらぶ（空いているマスをタップ）
+    if (E.needsPlace(st, id)) {
+      closePopover();
+      placing = id;
+      board.el.classList.add('placing');
+      sfx('tap');
+      toast(`🏰 ${c.name} をどこに置く？ 光っている空きマスをタップ（もう1回なかまをタップでやめる）`, 2600);
+      paintTools();
+      return;
+    }
+    doSummon(id);
+  }
+  function cancelPlace() {
+    placing = null;
+    board.el.classList.remove('placing');
+    paintTools();
+  }
+  function doSummon(id, opt = {}) {
+    const c = CARDS.find((x) => x.id === id);
+    cancelPlace();
+    if (!E.canSummon(st, id)) return;
+    if (!useTicket(id)) { toast('チケットがない…ガチャで仲間を増やそう'); return; }
     board.finish();
-    const evs = E.summon(st, id);
+    const evs = E.summon(st, id, opt);
     sfx('combo');
     castFx(board.el, { art: cardSprite(id), name: `${c.name} 参上！`, kind: 'ally' });
     paintHud();
@@ -247,6 +271,10 @@ export function render(el, params) {
     if (st.over || diagMode) return;
     board.finish();
     const tw = st.slots[si];
+    if (placing) {
+      if (tw && st.slots.some((x) => !x)) { board.floatOnSlot(si, 'うまってる', 'info'); return; }
+      return doSummon(placing, { slot: si });
+    }
     if (pop && pop.dataset.slot === String(si)) return closePopover();
     closePopover();
     board.showRange(si);

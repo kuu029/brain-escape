@@ -154,6 +154,9 @@ button { font: inherit; color: inherit; touch-action: manipulation; user-select:
 .cell.slot { border: 2px dashed #5d4fa3; border-radius: 12px; margin: 4px; width: calc(var(--cell) - 8px); height: calc(var(--cell) - 8px); background: #231a44; position: relative; cursor: pointer; padding: 0; }
 .cell.slot .plus { color: #6f62b5; font-size: calc(var(--cell) * .35); }
 .board.can-build .cell.slot:not(.built) { border-color: var(--accent); animation: glow 1s infinite alternate; }
+.board.placing .cell.slot:not(.built) { border-color: #5cffb0; border-style: solid; background: radial-gradient(circle, #1f5a44, #231a44); animation: glow .7s infinite alternate; }
+.board.placing .cell.slot:not(.built)::after { content: "🏰"; position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--cell) * .38); opacity: .55; pointer-events: none; }
+.board.placing .cell.slot.built { opacity: .45; }
 @keyframes glow { to { box-shadow: 0 0 14px #ffd64088; } }
 .cell.slot.built { border-style: solid; border-color: #8c7cf0; background: radial-gradient(circle, #4d3d9e, #2a2050); }
 /* 絵（画像 or 絵文字） */
@@ -1391,6 +1394,8 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .md-enemy.danger .md-face { filter: drop-shadow(0 0 7px #ff4d6d); }
 .md-enemy.target.danger .md-face { filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 0 6px #ff4d6d); }
 .md-enemy.hit { animation: mdHit .25s; }
+.md-enemy.stun .md-face { filter: drop-shadow(0 0 7px #7fd8ff) saturate(.6); }
+.md-enemy.stun::before { content: "💫"; position: absolute; top: -14px; right: -4px; font-size: 18px; animation: nodeBounce .8s ease-in-out infinite; z-index: 3; }
 .md-enemy.gone.pop { animation: mdPop .45s forwards; pointer-events: none; }
 .md-enemy.gone.leak { animation: mdLeak .45s forwards; pointer-events: none; }
 .md-hp { width: 64px; height: 6px; border-radius: 3px; background: #0006; overflow: hidden; margin-top: 2px; }
