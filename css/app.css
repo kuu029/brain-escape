@@ -1231,3 +1231,11 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 /* 暗号室: 流れでつなげる */
 .mm-flow { border-color: #5fd6a6; }
 .flow-why { text-align: left; line-height: 1.6; }
+/* 流れでつなげる: 画面下の順番ガイド */
+.flow-guide { margin-top: auto; padding: 10px 12px; border-radius: 14px; background: #0f1a1699; border: 1px dashed #5fd6a6aa; }
+.fg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: #9fe8c8; }
+.fg-head.off { justify-content: center; }
+.fg-toggle { min-height: 36px; padding: 4px 12px; border-radius: 10px; border: 1px solid #5fd6a666; background: transparent; color: #9fe8c8; font-size: 13px; }
+.fg-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 2px; margin-top: 6px; font-size: 13px; }
+.fg-step { padding: 2px 7px; border-radius: 8px; background: #5fd6a622; color: #e6fff4; white-space: nowrap; }
+.fg-sep { color: #5fd6a6; font-size: 11px; }

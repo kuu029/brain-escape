@@ -13,7 +13,7 @@ import { bump } from '../game/missions.js';
 import { addCard } from '../game/progress.js';
 import { GACHA_CARDS, CARDS as GAME_CARDS } from '../game/content.js';
 import * as ME from '../memory/engine.js';
-import { flowQuestion, hasFlow, FLOW_N } from '../memory/flow.js';
+import { flowQuestion, flowGuide, hasFlow, FLOW_N } from '../memory/flow.js';
 import { claimActivity } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
@@ -107,7 +107,7 @@ function topView(el, subject) {
         nextButtons(subject, T, M),
         weak > 0 && btn(`😵 苦手だけ（${weak}枚）`, () => startRush(subject, { weak: true }), 'ghost small')),
       // 流れでつなげる（社会・理科）: 年表・時代・分野と結びつけて覚える
-      hasFlow(subject) && btn(h('span', {}, '🧭 流れでつなげる', h('small', {}, subject === 'soc' ? `年表ならべかえ・どっちが先？・時代あて（${FLOW_N}問）` : `この用語はどの分野？（${FLOW_N}問）`)), () => { sfx('tap'); go('memory', { phase: 'flow', subject }); }, 'ghost mm-go mm-flow'),
+      hasFlow(subject) && btn(h('span', {}, '🧭 流れでつなげる', h('small', {}, subject === 'soc' ? `年表・時代・地方・州・三権・原因と結果（${FLOW_N}問）` : `分野・単位・なかま分け・原因と結果（${FLOW_N}問）`)), () => { sfx('tap'); go('memory', { phase: 'flow', subject }); }, 'ghost mm-go mm-flow'),
       h('h3', { class: 'sec' }, '難易度'),
       seg,
       h('div', { class: 'mm-total' },
@@ -159,8 +159,25 @@ function flowView(el, subject) {
         btn(k >= FLOW_N ? '結果へ ▶' : '次へ ▶', next, 'primary')));
       fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, { fire: '決定' });
-    stage.replaceChildren(h('div', { class: 'mr-card' }, h('div', { class: 'mr-word ja long' }, p.stem), h('small', { class: 'mr-ask' }, p.ask)), pad.el, fb);
+    stage.replaceChildren(h('div', { class: 'mr-card' }, h('div', { class: 'mr-word ja long' }, p.stem), h('small', { class: 'mr-ask' }, p.ask)), pad.el, fb, guideBox(p));
     window.scrollTo(0, 0);
+  }
+  // 順番ガイド（画面下）: 表示/非表示は教科ごとに保存。ハードモードでは最初は非表示
+  const guideOn = () => mem().flowGuide?.[subject] ?? ME.modeOf(mem(), subject) !== 'hard';
+  function guideBox(p) {
+    const g = flowGuide(p);
+    if (!g) return '';
+    const box = h('div', { class: 'flow-guide' });
+    const draw = () => {
+      const on = guideOn();
+      const toggle = h('button', { class: 'fg-toggle', type: 'button', onclick: () => { sfx('tap'); (mem().flowGuide ||= {})[subject] = !on; save(); draw(); } }, on ? '隠す' : '👁 順番ガイドを見る');
+      box.replaceChildren(on
+        ? h('div', {}, h('div', { class: 'fg-head' }, h('b', {}, `🧭 ${g.title}`), toggle),
+          h('div', { class: 'fg-line' }, g.steps.flatMap((t, i) => (i ? [h('span', { class: 'fg-sep' }, g.sep || '→'), h('span', { class: 'fg-step' }, t)] : [h('span', { class: 'fg-step' }, t)]))))
+        : h('div', { class: 'fg-head off' }, toggle));
+    };
+    draw();
+    return box;
   }
   function finish() {
     studyEnd();
