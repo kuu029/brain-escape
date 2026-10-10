@@ -18,9 +18,10 @@ import * as memory from './screens/memory.js';
 import * as timeattack from './screens/timeattack.js';
 import * as ending from './screens/ending.js';
 import * as guide from './screens/guide.js';
+import * as parent from './screens/parent.js';
 
 init();
-const screens = { onboarding, home, map, diagnosis, training, battle, result, collection, records, settings, exam, memory, timeattack, ending, guide };
+const screens = { onboarding, home, map, diagnosis, training, battle, result, collection, records, settings, exam, memory, timeattack, ending, guide, parent };
 for (const [k, v] of Object.entries(screens)) register(k, v);
 setOnGo((name, p) => playBgm(trackFor(name, p)));
 mount(document.getElementById('app'));

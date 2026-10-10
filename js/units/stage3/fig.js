@@ -313,3 +313,27 @@ export function solid(kind, labels = {}, { w = 220, h = 170 } = {}) {
   }
   return `<svg class="fig" viewBox="0 0 ${w} ${h}" role="img" aria-label="立体の見取図">${out}</svg>`;
 }
+
+// ---------- 目盛りつきのグラフ（理科の実験・速さのグラフ） ----------
+// x: [最小, 最大], xs: 目盛りの間隔, xlab: 軸の名前（単位つき）。lines: [{ pts: [[x, y], …], label, dash }]、dots: [[x, y], …]
+export function chart({ x: [x0, x1], y: [y0, y1], xs, ys, xlab = '', ylab = '', lines = [], dots = [], w = 300, h = 220 }) {
+  const L = 44, R = 16, T = 22, B = 38;
+  const X = (v) => r2(L + ((v - x0) / (x1 - x0)) * (w - L - R));
+  const Y = (v) => r2(h - B - ((v - y0) / (y1 - y0)) * (h - T - B));
+  const num = (v) => String(Math.round(v * 1000) / 1000);
+  let out = '';
+  for (let i = 0, v = x0; v <= x1 + 1e-9; i++, v = x0 + i * xs) {
+    out += `<line class="p-grid" x1="${X(v)}" y1="${Y(y0)}" x2="${X(v)}" y2="${Y(y1)}"/><text class="p-num" style="text-anchor:middle" x="${X(v)}" y="${r2(Y(y0) + 14)}">${num(v)}</text>`;
+  }
+  for (let i = 0, v = y0; v <= y1 + 1e-9; i++, v = y0 + i * ys) {
+    out += `<line class="p-grid" x1="${X(x0)}" y1="${Y(v)}" x2="${X(x1)}" y2="${Y(v)}"/><text class="p-num" style="text-anchor:end" x="${r2(X(x0) - 4)}" y="${r2(Y(v) + 4)}">${num(v)}</text>`;
+  }
+  out += `<line class="p-axis" x1="${X(x0)}" y1="${Y(y0)}" x2="${X(x1)}" y2="${Y(y0)}"/><line class="p-axis" x1="${X(x0)}" y1="${Y(y0)}" x2="${X(x0)}" y2="${Y(y1)}"/>`;
+  out += `<text class="p-lab" style="text-anchor:end" x="${X(x1)}" y="${h - 4}">${esc(xlab)}</text><text class="p-lab" style="text-anchor:start" x="4" y="12">${esc(ylab)}</text>`;
+  for (const ln of lines) {
+    out += `<path class="p-fn${ln.dash ? ' dash' : ''}" d="${ln.pts.map((p, i) => `${i ? 'L' : 'M'} ${X(p[0])} ${Y(p[1])}`).join(' ')}"/>`;
+    if (ln.label) { const p = ln.pts[ln.pts.length - 1]; out += `<text class="p-flab" style="text-anchor:end" x="${r2(X(p[0]) - 2)}" y="${r2(Y(p[1]) - 6)}">${esc(ln.label)}</text>`; }
+  }
+  for (const p of dots) out += `<circle class="g-dot big" cx="${X(p[0])}" cy="${Y(p[1])}" r="3.4"/>`;
+  return `<svg class="fig plane chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="グラフ">${out}</svg>`;
+}

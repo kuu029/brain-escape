@@ -56,6 +56,16 @@ function unlockBox(s) {
   return box;
 }
 
+// おうちの人ページ: 合言葉があれば確かめてから開く
+async function openParent(s) {
+  if (!s.settings.unlockSecret) return go('parent');
+  const inp = h('input', { class: 'mr-input', type: 'password', autocomplete: 'off', placeholder: '合言葉' });
+  const ok = await modal({ title: '👪 おうちの人ページ', body: h('div', { class: 'modal-body' }, h('p', { class: 'note' }, 'ごほうびの合言葉を入れてください。'), inp), buttons: [{ label: 'やめる', value: false }, { label: '開く', value: true, cls: 'primary' }] });
+  if (!ok) return;
+  if (inp.value.trim() !== s.settings.unlockSecret) return toast('合言葉がちがう', 2000);
+  go('parent');
+}
+
 // ショートカットのテスト用: 合言葉を入れた人だけ、券を使わずに1分のコードを出せる
 async function testCode(s) {
   const inp = h('input', { class: 'mr-input', type: 'password', autocomplete: 'off', placeholder: '合言葉' });
@@ -176,6 +186,9 @@ export function render(el) {
         btn('📂 ファイルから復元', () => fileIn.click(), 'ghost'),
         btn('📝 文字から復元', pasteBox, 'ghost')),
       fileIn,
+      h('h3', { class: 'sec' }, '👪 おうちの人ページ'),
+      h('p', { class: 'note' }, '勉強時間・教科ごとの正答率・苦手な単元・今週の計画・模試・ごほうびの記録を1画面で見られます。合言葉を設定していると、合言葉を入れたときだけ開きます。'),
+      btn('👪 おうちの人ページを開く', () => openParent(s), 'primary'),
       h('h3', { class: 'sec' }, '🔐 ごほうびの合言葉（おうちの人用）'),
       h('p', { class: 'note' }, '解除券を使うと、この合言葉から「解除コード」を作る。iPhone のショートカット「ごほうび解除」に同じ合言葉を入れておくと、コードを確かめて、券の分数だけ白黒を解除する。'),
       unlockBox(s),

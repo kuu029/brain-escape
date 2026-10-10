@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = '3e0358ddc7';
+const VERSION = '7688b537a3';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -269,6 +269,7 @@ const ASSETS = [
   './js/game/event.js',
   './js/game/flowchal.js',
   './js/game/missions.js',
+  './js/game/plan.js',
   './js/game/progress.js',
   './js/game/reward.js',
   './js/game/unlock.js',
@@ -294,6 +295,7 @@ const ASSETS = [
   './js/screens/memdef.js',
   './js/screens/memory.js',
   './js/screens/onboarding.js',
+  './js/screens/parent.js',
   './js/screens/records.js',
   './js/screens/result.js',
   './js/screens/settings.js',
@@ -314,6 +316,7 @@ const ASSETS = [
   './js/units/english/en-future.js',
   './js/units/english/en-indirect.js',
   './js/units/english/en-inf.js',
+  './js/units/english/en-listen.js',
   './js/units/english/en-modal.js',
   './js/units/english/en-participle.js',
   './js/units/english/en-passive.js',
@@ -333,6 +336,7 @@ const ASSETS = [
   './js/units/english/gram.js',
   './js/units/english/kit-en.js',
   './js/units/english/lex.js',
+  './js/units/english/listen-bank.js',
   './js/units/english/words1.js',
   './js/units/english/words2.js',
   './js/units/english/words3.js',

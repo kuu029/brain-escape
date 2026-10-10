@@ -19,6 +19,8 @@ import { slotStatus, SLOT_GEMS, SLOT_MAX } from '../game/bonus.js';
 import { unitNext } from './map.js';
 import { avatarHTML, pickAvatar } from '../ui/avatar.js';
 import { studyColorUrl } from '../game/unlock.js';
+import { weekPlan, planNext, claimPlan, SUBJ_JA, PLAN_GOAL, PLAN_GEMS } from '../game/plan.js';
+import { UNIT } from '../units/registry.js';
 
 export function topBar(back = null) {
   const s = S();
@@ -125,20 +127,15 @@ export function render(el) {
           h('b', { class: 'em-pct' }, `${pct}%`))),
       countdown(),
       eventCard(),
+      // ① 迷ったらこれ（計画から1つ）　② 今週の計画　③ 今日の指令　④ 自分でえらぶ（たたんである）
       todayCard(),
+      planCard(el),
       h('div', { class: 'mboard' },
         h('h3', { class: 'mboard-title', html: `${iconHTML('icon-mission', '📋', '')} 今日の指令` }),
         mlist,
         hourLine(),
         h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ リベンジ待ち 👻${s.reviewQueue.length}`)),
-      h('h3', { class: 'sec home-sec' }, '🎮 ぜんぶのモード'),
-      gameCard('math', '数学棟', '数学', () => go('map')),
-      gameCard('english', '英語棟', '英語', () => go('map', { subject: 'english' })),
-      gameCard('japanese', '国語棟', '国語', () => go('map', { subject: 'japanese' })),
-      gameCard('science', '理科棟', '理科', () => go('map', { subject: 'science' })),
-      gameCard('social', '社会棟', '社会', () => go('map', { subject: 'social' })),
-      memoryCard(),
-      examCard(),
+      allModes(),
     ),
     h('nav', { class: 'bottom-nav' },
       [['🎰', 'ガチャ', 'collection', { tab: 'gacha' }, 'gacha'], ['🃏', 'コレクション', 'collection', {}, 'collection'], ['📊', '記録', 'records', {}, 'records'], ['⚙️', '設定', 'settings', {}, 'settings']].map(([em, label, to, p, key]) =>
@@ -176,9 +173,17 @@ const MEM_FACE = { en: 'golem', soc: 'bushou', sci: 'hakase', ja: 'fude' }; // �
 function todayPick() {
   const M = S().memory;
   const dues = ['en', 'soc', 'sci', 'ja'].map((sj) => [sj, dueList(M, sj, Date.now()).length]).sort((a, b) => b[1] - a[1]);
-  if (dues[0][1] >= 5) {
+  if (dues[0][1] >= 10) {
     const [sj, n] = dues[0];
     return { em: '🔐', art: cardSprite(MEM_FACE[sj]), label: `暗号の復習 ${Math.min(n, 20)}枚`, sub: `${{ en: '英単語', soc: '社会', sci: '理科', ja: '国語' }[sj]}・約3分`, to: ['memory', { subject: sj }] };
+  }
+  // 今週の計画で、いちばん進んでいない単元
+  const pn = planNext();
+  const pc = pn && unitNext(pn.unit).cta;
+  if (pc) {
+    const u = UNIT[pn.unit];
+    const p = weekPlan();
+    return { em: u.emoji, art: spriteHTML(`boss-${u.id}`, BOSSES[u.id]?.emoji || u.emoji, ''), label: pc.label.replace(/^\S+\s/, ''), sub: `今週の計画 ${p.doneCount}/${p.items.length}｜${SUBJ_JA[u.subject]}｜${u.title}・${pn.why}`, to: pc.to, html: true };
   }
   for (const subj of ['math', 'english', 'japanese', 'science', 'social']) {
     const u = nextUnit(subj);
@@ -205,60 +210,69 @@ function hourLine() {
   return h('p', { class: 'hour-line open' }, `⏰ ${st.label}の間に 10分勉強で 💎+${SLOT_GEMS}（いま ${Math.min(min, 10)}/10分・今日 ${st.count}/${SLOT_MAX}）`);
 }
 
-// バナー画像（art に入っていれば）を背景に。左側を暗くして文字を読みやすく
-function bannerAttrs(key, cls) {
-  const url = bgUrl(key);
-  return url ? { class: `game-card ${cls} has-img`, style: { backgroundImage: `linear-gradient(90deg, #0b0716e6 30%, #0b071640), url(${url})` } } : {};
+// 今週の計画: 教科ごとに1単元。1単元 PLAN_GOAL 問で達成、全部で 💎 ボーナス
+function planCard(el) {
+  const p = weekPlan();
+  if (!p.items.length) return '';
+  const all = p.doneCount === p.items.length;
+  const daysLeft = 7 - ((new Date().getDay() + 6) % 7);
+  return h('div', { class: `plan-card${all ? ' all' : ''}` },
+    h('div', { class: 'pl-head' },
+      h('b', {}, '📅 今週の計画'),
+      h('small', {}, `${p.phaseInfo.name}${p.phaseInfo.days != null ? `（入試まで${p.phaseInfo.days}日）` : ''}・あと${daysLeft}日`)),
+    h('div', { class: 'pl-rows' }, p.items.map((x) => {
+      const u = UNIT[x.unit];
+      const cta = unitNext(x.unit).cta;
+      return h('button', { class: `pl-row${x.done ? ' done' : ''}`, type: 'button', onclick: () => { sfx('tap'); if (cta) go(...cta.to); else go('map', { subject: u.subject }); } },
+        h('span', { class: `pl-subj s-${u.subject}` }, SUBJ_JA[u.subject]),
+        h('span', { class: 'pl-body' }, h('b', { html: u.title }), h('small', {}, x.why)),
+        x.done ? h('span', { class: 'pl-ok' }, '✔') : h('span', { class: 'pl-num' }, h('span', { class: 'pl-bar' }, h('i', { style: { width: `${(x.n / PLAN_GOAL) * 100}%` } })), h('small', {}, `${x.n}/${PLAN_GOAL}`)));
+    })),
+    all && !p.claimed
+      ? btn(`🎉 今週の計画クリア！ 💎${PLAN_GEMS} もらう`, (e) => { const from = e.currentTarget.getBoundingClientRect(); const g = claimPlan(); if (g) { sfx('win'); flyGems(g, { getBoundingClientRect: () => from }); el.querySelector('.topbar')?.replaceWith(topBar()); el.querySelector('.plan-card')?.replaceWith(planCard(el)); } }, 'primary')
+      : h('small', { class: 'pl-note' }, all ? '✅ 今週の計画は全部クリア！ 来週の月曜に新しい計画が出るよ' : `1単元 ${PLAN_GOAL}問で ✔。5つ全部で 💎${PLAN_GEMS}`));
 }
 
-// 暗号室（暗記）のポスター: 復習どきの枚数
-function memoryCard() {
-  const M = S().memory;
-  const due = ['en', 'soc', 'sci', 'ja'].reduce((a, sj) => a + dueList(M, sj, Date.now()).length, 0);
-  const seen = Object.keys(M.cards || {}).length;
-  return h('button', { class: 'game-card memory', type: 'button', ...bannerAttrs('banner-memory', 'memory'), onclick: () => { sfx('tap'); go('memory'); } },
-    h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
-    h('div', { class: 'gc-body' },
-      h('div', { class: 'gc-sub' }, '暗記 ｜ 暗号ラッシュ'),
-      h('div', { class: 'gc-title' }, '暗号室'),
-      h('div', { class: 'gc-next' }, due ? `🔔 復習どき ${due} 枚` : seen ? `解読した暗号 ${seen} 枚` : '英単語・国語・社会・理科。1回2〜4分'),
-      h('span', { class: 'gc-go' }, 'START ▶')),
-    h('div', { class: 'gc-em' }, '🔐'));
-}
-
-// 入試本番モード（模試）のポスター: 前回の点数・とちゅうの模試
-function examCard() {
+// 自分でえらぶ: 5つの棟・暗号室・模試。ふだんはたたんでおいて、ホームをすっきりさせる
+const MODES_KEY = 'be-home-modes-open';
+function allModes() {
+  let open = false;
+  try { open = localStorage.getItem(MODES_KEY) === '1'; } catch { /* 使えなくてもよい */ }
   const s = S();
-  const last = (s.exams || []).filter((r) => r.kind === 'full').pop();
-  return h('button', { class: 'game-card exam', type: 'button', ...bannerAttrs('banner-exam', 'exam'), onclick: () => { sfx('tap'); go('exam'); } },
-    h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
-    h('div', { class: 'gc-body' },
-      h('div', { class: 'gc-sub' }, '入試本番モード ｜ 滋賀県型'),
-      h('div', { class: 'gc-title' }, '模試'),
-      h('div', { class: 'gc-next' }, s.examDraft ? '▶ とちゅうの模試があるよ' : last ? `前回のフル模試 ${last.got}点` : 'ミニ15分 ／ フル50分'),
-      h('span', { class: 'gc-go' }, s.examDraft ? 'つづき ▶' : 'START ▶')),
-    h('div', { class: 'gc-em' }, '📝'));
+  const rows = [
+    ...[['math', '数学棟', () => go('map')], ['english', '英語棟', () => go('map', { subject: 'english' })], ['japanese', '国語棟', () => go('map', { subject: 'japanese' })], ['science', '理科棟', () => go('map', { subject: 'science' })], ['social', '社会棟', () => go('map', { subject: 'social' })]].map(([subj, title, fn]) => {
+      const list = unitsOf(subj).filter((u) => !u.comingSoon);
+      const done = list.filter((u) => cleared(u.id)).length;
+      const next = nextUnit(subj);
+      return modeRow(subj, next ? spriteHTML(`boss-${next.id}`, BOSSES[next.id]?.emoji || next.emoji, '') : '🏁', title, next ? `次: ${next.title}` : '全エリア突破！', done / list.length, `${done}/${list.length}`, fn);
+    }),
+    (() => {
+      const M = s.memory;
+      const due = ['en', 'soc', 'sci', 'ja'].reduce((a, sj) => a + dueList(M, sj, Date.now()).length, 0);
+      return modeRow('memory', '🔐', '暗号室（暗記）', due ? `🔔 復習どき ${due}枚` : '英単語・国語・社会・理科', null, '', () => go('memory'));
+    })(),
+    (() => {
+      const last = (s.exams || []).filter((r) => r.kind === 'full').pop();
+      return modeRow('exam', '📝', '模試（入試本番モード）', s.examDraft ? '▶ とちゅうの模試があるよ' : last ? `前回のフル模試 ${last.got}点` : 'ミニ15分 ／ フル50分', null, '', () => go('exam'));
+    })(),
+  ];
+  const box = h('div', { class: `modes${open ? ' open' : ''}` });
+  const head = h('button', { class: 'modes-head', type: 'button', 'aria-expanded': String(open), onclick: () => {
+    open = !open;
+    box.classList.toggle('open', open);
+    head.setAttribute('aria-expanded', String(open));
+    try { localStorage.setItem(MODES_KEY, open ? '1' : '0'); } catch { /* 使えなくてもよい */ }
+    sfx('tap');
+  } }, h('span', {}, '🎮 自分でえらぶ（5つの棟・暗号室・模試）'), h('span', { class: 'modes-arrow' }, '▾'));
+  box.append(head, h('div', { class: 'modes-body' }, rows));
+  return box;
+}
+function modeRow(key, art, title, sub, ratio, num, fn) {
+  return h('button', { class: `mode-row m-${key}`, type: 'button', onclick: () => { sfx('tap'); fn(); } },
+    h('span', { class: 'mr-art', html: art }),
+    h('span', { class: 'mr-body' }, h('b', {}, title), h('small', { html: sub })),
+    ratio !== null && h('span', { class: 'pl-num' }, h('span', { class: 'pl-bar' }, h('i', { style: { width: `${Math.max(ratio * 100, 3)}%` } })), h('small', {}, num)),
+    h('span', { class: 'mr-go' }, '▶'));
 }
 
-// ゲームのポスター: 次に戦うボスの顔・進み具合
-function gameCard(subj, title, sub, onPlay) {
-  const list = unitsOf(subj).filter((u) => !u.comingSoon);
-  const done = list.filter((u) => cleared(u.id)).length;
-  const next = nextUnit(subj);
-  const boss = next && BOSSES[next.id];
-  const banner = bgUrl(`banner-${{ math: 'math', english: 'en', japanese: 'ja', science: 'sci', social: 'soc' }[subj]}`);
-  return h('button', {
-    class: `game-card ${subj}${banner ? ' has-img' : ''}`, type: 'button',
-    style: banner ? { backgroundImage: `linear-gradient(90deg, #0b0716e6 30%, #0b071640), url(${banner})` } : {},
-    onclick: () => { sfx('tap'); onPlay(); },
-  },
-    h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
-    h('div', { class: 'gc-body' },
-      h('div', { class: 'gc-sub' }, `${sub} ｜ タワーディフェンス`),
-      h('div', { class: 'gc-title' }, title),
-      h('div', { class: 'gc-prog' }, h('span', { class: 'gc-bar' }, h('i', { style: { width: `${(done / list.length) * 100}%` } })), h('small', {}, `突破 ${done}/${list.length}`)),
-      h('div', { class: 'gc-next' }, next ? `次: ${next.title}` : '全エリア突破！'),
-      h('span', { class: 'gc-go' }, 'PLAY ▶')),
-    next && h('div', { class: 'gc-boss', html: spriteHTML(`boss-${next.id}`, boss?.emoji || next.emoji, boss?.name || '') }));
-}
 

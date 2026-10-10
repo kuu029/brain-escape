@@ -44,6 +44,7 @@ import enParticiple from './english/en-participle.js';
 import enRelative from './english/en-relative.js';
 import enIndirect from './english/en-indirect.js';
 import enSubjunctive from './english/en-subjunctive.js';
+import enListen from './english/en-listen.js';
 import jaHinshi from './japanese/ja-hinshi.js';
 import jaKana from './japanese/ja-kana.js';
 import jaKatsuyou from './japanese/ja-katsuyou.js';
@@ -124,6 +125,7 @@ export const UNITS = [
   enRelative,
   enIndirect,
   enSubjunctive,
+  enListen,
   // 国語
   jaHinshi,
   jaKana,

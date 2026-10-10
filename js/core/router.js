@@ -1,5 +1,6 @@
 // 画面切りかえ
 import { studyStop } from './timer.js';
+import { stopSpeech } from '../ui/speech.js';
 
 const screens = {};
 let current = null;
@@ -20,6 +21,7 @@ export function go(name, params = {}) {
   if (updateReady && name === 'home') { location.reload(); return; }
   current?.mod.leave?.();
   studyStop(); // 勉強時間と挑戦の記録は、画面を離れたら締める
+  stopSpeech(); // リスニングの放送も止める
   root.innerHTML = '';
   const el = document.createElement('div');
   el.className = `screen screen-${name}`;

@@ -1,6 +1,6 @@
 import { numAns, choice, m } from '../kit.js';
 import { F, Frac, tnum, lineTex, lineRhs, subX } from './kit3.js';
-import { plane } from './fig.js';
+import { plane, chart } from './fig.js';
 
 const par = (v) => (Frac.of(v).n < 0 ? `(${tnum(v)})` : tnum(v));
 // 傾き（整数か、分母2・3の分数）と切片
@@ -84,6 +84,54 @@ function genGraph(rng) {
   };
 }
 
+// 速さのグラフ: 兄が歩いて出発し、あとから弟が自転車で追いかける。グラフから読む・追いつく時刻・場所
+function travelSetup(rng) {
+  for (;;) {
+    const a = rng.pick([50, 60, 80]);
+    const b = rng.pick([100, 120, 150, 160, 200, 240]);
+    const t0 = rng.pick([2, 4, 6, 8, 10]);
+    const T = (b * t0) / (b - a);
+    if (Number.isInteger(T) && T <= 18 && T > t0) return { a, b, t0, T, d: a * T };
+  }
+}
+function genTravel(rng) {
+  const { a, b, t0, T, d } = travelSetup(rng);
+  const xmax = 20;
+  const ymax = Math.ceil((a * xmax) / 200) * 200;
+  const ys = ymax <= 1200 ? 100 : 200;
+  const fig = chart({ x: [0, xmax], y: [0, ymax], xs: 2, ys, xlab: 'x（分）', ylab: 'y（m）', w: 300, h: 240, lines: [
+    { pts: [[0, 0], [xmax, a * xmax]], label: '兄' },
+    { pts: [[t0, 0], [Math.min(xmax, t0 + ymax / b), Math.min(ymax, b * (xmax - t0))]], label: '弟', dash: true },
+  ] });
+  const intro = `兄が家を出て、一定の速さで歩いた。その ${t0} 分後に、弟が自転車で同じ道を追いかけた。図は、兄が家を出てから $x$ 分後の、家からの道のりを $y$ m として、2人のようすを表したグラフ（実線が兄、点線が弟）。`;
+  const type = rng.pick(['speed', 'meet', 'where']);
+  if (type === 'speed') {
+    return {
+      stem: `${intro}\n兄の歩く速さは分速何 m か。`, fig,
+      ...numAns([{ key: 'v', text: '分速', suffix: ' m' }], { v: a }, { wrong: [{ vals: { v: a * 10 }, msg: 'それは 10 分で進んだ道のり。速さは 1 分あたり（道のり ÷ 時間）。' }, { vals: { v: b }, msg: 'それは弟（点線）の速さ。' }] }),
+      hint: '兄の線（実線）で、目盛りがちょうど読める点をさがす。速さ = 道のり ÷ 時間。',
+      steps: [`兄は 10 分で ${a * 10} m 進む`, `$${a * 10}\\div 10=${a}$ → 分速 ${a} m`],
+      check: { kind: 'fn', verify: (x) => x.v * 10 === a * 10 && x.v * xmax === a * xmax },
+    };
+  }
+  if (type === 'meet') {
+    return {
+      stem: `${intro}\n弟の速さは分速 ${b} m。弟が兄に追いつくのは、兄が家を出てから何分後か。`, fig,
+      ...numAns([{ key: 'v', text: '', suffix: ' 分後' }], { v: T }, { wrong: [{ vals: { v: T - t0 }, msg: 'それは弟が出発してからの時間。兄が家を出てからの時間を聞いている。' }, { vals: { v: t0 }, msg: 'それは弟が出発した時刻。2本の線が交わるところを読む。' }] }),
+      hint: `兄の式 $y=${a}x$、弟の式 $y=${b}(x-${t0})$ の交点の $x$ を求める。`,
+      steps: [`兄: $y=${a}x$、弟: $y=${b}(x-${t0})=${b}x-${b * t0}$`, `$${a}x=${b}x-${b * t0}$ → $${b - a}x=${b * t0}$ → $x=${T}$`],
+      check: { kind: 'fn', verify: (x) => a * x.v === b * (x.v - t0) },
+    };
+  }
+  return {
+    stem: `${intro}\n弟の速さは分速 ${b} m。弟が兄に追いつくのは、家から何 m の地点か。`, fig,
+    ...numAns([{ key: 'v', text: '', suffix: ' m' }], { v: d }, { wrong: [{ vals: { v: b * T }, msg: `弟は ${t0} 分おくれて出発している。弟が走った時間は $x-${t0}$ 分。` }, { vals: { v: a * (T - t0) }, msg: '兄は家を出てから追いつかれるまでずっと歩いている。' }] }),
+    hint: `兄の式 $y=${a}x$、弟の式 $y=${b}(x-${t0})$ の交点を求める。聞かれているのは $y$。`,
+    steps: [`$${a}x=${b}(x-${t0})$ → $x=${T}$`, `$y=${a}\\times ${T}=${d}$（m）`],
+    check: { kind: 'fn', verify: (x) => { const t = x.v / a; return Number.isFinite(t) && Math.abs(b * (t - t0) - x.v) < 1e-9 && t > t0; } },
+  };
+}
+
 function genIntersect(rng) {
   let a1, a2, b1, b2, x, y;
   do {
@@ -122,6 +170,7 @@ export default {
     'lf-two-pts': { difficulty: 2, gen: genTwoPts },
     'lf-graph': { difficulty: 2, gen: genGraph },
     'lf-intersect': { difficulty: 3, gen: genIntersect },
+    'lf-travel': { difficulty: 3, gen: genTravel },
   },
   lessons: [
     {
@@ -175,7 +224,7 @@ export default {
     {
       id: 'lf-l4',
       title: '2直線の交点',
-      unlocks: ['lf-intersect'],
+      unlocks: ['lf-intersect', 'lf-travel'],
       build(rng) {
         const x = rng.int(1, 3), y = rng.int(1, 4);
         const a1 = 1, a2 = -2, b1 = y - x, b2 = y + 2 * x;

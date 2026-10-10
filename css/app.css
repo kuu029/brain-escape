@@ -1649,3 +1649,67 @@ svg.climate { width: 100%; max-width: 320px; height: auto; display: block; margi
 svg.mapdir { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto; }
 .rw-code { font-family: ui-monospace, Menlo, monospace; font-size: 26px; font-weight: 800; letter-spacing: .06em; color: #ffd640; margin: 6px 0 10px; user-select: all; -webkit-user-select: all; }
 .hm-color { display: block; margin: 4px auto 8px; min-height: 36px; padding: 4px 16px; font-size: 14px; border-radius: 999px; }
+.q-listen-box { margin-top: 8px; }
+.q-listen { width: 100%; min-height: 48px; border-radius: 12px; border: 2px solid #5ad1ff; background: rgba(90,209,255,.12); color: #e8f7ff; font-size: 16px; font-weight: 800; }
+.q-listen.on { background: rgba(90,209,255,.32); animation: qlisten 1s ease-in-out infinite alternate; }
+@keyframes qlisten { to { background: rgba(90,209,255,.12); } }
+.q-listen-text { margin-top: 6px; font-size: 14px; text-align: left; line-height: 1.5; }
+.q-listen-text.hidden { display: none; }
+
+/* 今週の計画 */
+.plan-card { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 18px; background: #ffffff0d; border: 2px solid #5ad1ff66; }
+.plan-card.all { border-color: #7dff9a99; }
+.pl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.pl-head b { font-size: 17px; }
+.pl-head small { color: var(--dim); font-size: 12px; }
+.pl-rows { display: flex; flex-direction: column; gap: 4px; }
+.pl-row, .mode-row { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 48px; padding: 6px 10px; border-radius: 12px; border: 1px solid var(--line); background: #0004; color: var(--text); text-align: left; }
+.pl-row.done { opacity: .6; }
+.pl-subj { flex: none; width: 38px; padding: 2px 0; border-radius: 8px; font-size: 12px; font-weight: 800; text-align: center; background: #ffffff1a; }
+.pl-subj.s-math { background: #3d6bff55; } .pl-subj.s-english { background: #ff5ab455; } .pl-subj.s-japanese { background: #ff9a3d55; } .pl-subj.s-science { background: #2fd39a55; } .pl-subj.s-social { background: #c99a5a55; }
+.pl-body, .mr-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pl-body b, .mr-body b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-body small, .mr-body small { font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-num { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; width: 54px; }
+.pl-num small { font-size: 11px; color: var(--dim); }
+.pl-bar { display: block; width: 100%; height: 6px; border-radius: 3px; background: #ffffff1f; overflow: hidden; }
+.pl-bar i { display: block; height: 100%; background: linear-gradient(90deg, #5ad1ff, #7dff9a); }
+.pl-ok { flex: none; width: 54px; text-align: right; color: #7dff9a; font-weight: 900; font-size: 18px; }
+.pl-note { color: var(--dim); font-size: 12px; text-align: center; }
+/* 自分でえらぶ（たたむ） */
+.modes { border-radius: 18px; border: 2px solid var(--line); background: #ffffff08; overflow: hidden; }
+.modes-head { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 52px; padding: 10px 14px; border: 0; background: transparent; color: var(--text); font-size: 15px; font-weight: 800; text-align: left; }
+.modes-arrow { transition: transform .2s; }
+.modes.open .modes-arrow { transform: rotate(180deg); }
+.modes-body { display: none; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
+.modes.open .modes-body { display: flex; }
+.mr-art { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 26px; overflow: hidden; }
+.mr-art img, .mr-art svg { max-width: 100%; max-height: 100%; }
+.mr-go { flex: none; color: var(--dim); }
+
+/* おうちの人ページ */
+.parent { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 96px; }
+.pa-title { margin: 4px 0 0; font-size: 22px; }
+.pa-card { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 16px; background: #ffffff0d; border: 1px solid var(--line); }
+.pa-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 0; font-size: 16px; }
+.pa-h small { font-size: 12px; color: var(--dim); font-weight: 600; }
+.pa-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; align-items: end; }
+.pa-bar { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--dim); }
+.pa-bar.now small:last-child { color: #ffd640; font-weight: 800; }
+.pa-col { display: flex; align-items: flex-end; width: 70%; height: 90px; border-radius: 6px; background: #ffffff12; overflow: hidden; }
+.pa-col i { display: block; width: 100%; background: linear-gradient(#7dff9a, #5ad1ff); border-radius: 6px 6px 0 0; }
+.pa-row { display: flex; align-items: center; gap: 8px; min-height: 34px; }
+.pa-meter { flex: 1; height: 10px; border-radius: 5px; background: #ffffff14; overflow: hidden; }
+.pa-meter i { display: block; height: 100%; background: #5ad1ff; }
+.pa-meter i.low { background: #ff6b6b; } .pa-meter i.mid { background: #ffd640; } .pa-meter i.high { background: #7dff9a; }
+.pa-name { flex: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pa-name small { color: var(--dim); font-size: 11px; }
+.pa-num { flex: none; width: 44px; text-align: right; font-size: 15px; }
+.pa-num.low { color: #ff8a8a; } .pa-num.mid { color: #ffd640; } .pa-num.high { color: #7dff9a; }
+.pa-sub { flex: none; width: 46px; text-align: right; color: var(--dim); font-size: 11px; }
+.pa-tix { display: flex; flex-wrap: wrap; gap: 6px; }
+.pa-tix span { padding: 4px 8px; border-radius: 10px; background: #ffffff12; font-size: 13px; }
+.fig.chart { max-width: 340px; max-height: 260px; }
+.fig.chart .p-fn.dash { stroke-dasharray: 7 4; }
+.fig.chart .p-lab { font-style: normal; font-size: 11px; }
+.screen-battle .qcard.has-fig .fig.chart { height: 190px; max-width: 100%; }

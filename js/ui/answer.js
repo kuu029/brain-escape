@@ -3,6 +3,7 @@ import { h } from '../core/ui.js';
 import { tex, rich } from '../core/mathml.js';
 import { sfx } from '../core/sound.js';
 import { checkAnswer } from '../core/check.js';
+import { canSpeak, speakLines, stopSpeech } from './speech.js';
 
 // つづり・並べかえは、正しく全部うまったら決定ボタンなしで自動で進む（少し待って、最後の1文字を見せてから）
 const AUTO_MS = 280;
@@ -19,7 +20,27 @@ export function problemCard(p, { review = false, label = '' } = {}) {
       ? h('div', { class: 'qstem' }, h('small', { class: 'q-inst' }, '並べかえ'), h('span', { rich: p.stem.slice(ORDER_INST.length) }))
       : h('div', { class: 'qstem', rich: p.stem }),
     // 図（第3段階の関数・図形・データ）
-    p.fig && h('div', { class: 'qfig', html: p.fig }));
+    p.fig && h('div', { class: 'qfig', html: p.fig }),
+    // リスニング: 🔊 で放送を流す（練習では何回でも）。読み上げが使えない端末では放送文を見せる
+    p.listen && listenButton(p.listen, review));
+}
+function listenButton(listen, review) {
+  const say = canSpeak();
+  const b = h('button', { class: 'q-listen', type: 'button' }, say ? '🔊 放送を聞く' : '📄 放送文を見る');
+  const text = h('div', { class: 'q-listen-text hidden' }, listen.lines.map((l) => h('p', {}, l.who !== 'N' && h('b', {}, `${l.who}: `), l.text)));
+  const play = async () => {
+    if (!say) { text.classList.toggle('hidden'); return; }
+    b.classList.add('on');
+    b.textContent = '🔊 放送中…（タップで止める）';
+    const done = await speakLines(listen.lines);
+    if (!b.isConnected) return;
+    b.classList.remove('on');
+    b.textContent = done ? '🔊 もう一度聞く' : '🔊 放送を聞く';
+  };
+  b.onclick = (e) => { e.stopPropagation(); if (b.classList.contains('on')) { stopSpeech(); return; } play(); };
+  // 問題が出たら1回だけ自動で流す（リベンジのときも）
+  if (say) setTimeout(() => { if (b.isConnected && !b.classList.contains('on')) play(); }, review ? 500 : 350);
+  return h('div', { class: 'q-listen-box' }, b, text);
 }
 
 // 入力中の文字列をそれっぽく表示

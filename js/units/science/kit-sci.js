@@ -6,6 +6,7 @@ import { tdec } from '../../core/fmt.js';
 import { textChoice } from '../english/kit-en.js';
 
 export { m, textChoice };
+export { chart } from '../stage3/fig.js';
 export const near = (a, b) => Math.abs(a - b) < 1e-6;
 // 小数 → Frac（小数第3位まで）。3.0000000004 のような誤差を消す
 export const D = (x) => F(Math.round(x * 1000), 1000);

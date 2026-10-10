@@ -1,6 +1,6 @@
 // 理科 第2段階（中2）: 化学変化と質量（質量保存・決まった質量の比）
 //   銅 : 酸素 : 酸化銅 = 4 : 1 : 5、マグネシウム : 酸素 : 酸化マグネシウム = 3 : 2 : 5
-import { sciNum, sciChoice, m, dec, near, round2 } from './kit-sci.js';
+import { sciNum, sciChoice, m, dec, near, round2, chart } from './kit-sci.js';
 
 export const METALS = {
   銅: { ratio: [4, 1, 5], oxide: '酸化銅' },
@@ -74,6 +74,47 @@ function genCons(rng) {
   });
 }
 
+// グラフの読み取り: 金属の質量と、できた酸化物の質量（加熱して全部反応したとき）
+//   [金属, 酸化物, 金属の目盛り, 酸化物 ÷ 金属]
+const GM = [['銅', '酸化銅', 0.4, 5 / 4], ['マグネシウム', '酸化マグネシウム', 0.3, 5 / 3]];
+function genGraph(rng) {
+  const [mt, ox, xs, k] = rng.pick(GM);
+  const xmax = xs * 5;
+  const pts = [1, 2, 3, 4, 5].map((i) => [round2(xs * i), round2(xs * i * k)]);
+  const fig = chart({ x: [0, xmax], y: [0, 2.5], xs, ys: 0.5, xlab: `${mt}の質量〔g〕`, ylab: `${ox}の質量〔g〕`, lines: [{ pts: [[0, 0], [xmax, xmax * k]] }], dots: pts });
+  const type = rng.pick(['o2', 'need', 'big']);
+  const [a, b] = rng.pick(pts.slice(0, 4));
+  if (type === 'o2') {
+    return sciNum({
+      stem: `図は、${mt}の粉末を加熱して、全部を${ox}にしたときの質量の関係を表したグラフ。${mt} ${dec(a)} g と結びついた酸素は何 g か。`,
+      fig, v: b - a, unit: 'g',
+      wrongs: [{ v: b, msg: `それは${ox}の質量。結びついた酸素 = ${ox} − ${mt}。` }, { v: a, msg: `それは${mt}の質量。` }],
+      hint: `${mt} ${dec(a)} g のときの${ox}の質量を読んで、${mt}の質量を引く。`,
+      steps: [`${mt} ${dec(a)} g → ${ox} ${dec(b)} g`, `酸素 ${m(`${dec(b)}-${dec(a)}=${dec(b - a)}`)}（g）`],
+      verify: (x) => near(x, round2(a * k - a)),
+    });
+  }
+  if (type === 'need') {
+    return sciNum({
+      stem: `図は、${mt}の粉末を加熱して、全部を${ox}にしたときの質量の関係を表したグラフ。${ox}を ${dec(b)} g つくるには、${mt}は何 g 必要か。`,
+      fig, v: a, unit: 'g',
+      wrongs: [{ v: b - a, msg: 'それは結びつく酸素の質量。' }, { v: b * k, msg: 'グラフのたてが酸化物、よこが金属。よこの目盛りを読む。' }],
+      hint: `たての目盛り ${dec(b)} g のところから、グラフの線にぶつかる点の横の目盛りを読む。`,
+      steps: [`${ox} ${dec(b)} g のところ → ${mt} ${dec(a)} g`],
+      verify: (x) => near(x * k, b),
+    });
+  }
+  const big = round2(xmax * 2);
+  return sciNum({
+    stem: `図は、${mt}の粉末を加熱して、全部を${ox}にしたときの質量の関係を表したグラフ。${mt} ${dec(big)} g を全部${ox}にすると、${ox}は何 g できるか。`,
+    fig, v: big * k, unit: 'g',
+    wrongs: [{ v: big * k - big, msg: 'それは結びつく酸素の質量。' }, { v: 2.5, msg: 'グラフの外。質量は比例するので、グラフの点から比を読んで計算する。' }],
+    hint: `グラフから「${mt} : ${ox}」の比を読む。${mt}の質量が2倍、3倍…になると、${ox}も2倍、3倍…になる。`,
+    steps: [`${mt} ${dec(xmax)} g → ${ox} ${dec(xmax * k)} g（グラフのいちばん右）`, `${dec(big)} g はその2倍 → ${m(`${dec(xmax * k)}\\times 2=${dec(big * k)}`)}（g）`],
+    verify: (x) => near(x / big, k),
+  });
+}
+
 export default {
   id: 'sc-react',
   subject: 'science',
@@ -93,6 +134,7 @@ export default {
     'cr-cons': { difficulty: 1, gen: genCons },
     'cr-ratio': { difficulty: 2, gen: genRatio },
     'cr-left': { difficulty: 3, gen: genLeft },
+    'cr-graph': { difficulty: 2, gen: genGraph },
   },
   lessons: [
     {
@@ -110,7 +152,7 @@ export default {
     {
       id: 'cr-l2',
       title: '結びつく質量の比',
-      unlocks: ['cr-ratio', 'cr-left'],
+      unlocks: ['cr-ratio', 'cr-left', 'cr-graph'],
       build(rng) {
         return [
           { text: '金属と酸素は、決まった質量の比で結びつく。\n銅 : 酸素 : 酸化銅 = 4 : 1 : 5\nマグネシウム : 酸素 : 酸化マグネシウム = 3 : 2 : 5', q: genRatio(rng) },

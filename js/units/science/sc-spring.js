@@ -1,6 +1,6 @@
 // 理科 第1段階（中1）: ばねののび（フックの法則）
 //   ばねののびは、ばねを引く力の大きさに比例する。全体の長さ = もとの長さ + のび
-import { sciNum, table, m, dec, near, round2 } from './kit-sci.js';
+import { sciNum, table, m, dec, near, round2, chart } from './kit-sci.js';
 
 const G100 = '（100 g の物体にはたらく重力の大きさを 1 N とする）';
 
@@ -38,6 +38,45 @@ function genStretch(rng) {
   });
 }
 
+// グラフの読み取り: ばねA・Bを引く力と、ばねののび
+const SK = [[4, 2], [4, 1], [3, 1], [2, 1], [4, 3]]; // 1 N あたりののび〔cm〕
+function genGraph(rng) {
+  const [ka, kb] = rng.pick(SK);
+  const fig = chart({ x: [0, 5], y: [0, 20], xs: 1, ys: 2, xlab: '力の大きさ〔N〕', ylab: 'ばねののび〔cm〕', lines: [{ pts: [[0, 0], [5, 5 * ka]], label: 'A' }, { pts: [[0, 0], [5, 5 * kb]], label: 'B' }] });
+  const type = rng.pick(['force', 'diff', 'out']);
+  if (type === 'force') {
+    const x = ka * rng.pick([2, 3, 4]);
+    return sciNum({
+      stem: `図は、ばねA・Bを引く力の大きさと、ばねののびの関係を表したグラフ。ばねAを ${x} cm のばすのに必要な力は何 N か。`,
+      fig, v: x / ka, unit: 'N',
+      wrongs: [{ v: x / kb, msg: 'それはばねBの場合。' }, { v: x * ka, msg: 'のび ÷ (1 N あたりののび) で求める。' }],
+      hint: 'ばねAの線で、のびが ' + x + ' cm になる点の、横の目盛りを読む。',
+      steps: [`ばねAは 1 N で ${ka} cm のびる`, `${m(`${x}\\div ${ka}=${x / ka}`)}（N）`],
+      verify: (v) => near(v * ka, x),
+    });
+  }
+  if (type === 'diff') {
+    const f = rng.pick([2, 3, 4, 5]);
+    return sciNum({
+      stem: `図は、ばねA・Bを引く力の大きさと、ばねののびの関係を表したグラフ。どちらのばねも ${f} N の力で引いたとき、のびの差は何 cm か。`,
+      fig, v: f * (ka - kb), unit: 'cm',
+      wrongs: [{ v: f * ka, msg: 'それはばねAののびだけ。Bののびを引く。' }, { v: f * (ka + kb), msg: '差なので、引き算。' }],
+      hint: `${f} N のところで、2本の線ののびをそれぞれ読む。`,
+      steps: [`A: ${f * ka} cm、B: ${f * kb} cm`, `${m(`${f * ka}-${f * kb}=${f * (ka - kb)}`)}（cm）`],
+      verify: (v) => near(v, f * ka - f * kb),
+    });
+  }
+  const f = rng.pick([6, 7, 8]);
+  return sciNum({
+    stem: `図は、ばねA・Bを引く力の大きさと、ばねののびの関係を表したグラフ。ばねBを ${f} N の力で引くと、何 cm のびるか（ばねはこわれないものとする）。`,
+    fig, v: f * kb, unit: 'cm',
+    wrongs: [{ v: f * ka, msg: 'それはばねAの場合。' }, { v: 5 * kb, msg: 'グラフは 5 N まで。のびは力に比例する（フックの法則）ので、計算で求める。' }],
+    hint: 'ばねののびは、引く力に比例する（フックの法則）。1 N あたりののびを読んで、' + f + ' 倍する。',
+    steps: [`ばねBは 1 N で ${kb} cm のびる`, `${m(`${kb}\\times ${f}=${f * kb}`)}（cm）`],
+    verify: (v) => near(v / f, kb),
+  });
+}
+
 export default {
   id: 'sc-spring',
   subject: 'science',
@@ -54,12 +93,13 @@ export default {
   ],
   generators: {
     'sp-stretch': { difficulty: 2, gen: genStretch },
+    'sp-graph': { difficulty: 2, gen: genGraph },
   },
   lessons: [
     {
       id: 'sp-l1',
       title: 'フックの法則',
-      unlocks: ['sp-stretch'],
+      unlocks: ['sp-stretch', 'sp-graph'],
       build(rng) {
         return [
           { text: 'ばねを引く力が2倍、3倍になると、のびも2倍、3倍になる（比例）。これをフックの法則という。\nまず表から「1 N あたり何 cm のびるか」を出すと、計算しやすい。', q: genStretch(rng) },

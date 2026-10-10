@@ -1,6 +1,6 @@
 // 理科 第2段階（中2）: 電流と電圧（オームの法則・直列と並列）
 //   電圧 [V] = 抵抗 [Ω] × 電流 [A]。直列: 抵抗は足し算、電流はどこも同じ。並列: 電圧はどこも同じ、電流は足し算
-import { sciNum, m, dec, near } from './kit-sci.js';
+import { sciNum, m, dec, near, chart } from './kit-sci.js';
 
 const R = [2, 4, 5, 10, 15, 20, 25, 30, 40, 50];
 const I = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.5, 2];
@@ -77,6 +77,36 @@ function genCircuit(rng) {
   });
 }
 
+// グラフの読み取り: 抵抗A・Bに加えた電圧と流れた電流
+const GR = [10, 15, 20, 30];
+function genGraph(rng) {
+  const [ra, rb] = rng.shuffle([...GR]).slice(0, 2);
+  const who = rng.pick(['A', 'B']);
+  const R = who === 'A' ? ra : rb;
+  const fig = chart({ x: [0, 6], y: [0, 0.6], xs: 1, ys: 0.1, xlab: '電圧〔V〕', ylab: '電流〔A〕', lines: [{ pts: [[0, 0], [6, 6 / ra]], label: 'A' }, { pts: [[0, 0], [6, 6 / rb]], label: 'B' }] });
+  // 目盛りがちょうど読める点（電圧が整数で、電流が 0.1 の倍数）
+  const V = [1, 2, 3, 4, 5, 6].find((v) => near(Math.round((v / R) * 10) / 10, v / R));
+  if (rng.chance(0.5)) {
+    return sciNum({
+      stem: `図は、抵抗A・Bに加えた電圧と、流れた電流の関係を表したグラフ。抵抗${who}の抵抗は何Ωか。`,
+      fig, v: R, unit: 'Ω',
+      wrongs: [{ v: (V / R) / V, msg: '電流 ÷ 電圧 になっている。抵抗 = 電圧 ÷ 電流。' }, { v: who === 'A' ? rb : ra, msg: `それは抵抗${who === 'A' ? 'B' : 'A'}。` }],
+      hint: `抵抗${who}の線上で、目盛りがちょうど読める点をさがす。抵抗 = 電圧 ÷ 電流。`,
+      steps: [`抵抗${who}: ${V} V のとき ${dec(V / R)} A`, `${m(`${V}\\div ${dec(V / R)}=${R}`)}（Ω）`],
+      verify: (x) => near(V / x, V / R),
+    });
+  }
+  const v = 9;
+  return sciNum({
+    stem: `図は、抵抗A・Bに加えた電圧と、流れた電流の関係を表したグラフ。抵抗${who}に ${v} V の電圧を加えると、何 A の電流が流れるか。`,
+    fig, v: v / R, unit: 'A',
+    wrongs: [{ v: v * R, msg: '電圧 × 抵抗 になっている。電流 = 電圧 ÷ 抵抗。' }, { v: v / (who === 'A' ? rb : ra), msg: `それは抵抗${who === 'A' ? 'B' : 'A'}の場合。` }],
+    hint: `グラフは 6 V まで。まず抵抗${who}の抵抗（電圧 ÷ 電流）を求めてから、${v} V のときを計算する。電流は電圧に比例する。`,
+    steps: [`抵抗${who} = ${m(`${V}\\div ${dec(V / R)}=${R}`)} Ω`, `${m(`${v}\\div ${R}=${dec(v / R)}`)}（A）`],
+    verify: (x) => near(x * R, v),
+  });
+}
+
 export default {
   id: 'sc-ohm',
   subject: 'science',
@@ -95,6 +125,7 @@ export default {
   generators: {
     'om-calc': { difficulty: 1, gen: genOhm },
     'om-circuit': { difficulty: 3, gen: genCircuit },
+    'om-graph': { difficulty: 2, gen: genGraph },
   },
   lessons: [
     {
@@ -112,7 +143,7 @@ export default {
     {
       id: 'om-l2',
       title: '直列と並列',
-      unlocks: ['om-circuit'],
+      unlocks: ['om-circuit', 'om-graph'],
       build(rng) {
         return [
           { text: '直列（1本道）: 電流はどこも同じ。全体の抵抗は足し算。\n並列（枝分かれ）: どの枝にも電源と同じ電圧。電流は足し算。\n例: 3 Ω と 6 Ω の並列 → 3 × 6 ÷ (3 + 6) = 2 Ω', q: genCircuit(rng) },

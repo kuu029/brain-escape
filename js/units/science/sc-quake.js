@@ -1,6 +1,6 @@
 // 理科 第1段階（中1）: 地震（P波・S波・初期微動継続時間）
 //   時間 = 距離 ÷ 速さ。初期微動継続時間 = S波が届く時間 − P波が届く時間（震源から遠いほど長い）
-import { sciNum, sciChoice, m, dec, near } from './kit-sci.js';
+import { sciNum, sciChoice, m, dec, near, chart } from './kit-sci.js';
 
 // [P波の速さ, S波の速さ, 距離の刻み（継続時間がきれいになる）]
 const WAVES = [[6, 3, 6], [8, 4, 8], [6, 4, 12], [7, 3.5, 7], [5, 3, 15], [7.5, 5, 15]];
@@ -46,6 +46,47 @@ function genCalc(rng) {
   });
 }
 
+// グラフの読み取り: 震源からの距離と、P波・S波が届くまでの時間
+//   [P波, S波, 目盛りの距離（10秒ぶん P波が進む距離 ÷ 2）, 時間の目盛り]
+const GW = [[6, 3, 30, 10], [8, 4, 40, 10], [5, 2.5, 25, 10], [6, 4, 30, 5]];
+function genGraph(rng) {
+  const [vp, vs, xs, ys] = rng.pick(GW);
+  const xmax = xs * 6;
+  const ymax = Math.ceil(xmax / vs / ys) * ys;
+  const d = xs * rng.pick([2, 4, 6]);
+  const tp = d / vp, ts = d / vs, t = ts - tp;
+  const fig = chart({ x: [0, xmax], y: [0, ymax], xs, ys, xlab: '震源からの距離〔km〕', ylab: '発生してからの時間〔秒〕', lines: [{ pts: [[0, 0], [xmax, xmax / vp]], label: 'P波' }, { pts: [[0, 0], [xmax, xmax / vs]], label: 'S波' }] });
+  const type = rng.pick(['t', 'd', 'v']);
+  if (type === 'd') {
+    return sciNum({
+      stem: `図は、ある地震のP波とS波が届くまでの時間と、震源からの距離の関係を表したグラフ。初期微動継続時間が ${dec(t)} 秒だった地点は、震源から何 km か。`,
+      fig, v: d, unit: 'km',
+      wrongs: [{ v: t * vp, msg: 'P波の線だけを見ている。P波とS波の線の「たての差」が初期微動継続時間。' }, { v: t * vs, msg: 'S波の線だけを見ている。2本の線のたての差を見る。' }],
+      hint: '2本の線の「たての差」が初期微動継続時間。差が ' + dec(t) + ' 秒になる距離をさがす。',
+      steps: [`距離 ${d} km のとき P波 ${dec(tp)} 秒、S波 ${dec(ts)} 秒`, `差 ${m(`${dec(ts)}-${dec(tp)}=${dec(t)}`)} 秒 → ${d} km`],
+      verify: (x) => near(x / vs - x / vp, t),
+    });
+  }
+  if (type === 'v') {
+    return sciNum({
+      stem: '図は、ある地震のP波とS波が届くまでの時間と、震源からの距離の関係を表したグラフ。P波の速さは何 km/s か。',
+      fig, v: vp, unit: 'km/s',
+      wrongs: [{ v: vs, msg: 'それはS波の速さ。P波は速いので、同じ距離に早く届く（線がねている）ほう。' }, { v: tp / d, msg: '時間 ÷ 距離 になっている。速さ = 距離 ÷ 時間。' }],
+      hint: 'P波の線上で、目盛りがちょうど読める点をさがす。速さ = 距離 ÷ 時間。',
+      steps: [`P波は ${d} km を ${dec(tp)} 秒で進む`, `${m(`${d}\\div ${dec(tp)}=${dec(vp)}`)}（km/s）`],
+      verify: (x) => near(x * tp, d),
+    });
+  }
+  return sciNum({
+    stem: `図は、ある地震のP波とS波が届くまでの時間と、震源からの距離の関係を表したグラフ。震源から ${d} km の地点の、初期微動継続時間は何秒か。`,
+    fig, v: t, unit: '秒',
+    wrongs: [{ v: tp, msg: 'それはP波が届くまでの時間。S波の時間から引く。' }, { v: ts, msg: 'それはS波が届くまでの時間。P波の時間を引く。' }],
+    hint: `距離 ${d} km のところで、P波とS波の線の時間を読んで、差をとる。`,
+    steps: [`P波 ${dec(tp)} 秒、S波 ${dec(ts)} 秒`, `${m(`${dec(ts)}-${dec(tp)}=${dec(t)}`)}（秒）`],
+    verify: (x) => near(x, d / vs - d / vp),
+  });
+}
+
 // 用語（震度とマグニチュード・初期微動と主要動）
 const TERMS = [
   ['はじめに来る小さなゆれ', '初期微動', 'P波によるゆれ'],
@@ -87,6 +128,7 @@ export default {
   generators: {
     'qk-calc': { difficulty: 2, gen: genCalc },
     'qk-term': { difficulty: 1, gen: genTerm },
+    'qk-graph': { difficulty: 2, gen: genGraph },
   },
   lessons: [
     {
@@ -104,7 +146,7 @@ export default {
     {
       id: 'qk-l2',
       title: '初期微動継続時間',
-      unlocks: ['qk-calc'],
+      unlocks: ['qk-calc', 'qk-graph'],
       build(rng) {
         return [
           { text: 'P波が届いてからS波が届くまでの時間を、初期微動継続時間という。\n例: 120 km、P波 6 km/s、S波 3 km/s\nP波 120 ÷ 6 = 20 秒、S波 120 ÷ 3 = 40 秒 → 差 20 秒', q: genCalc(rng) },
