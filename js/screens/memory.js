@@ -17,7 +17,7 @@ import { flowQuestion, flowGuide, hasFlow, FLOW_N } from '../memory/flow.js';
 import * as FC from '../game/flowchal.js';
 import { defenseView } from './memdef.js';
 import { MEM_BOSS } from '../memory/defense.js';
-import { claimActivity } from '../game/bonus.js';
+import { claimActivity, repeatMult } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
 import { canSpeak, speakLines, stopSpeech } from '../ui/speech.js';
@@ -407,6 +407,9 @@ function rushView(el, subject, opts) {
     studyEnd();
     const mult = ME.MODES[mode].mult;
     let gems = Math.max(1, Math.round((R.ok * 0.5 + R.news * 0.5) * mult));
+    // 同じ教科・同じモードのくり返しは💎がへる（デッキ試験の合格ボーナスはそのまま）
+    R.repeat = repeatMult(`m:${R.test ? 'test' : mode}:${R.subject}`);
+    gems = Math.max(1, Math.round(gems * R.repeat.mult));
     const extra = [];
     if (R.test) {
       const pct = Math.round((R.ok / Math.max(R.asked, 1)) * 100);

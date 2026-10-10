@@ -74,6 +74,7 @@ export function render(el, r) {
     hero,
     h('h2', {}, head.t),
     bonusChips(r.bonus),
+    r.repeat && r.repeat.mult < 1 && h('p', { class: 'note center rs-repeat' }, `🔁 今日この単元 ${r.repeat.n}回目 → 💎×${r.repeat.mult}（ちがう単元なら満額。明日またもどる）`),
     h('p', { class: 'rs-sub' }, rank ? `${RANK_TEXT[rank]} ${head.s}` : head.s),
     h('div', { class: 'stats tickets' },
       h('div', {}, countUp(rate, (v) => `${v}%`, 0), h('small', {}, `正答率（${r.firstCorrect}/${r.asked}）`)),

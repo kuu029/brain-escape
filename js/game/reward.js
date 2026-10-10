@@ -87,6 +87,24 @@ export function rollBonus(rand = Math.random) {
 }
 export const BONUS_NAME = { u15: '🌈 15分 解除券', gtix: '🎫 ごほうびガチャ券' };
 
+// まとめる・わける: 分数の合計は変わらない（15分×2 ⇄ 30分、30分×2 ⇄ 60分、15分×4 ⇄ 60分）
+export const CONVERT = [
+  { from: 'u15', n: 2, to: 'u30', m: 1 },
+  { from: 'u30', n: 2, to: 'u60', m: 1 },
+  { from: 'u15', n: 4, to: 'u60', m: 1 },
+  { from: 'u60', n: 1, to: 'u30', m: 2 },
+  { from: 'u30', n: 1, to: 'u15', m: 2 },
+];
+export function convertReward(i) {
+  const c = CONVERT[i];
+  const R = rewardState();
+  if (!c || (R.tix[c.from] || 0) < c.n) return false;
+  R.tix[c.from] -= c.n;
+  R.tix[c.to] = (R.tix[c.to] || 0) + c.m;
+  saveNow();
+  return true;
+}
+
 // 使う: 1枚へらして記録を残す（おうちの人が見て、時間を測る）
 export function useReward(id) {
   const R = rewardState();

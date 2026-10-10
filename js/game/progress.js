@@ -5,7 +5,7 @@ import { BOSS_CARD, BOSS_CARD_IDS, GACHA_CARDS, SKINS, CARDS, GACHA_RATES, TOWER
 import { bump } from './missions.js';
 import { setAllyLevelSource, setGaugeBonus, ALLY_MAX_LV } from './engine.js';
 import { isEvent } from './event.js';
-import { claimActivity } from './bonus.js';
+import { claimActivity, repeatMult } from './bonus.js';
 import { addReward, rollBonus, RGT_DROP } from './reward.js';
 
 export function isUnlocked(id) {
@@ -90,6 +90,7 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
   const win = st.over === 'win';
   const out = { mode, unitId, win, asked, firstCorrect, wrongList, gems: 0, cards: [], opened: [], leaks: st.leaks, maxCombo: st.maxCombo };
   let gems = firstCorrect * 2 + (win ? 10 : 3);
+  let fixed = 0; // くり返し減衰をかけない💎（ボスのはじめての撃破）
   if (unitId && mode !== 'review') unitState(unitId).practiced++;
   s.stats.bestCombo = Math.max(s.stats.bestCombo, st.maxCombo);
   bump('combo', st.maxCombo);
@@ -106,7 +107,8 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
       const first = !us.bossCleared;
       us.bossCleared = true;
       s.stats.bosses++;
-      gems += (first ? 40 : 15) * (isEvent('bossrush') ? 3 : 1); // 週末イベント「ボスラッシュ」は3倍
+      if (first) fixed += 40 * (isEvent('bossrush') ? 3 : 1); // 週末イベント「ボスラッシュ」は3倍
+      else gems += 15 * (isEvent('bossrush') ? 3 : 1);
       if (BOSS_CARD[unitId] && addCard(BOSS_CARD[unitId])) out.cards.push(BOSS_CARD[unitId]);
       out.opened = Object.keys(UNIT).filter((id) => isUnlocked(id) && !before.includes(id));
       // 脱獄王: 数学の全ボス撃破
@@ -126,6 +128,12 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
       }
     }
   }
+  // 同じ単元のウェーブを同じ日に何回もくり返すと💎がへる（リベンジ・診断はのぞく）
+  if (unitId && mode !== 'review' && mode !== 'diagnosis') {
+    out.repeat = repeatMult(`w:${unitId}`);
+    gems = Math.round(gems * out.repeat.mult);
+  }
+  gems += fixed;
   s.gems += gems;
   out.gems = gems;
   out.bonus = claimActivity('wave');

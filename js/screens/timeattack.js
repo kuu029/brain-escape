@@ -10,7 +10,7 @@ import { sfx } from '../core/sound.js';
 import { problemCard, answerPad } from '../ui/answer.js';
 import { UNIT } from '../units/registry.js';
 import { makePicker, practicePool } from '../game/waves.js';
-import { claimActivity } from '../game/bonus.js';
+import { claimActivity, repeatMult } from '../game/bonus.js';
 import { flyGems } from '../ui/gems.js';
 import { paperCheck, countdown } from '../ui/ready.js';
 import { topBar } from './home.js';
@@ -114,7 +114,8 @@ export function render(el, { unit }) {
     const isBest = counts && (!rec.best || ms < rec.best);
     if (isBest) rec.best = ms;
     const rank = ok === TA_N && ms <= target * 600 ? 'S' : counts && ms <= target * 1000 ? 'A' : 'B';
-    const gems = 5 + ok;
+    const rep = repeatMult(`ta:${unit}`); // 同じ単元のくり返しは💎がへる
+    const gems = Math.max(1, Math.round((5 + ok) * rep.mult));
     s.gems += gems;
     for (let i = 0; i < ok; i++) tallySession(true);
     const bonus = claimActivity('timeattack');

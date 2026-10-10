@@ -10,7 +10,7 @@ import { sfx } from '../core/sound.js';
 import { answerPad } from '../ui/answer.js';
 import { bump } from '../game/missions.js';
 import { addCard, party, towerSkin } from '../game/progress.js';
-import { claimActivity } from '../game/bonus.js';
+import { claimActivity, repeatMult } from '../game/bonus.js';
 import { cardSprite, enemySprite, towerSprite, spriteHTML, bgUrl, hasArt } from '../game/art.js';
 import { CARDS as GAME_CARDS } from '../game/content.js';
 import { bonusChips } from './result.js';
@@ -252,7 +252,8 @@ export function defenseView(el, subject, started = false) {
     const lr = ((rec.lv ||= {})[level] ||= { best: 0, wins: 0 });
     lr.best = Math.max(lr.best, st.kills);
     if (win) lr.wins++;
-    const gems = D.defGems(st) * (isEvent('gemfever') ? 2 : 1); // 週末イベント「💎フィーバー」
+    const rep = repeatMult(`md:${subject}:${level}`); // 同じ教科・同じむずかしさのくり返しは💎がへる
+    const gems = Math.round(D.defGems(st) * (isEvent('gemfever') ? 2 : 1) * rep.mult); // 週末イベント「💎フィーバー」
     S().gems += gems;
     // むずかしい・おに: 勝つとガチャ券
     const tix = win ? LV.ticket : 0;
