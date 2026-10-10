@@ -1,5 +1,6 @@
 // 入口の診断（看守チェック）: 第1段階の単元から各3問。2問以上正解で「突破」
 import { h, btn } from '../core/ui.js';
+import { bgUrl } from '../game/art.js';
 import { S, unitState, saveNow } from '../core/store.js';
 import { UNIT, unitsOf, makeProblem } from '../units/registry.js';
 import { answerLine } from '../ui/answer.js';
@@ -18,7 +19,7 @@ export function render(el, { phase = 'intro', results = {}, subject = 'math', mi
   if (phase === 'intro') {
     el.append(
       h('div', { class: 'center-col' },
-        h('div', { class: 'big-em' }, '🔦🗿'),
+        bgUrl('diag-check') ? h('img', { class: 'story-img', src: bgUrl('diag-check'), alt: '' }) : h('div', { class: 'big-em' }, '🔦🗿'),
         h('h2', {}, '看守チェック'),
         h('p', { rich: `${en ? '英語棟の看守が、きみの英語力をのぞきに来た。' : '看守が、きみの実力をのぞきに来た。'}\n全 ${units.length * per} 問。まちがえてもペナルティなし。\n苦手な区画を見つけて、そこだけ「訓練」に回すよ。` }),
         h('p', { class: 'note' }, 'タワーは建てられないモード。サクサク答えよう。'),

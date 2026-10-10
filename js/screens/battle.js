@@ -11,7 +11,9 @@ import { problemCard, answerPad, stepsView, answerLine } from '../ui/answer.js';
 import { askBtn } from '../ui/asklater.js';
 import { boardView } from '../ui/board.js';
 import { TOOLS, TOWER_LOOK, CARDS } from '../game/content.js';
-import { towerSprite, enemyLook, cardSprite } from '../game/art.js';
+import { towerSprite, enemyLook, cardSprite, iconHTML } from '../game/art.js';
+
+const COIN_ICON = iconHTML('icon-coin', '🪙', 'コイン');
 import { sfx } from '../core/sound.js';
 import { bump } from '../game/missions.js';
 import { go } from '../core/router.js';
@@ -91,7 +93,7 @@ export function render(el, params) {
   function paintHud() {
     if (!diagMode) paintReserve();
     hudLives.textContent = st.lives === Infinity ? '❤️ ∞' : `❤️ ${st.lives}`;
-    hudCoins.textContent = diagMode ? '' : `🪙 ${st.coins}`;
+    hudCoins.innerHTML = diagMode ? '' : `${COIN_ICON} ${st.coins}`;
     hudCombo.textContent = st.combo >= 2 ? `⚡${st.combo}` : '';
     hudCombo.classList.toggle('hot', st.combo >= 3);
     hudLeft.textContent = diagMode ? `${Math.min(dIdx, problems.length)}/${problems.length}` : `${MODE_LABEL[mode].replace('ウェーブ', '')} 👾${st.queue.length + E.alive(st).length}`;
@@ -141,7 +143,7 @@ export function render(el, params) {
     for (const [id, ok] of Object.entries(st.tools)) {
       const t = TOOLS[id];
       toolbar.append(h('button', { class: `tool${armed === id ? ' armed' : ''}`, type: 'button', disabled: !ok || !!st.over, onclick: () => tapTool(id) },
-        h('span', {}, t.emoji), h('small', {}, armed === id ? 'もう1回!' : t.name.slice(0, 5))));
+        h('span', { html: iconHTML(`tool-${id}`, t.emoji, t.name) }), h('small', {}, armed === id ? 'もう1回!' : t.name.slice(0, 5))));
     }
     const auto = !!S().settings.autoBuild;
     toolbar.append(h('button', { class: `tool auto${auto ? ' on' : ''}`, type: 'button', 'aria-pressed': String(auto), onclick: toggleAuto },
@@ -401,6 +403,7 @@ export function render(el, params) {
     }
     if (res.ok) bump('correct');
     const evs = E.answer(st, { correct: res.ok, retry: !firstTry, targetId: cur.target?.id });
+    if (evs.some((x) => x.t === 'revive')) toast('🔴 ダルマ、七転び八起き！ 起き上がった！', 1600);
     if (res.ok && cur.target) cur.target.review.answered = true;
     if (st.over) ending = true;
     paintHud();

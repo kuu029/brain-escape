@@ -135,7 +135,7 @@ function endTurn(st, ev) {
     if (!tw) return;
     // なかまのタワー（出撃したなかま）は、決まったターンだけ立つ
     const def = tw.type === 'ally' ? { dmg: [tw.dmg, tw.dmg, tw.dmg], splash: tw.splash } : TOWERS[tw.type];
-    const inRange = alive(st).filter((e) => near(SLOTS[si], PATH[e.pos]));
+    const inRange = alive(st).filter((e) => tw.global || near(SLOTS[si], PATH[e.pos]));
     if (!inRange.length) return;
     const dmg = def.dmg[tw.lvl - 1];
     const targets = def.splash ? inRange : [inRange.sort((a, b) => b.pos - a.pos)[0]];
@@ -155,10 +155,11 @@ function endTurn(st, ev) {
   for (const r of st.raiders || []) {
     if (r.hp <= 0) continue;
     const from = r.pos;
-    r.pos = Math.max(0, r.pos - 1);
+    r.pos = Math.max(0, r.pos - (r.speed || 1));
     for (const e of alive(st).filter((x) => x.pos >= r.pos && x.pos <= from)) {
       if (r.hp <= 0) break;
       hit(st, e, r.dmg, ev, 'guard');
+      if (r.knock && !e.dead) back(st, e, r.knock, ev);
       r.hp--;
     }
     if (r.pos === 0) r.hp = 0;
@@ -205,6 +206,7 @@ function endTurn(st, ev) {
   // ガードは、こわされるか時間がたつと帰る
   for (const g of st.guards || []) g.turns--;
   st.guards = (st.guards || []).filter((g) => {
+    if (g.hp <= 0 && g.revive && g.turns > 0) { g.hp = g.maxHp = g.revive; g.revive = 0; ev.push({ t: 'revive', id: g.id }); return true; } // 起き上がる
     if (g.hp > 0 && g.turns > 0) return true;
     ev.push({ t: 'leave', kind: 'guard', id: g.id });
     return false;
@@ -295,6 +297,10 @@ export const SUMMON = {
   kingyo: { need: 4, desc: 'コイン +60', run: (st) => { st.coins += 60; } },
   dragon: { need: 5, desc: '火をふいて敵ぜんぶに3ダメージ', run: (st, ev) => alive(st).forEach((e) => hit(st, e, 3, ev, 'ally')) },
   ufo: { need: 5, desc: '前の2体に8ダメージ（ほぼ一撃）', run: (st, ev) => alive(st).sort((x, y) => y.pos - x.pos).slice(0, 2).forEach((e) => hit(st, e, 8, ev, 'ally')) },
+  // ★4 追加（盤面に出撃する。下の DEPLOY を参照）
+  eisei: { need: 5, desc: '', run: () => {} },
+  daruma: { need: 5, desc: '', run: () => {} },
+  shinkansen: { need: 5, desc: '', run: () => {} },
 };
 // ボスカードの必殺技（ゲージ6）: 数学のボスは全体こうげき、英語のボスは足止め＋こうげき、★4（総長・脱獄王）は大技
 for (const [unit, id] of Object.entries(BOSS_CARD)) {
@@ -325,6 +331,10 @@ export const DEPLOY = {
   'banana-car': { kind: 'raider', hp: 3, dmg: 2 },
   ninja: { kind: 'raider', hp: 3, dmg: 3 },
   ufo: { kind: 'raider', hp: 4, dmg: 5 },
+  // ★4 の特別な力: global = 盤面のどこでもねらえる / revive = こわされても1回起き上がる / speed = 1ターンに進むマス・knock = はね飛ばすマス
+  eisei: { kind: 'tower', dmg: 4, turns: 10, global: true },
+  daruma: { kind: 'guard', hp: 7, dmg: 2, turns: 14, revive: 5 },
+  shinkansen: { kind: 'raider', hp: 6, dmg: 4, speed: 2, knock: 1 },
   bushou: { kind: 'raider', hp: 5, dmg: 3 },
   // ふつうのなかま（追加）
   broccoli: { kind: 'tower', dmg: 1, splash: true, turns: 5 }, // 重低音スピーカー
@@ -366,17 +376,17 @@ function deploy(st, id, d, ev, opt = {}) {
     // 置くマスはえらべる（opt.slot）。えらばなかったとき・うまっていたときは、おまかせ
     const si = Number.isInteger(opt.slot) && SLOTS[opt.slot] && !st.slots[opt.slot] ? opt.slot : AUTO_ORDER.find((i) => !st.slots[i]);
     if (si === undefined) { const f = front(st); if (f) hit(st, f, d.dmg * 2, ev, 'ally'); return; } // マスがうまっていたら、その場で一撃
-    st.slots[si] = { type: 'ally', id, lvl: 1, dmg: d.dmg, splash: !!d.splash, turns: d.turns };
+    st.slots[si] = { type: 'ally', id, lvl: 1, dmg: d.dmg, splash: !!d.splash, global: !!d.global, turns: d.turns };
     ev.push({ t: 'deploy', kind: 'tower', id, slot: si });
   } else if (d.kind === 'guard') {
     const f = front(st);
     const taken = new Set(alive(st).map((e) => e.pos));
     let pos = Math.min(EXIT - 1, f ? f.pos + 1 : EXIT - 1);
     while (pos < EXIT - 1 && taken.has(pos)) pos++;
-    (st.guards ||= []).push({ id, pos, hp: d.hp, maxHp: d.hp, dmg: d.dmg, turns: d.turns });
+    (st.guards ||= []).push({ id, pos, hp: d.hp, maxHp: d.hp, dmg: d.dmg, turns: d.turns, revive: d.revive || 0 });
     ev.push({ t: 'deploy', kind: 'guard', id, pos });
   } else {
-    (st.raiders ||= []).push({ id, pos: EXIT, hp: d.hp, maxHp: d.hp, dmg: d.dmg });
+    (st.raiders ||= []).push({ id, pos: EXIT, hp: d.hp, maxHp: d.hp, dmg: d.dmg, speed: d.speed || 1, knock: d.knock || 0 });
     ev.push({ t: 'deploy', kind: 'raider', id, pos: EXIT });
   }
 }
@@ -387,6 +397,10 @@ for (const [id, d] of Object.entries(DEPLOY)) {
   s.desc = d.kind === 'tower' ? `${DEPLOY_LABEL.tower}: 空きマスに立って ${d.turns}ターン、近くの${d.splash ? '敵ぜんぶ' : '敵'}に${d.dmg}ダメージ`
     : d.kind === 'guard' ? `${DEPLOY_LABEL.guard}: 道に立ちふさがって敵を止める（${d.hp}回まで）。となりの敵に${d.dmg}ダメージ`
       : `${DEPLOY_LABEL.raider}: ゴールから逆走して、ぶつかった敵に${d.dmg}ダメージ（${d.hp}体まで）`;
+  if (d.global) s.desc += '。盤面のどこの敵でもねらえる';
+  if (d.revive) s.desc += `。こわされても1回だけ起き上がる（${d.revive}回ぶん）`;
+  if (d.speed > 1) s.desc += `。${d.speed}マスずつ走る`;
+  if (d.knock) s.desc += `。ぶつかった敵を${d.knock}マスはね飛ばす`;
 }
 export const gaugeNeed = (id) => SUMMON[id]?.need || GAUGE_NEED;
 export const GAUGE_MAX = 6;

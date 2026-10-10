@@ -14,6 +14,7 @@ import { addCard } from '../game/progress.js';
 import { GACHA_CARDS, CARDS as GAME_CARDS } from '../game/content.js';
 import * as ME from '../memory/engine.js';
 import { flowQuestion, flowGuide, hasFlow, FLOW_N } from '../memory/flow.js';
+import * as FC from '../game/flowchal.js';
 import { defenseView } from './memdef.js';
 import { MEM_BOSS } from '../memory/defense.js';
 import { claimActivity } from '../game/bonus.js';
@@ -32,7 +33,7 @@ export function render(el, params = {}) {
   if (params.phase === 'rush') return rushView(el, subject, params);
   if (params.phase === 'result') return resultView(el, subject, params.r);
   if (params.phase === 'deck') return deckView(el, subject, params.deck);
-  if (params.phase === 'flow') return flowView(el, subject);
+  if (params.phase === 'flow') return flowView(el, subject, params.bet || 0);
   if (params.phase === 'defense') return defenseView(el, subject);
   return topView(el, subject);
 }
@@ -98,7 +99,7 @@ function topView(el, subject) {
     onclick: () => { sfx('tap'); (M.mode ||= {})[subject] = k; save(); go('memory', { subject }); },
   }, h('b', {}, m.name), h('small', {}, m.desc), h('span', { class: 'mm-mult' }, `💎×${m.mult}`))));
 
-  backdrop(el, 'cell');
+  backdrop(el, 'cell', 'bg-memory');
   el.append(topBar(() => go('home')),
     h('div', { class: 'mem-top' },
       h('div', { class: 'mm-hero' }, h('div', { class: 'mm-title' }, '🔐 暗号室'), h('p', {}, '看守たちの合言葉（暗号）を解読して、扉を開けろ。忘れかけたころに、また出てくるぞ。')),
@@ -130,7 +131,8 @@ function topView(el, subject) {
 
 // ---------- 流れでつなげる（社会・理科）----------
 // 間隔反復とは別の練習。1問ごとに「なぜその答えか」（年表・時代）を見せてから次へ
-function flowView(el, subject) {
+// bet > 0: 並べ替えチャレンジ（💎をかけている。順番ガイドなし・正解数で倍率）
+function flowView(el, subject, bet = 0) {
   const rng = makeRng(newSeed());
   let k = 0;
   let ok = 0;
@@ -139,14 +141,17 @@ function flowView(el, subject) {
   const stage = h('div', { class: 'mr-stage' });
   el.classList.add('mem-rush-screen');
   el.append(h('header', { class: 'mr-head' },
-    h('button', { class: 'hud-exit', type: 'button', 'aria-label': 'やめる', onclick: async () => { if (await confirmBox('やめる？', 'ここまでの正解は記録されているよ。', 'やめる', '続ける')) { studyEnd(); closeSession('quit'); go('memory', { subject }); } } }, '✕'),
-    h('b', {}, '🧭 流れでつなげる'), prog), stage);
+    h('button', { class: 'hud-exit', type: 'button', 'aria-label': 'やめる', onclick: async () => { if (await confirmBox('やめる？', bet ? `とちゅうでやめると、かけた 💎${bet} はもどらないよ。` : 'ここまでの正解は記録されているよ。', 'やめる', '続ける')) { studyEnd(); closeSession('quit'); go(bet ? 'collection' : 'memory', bet ? { tab: 'gacha' } : { subject }); } } }, '✕'),
+    h('b', {}, bet ? `🎲 並べ替えチャレンジ 💎${bet}` : '🧭 流れでつなげる'), prog), stage);
+  const multLine = h('div', { class: 'fc-mult' });
+  const paintMult = () => { if (bet) multLine.replaceChildren(h('span', {}, `⭕ ${ok}問`), h('b', {}, `いまの倍率 ×${FC.chalMult(ok)}`), h('small', {}, `→ 💎${Math.round(bet * FC.chalMult(ok))}`)); };
 
   function next() {
     if (k >= FLOW_N) return finish();
     const p = flowQuestion(subject, rng);
     k++;
     prog.textContent = `${k}/${FLOW_N}`;
+    paintMult();
     studyBegin(90);
     if (location.hostname === 'localhost') window.__flow = { p };
     const fb = h('div', { class: 'feedback' });
@@ -157,13 +162,14 @@ function flowView(el, subject) {
       pad.el.classList.add('done');
       tallySession(r.ok);
       if (r.ok) { ok++; sfx('ok'); bump('correct'); } else sfx('ng');
+      paintMult();
       fb.replaceChildren(h('div', { class: `fb ${r.ok ? 'good' : 'bad'}` },
         h('div', { class: 'fb-head' }, r.ok ? '⭕ 正解！' : '❌ おしい'),
         h('div', { class: 'answer-line flow-why', rich: p.why }),
         btn(k >= FLOW_N ? '結果へ ▶' : '次へ ▶', next, 'primary')));
       fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, { fire: '決定' });
-    stage.replaceChildren(h('div', { class: 'mr-card' }, h('div', { class: 'mr-word ja long' }, p.stem), h('small', { class: 'mr-ask' }, p.ask)), pad.el, fb, guideBox(p));
+    stage.replaceChildren(bet ? multLine : '', h('div', { class: 'mr-card' }, h('div', { class: 'mr-word ja long' }, p.stem), h('small', { class: 'mr-ask' }, p.ask)), pad.el, fb, bet ? '' : guideBox(p));
     window.scrollTo(0, 0);
   }
   // 順番ガイド（画面下）: 表示/非表示は教科ごとに保存。ハードモードでは最初は非表示
@@ -184,6 +190,7 @@ function flowView(el, subject) {
     return box;
   }
   function finish() {
+    if (bet) return finishChal();
     studyEnd();
     const gems = Math.max(1, ok);
     S().gems += gems;
@@ -201,7 +208,30 @@ function flowView(el, subject) {
       btn('🔐 暗号室へ', () => go('memory', { subject }), 'ghost')));
     flyGems(gems + (bonus?.gems || 0), gemEl, 400);
   }
+  function finishChal() {
+    studyEnd();
+    const R = FC.settleChal(bet, ok);
+    const bonus = claimActivity('memory');
+    closeSession('clear');
+    saveNow();
+    sfx(R.net >= 0 ? 'win' : 'ng');
+    const gemEl = h('p', { class: `fc-net ${R.net >= 0 ? 'plus' : 'minus'}` }, R.net >= 0 ? `💎 +${R.net}` : `💎 ${R.net}`);
+    stage.replaceChildren(h('div', { class: 'center-col' },
+      h('div', { class: 'big-em' }, R.mult >= 2 ? '🤑' : R.net >= 0 ? '😎' : '😱'),
+      h('h2', {}, `${ok} / ${FLOW_N} 問 正解　倍率 ×${R.mult}`),
+      h('p', { class: 'note center' }, `かけた 💎${bet} → もどった 💎${R.pay}`),
+      gemEl,
+      chalTable(ok),
+      bonusChips(bonus),
+      FC.chalLeft() > 0 ? btn(`🎲 もう1回（今日あと${FC.chalLeft()}回）`, () => go('collection', { tab: 'gacha', chal: 1 }), 'primary big') : h('p', { class: 'note center' }, '今日のチャレンジはおしまい。また明日！'),
+      btn('🎰 ガチャへ', () => go('collection', { tab: 'gacha' }), 'ghost')));
+    if (R.pay > 0) flyGems(R.pay + (bonus?.gems || 0), gemEl, 400);
+  }
   next();
+}
+// 正解数と倍率の表（いまの所を光らせる）
+export function chalTable(cur = -1) {
+  return h('div', { class: 'fc-table' }, [...FC.CHAL_MULT.keys()].reverse().filter((n) => n >= 3).map((n) => h('span', { class: `fc-cell${n === cur || (cur < 3 && n === 3 && cur >= 0) ? ' on' : ''}${FC.CHAL_MULT[n] < 1 ? ' lose' : ''}` }, h('small', {}, n === 3 ? '0〜3問' : `${n}問`), h('b', {}, `×${FC.CHAL_MULT[n]}`))));
 }
 
 // ---------- 暗号ノート（デッキ） ----------

@@ -3,6 +3,7 @@ import { h, btn, toast } from '../core/ui.js';
 import { S, saveNow } from '../core/store.js';
 import { go } from '../core/router.js';
 import { sfx } from '../core/sound.js';
+import { bgUrl } from '../game/art.js';
 
 export const STORY = [
   { em: '🧠⛓️', text: '目が覚めたら、そこは『ブレイン監獄』だった。' },
@@ -14,7 +15,7 @@ export function render(el, { step = 'title', i = 0 } = {}) {
   if (step === 'title') {
     el.append(
       h('div', { class: 'title-screen' },
-        h('div', { class: 'logo-em' }, '🧠⛓️'),
+        bgUrl('title-key') ? h('img', { class: 'title-key', src: bgUrl('title-key'), alt: '' }) : h('div', { class: 'logo-em' }, '🧠⛓️'),
         h('h1', { class: 'logo' }, 'ブレイン', h('br'), '脱獄'),
         h('p', { class: 'tagline' }, '解いて、建てて、ぶっとばして、出ろ。'),
         btn('はじめる', () => go('onboarding', { step: 'name' }), 'primary big')),
@@ -54,7 +55,7 @@ export function render(el, { step = 'title', i = 0 } = {}) {
   el.append(
     h('div', { class: 'story', onclick: () => { sfx('tap'); i + 1 < STORY.length ? go('onboarding', { step: 'story', i: i + 1 }) : done(); } },
       h('button', { class: 'skip', type: 'button', onclick: (e) => { e.stopPropagation(); done(); } }, 'スキップ ⏭'),
-      h('div', { class: 'story-em' }, s.em),
+      bgUrl(`story-${i + 1}`) ? h('img', { class: 'story-img', src: bgUrl(`story-${i + 1}`), alt: '' }) : h('div', { class: 'story-em' }, s.em),
       h('p', { class: 'story-text', rich: s.text }),
       h('div', { class: 'story-dots' }, STORY.map((_, k) => h('span', { class: k === i ? 'on' : '' }))),
       h('p', { class: 'note' }, 'タップで次へ')),

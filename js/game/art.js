@@ -16,6 +16,9 @@ export function spriteHTML(key, emoji, alt = '', cls = '') {
   return `<span class="spr emo ${cls}" role="img" aria-label="${alt}">${emoji}</span>`;
 }
 
+// 小さなアイコン（道具・券など）: 文字の大きさに合わせる。画像がなければ絵文字
+export const iconHTML = (key, emoji, alt = '') => spriteHTML(key, emoji, alt, 'ico');
+
 // タワー: スキン専用の絵 → 通常の絵（そのレベル以下で一番高いもの）→ 絵文字
 export function towerSprite(type, lvl, skin = 'default') {
   const name = TOWER_LOOK[type].name;

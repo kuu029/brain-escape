@@ -13,7 +13,8 @@ export function embers(n, top = 40) {
 // image: 背景画像のキー（art/<key>.jpg があれば重ねる）
 export function backdrop(el, variant = 'cell', image = null) {
   el.classList.add('has-deco');
-  const img = image && bgUrl(image);
+  // 画像の指定がなければ、ふんいきごとの共通の背景（art/bg-desk.jpg など。なければ CSS だけ）
+  const img = bgUrl(image || { desk: 'bg-desk', win: 'bg-win', lose: 'bg-lose' }[variant]);
   const d = h('div', { class: `bg-deco v-${variant}${img ? ' has-img' : ''}`, 'aria-hidden': 'true', style: img ? { backgroundImage: `linear-gradient(#0b071699, #0b0716cc 55%, #0b0716f2), url(${img})` } : {} });
   if (variant === 'cell' && !img) d.append(h('span', { class: 'moon' }));
   if (variant === 'win') d.append(h('span', { class: 'rays' }));

@@ -163,6 +163,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; user-select:
 .spr { display: block; pointer-events: none; user-select: none; -webkit-user-select: none; }
 img.spr { width: 100%; height: 100%; object-fit: contain; }
 .spr.emo { line-height: 1; text-align: center; }
+img.spr.ico { display: inline-block; width: 1.3em; height: 1.3em; object-fit: contain; vertical-align: middle; }
 .cell.slot .tw-img { width: 92%; height: 92%; filter: drop-shadow(0 3px 2px #0009); }
 .cell.slot .tw-emo { font-size: calc(var(--cell) * .42); }
 .cell.slot .tw-emo.lv2 { font-size: calc(var(--cell) * .48); filter: drop-shadow(0 0 4px #ffd64099); }
@@ -1362,6 +1363,26 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .mm-def { border-color: #ff8a5c; }
 .md-intro p { text-align: center; }
 .md-boss { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px; background: #ff8a5c1f; border: 2px solid #ff8a5c88; }
+.md-lv-title { font-size: 14px; color: var(--dim); margin-bottom: -6px; }
+.md-lv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; }
+.md-lv-opt { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg2); color: var(--text); }
+.md-lv-opt b { font-size: 13px; white-space: nowrap; }
+.md-lv-opt small { font-size: 11px; color: var(--dim); white-space: nowrap; }
+.md-lv-em { font-size: 24px; line-height: 1; }
+.md-lv-opt.on { transform: translateY(-2px); box-shadow: 0 4px 12px #0008; }
+.md-lv-opt.on.lv-easy { border-color: #5cffb0; background: #1f5a44; }
+.md-lv-opt.on.lv-normal { border-color: var(--accent); background: #4d3d9e; }
+.md-lv-opt.on.lv-hard { border-color: #ff8a5c; background: #6a2a1c; }
+.md-lv-opt.on.lv-oni { border-color: #ff4d6d; background: #5a1030; box-shadow: 0 0 14px #ff4d6d88; }
+.md-lv-opt.on small { color: var(--text); }
+.md-lv-desc { margin: 0; padding: 8px 12px; border-radius: 12px; background: #0004; font-size: 14px; text-align: center; }
+.md-lv-desc.lv-hard, .md-lv-desc.lv-oni { color: #ffb08c; }
+.md-msg { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 5; padding: 6px 14px; border-radius: 999px; background: #0b0716e6; border: 2px solid var(--accent); color: var(--text); font-weight: 800; font-size: 14px; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis; pointer-events: none; animation: mdMsg 1.5s ease-out forwards; }
+.md-msg.clear { border-color: #ffd640; color: #ffd640; }
+.md-msg.ally { border-color: #5cffb0; }
+.md-msg.ng { border-color: #ff4d6d; }
+.md-msg.boss { border-color: #ff8a5c; color: #ffb08c; }
+@keyframes mdMsg { 0% { opacity: 0; transform: translate(-50%, -6px) scale(.9); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 20% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -4px); } }
 .md-boss.got { border-color: var(--accent); background: #ffd64022; }
 .md-boss.md-party { background: #5cffb01a; border-color: #5cffb088; }
 .md-boss > div { display: flex; flex-direction: column; text-align: left; }
@@ -1436,3 +1457,55 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .md-fort.has-img .md-gate-img { left: -10px; width: 96px; }
 .md-fort.has-img .md-cannon { right: -22px; bottom: auto; top: calc(50% + 4px); }
 .md-fort.has-img .md-gate-img { left: -22px; width: 118px; }
+/* コレクションの上のタブ: 「いまどの画面か」が分かる、フォルダのつまみ風（中のボタンとは見た目を分ける） */
+.screen-collection .tabs { gap: 2px; border-bottom: 3px solid var(--accent); padding: 0 2px; }
+.screen-collection .tab { min-height: 44px; border: 0; border-radius: 12px 12px 0 0; background: #ffffff0d; color: var(--dim); font-size: 14px; padding: 0 12px; }
+.screen-collection .tab.on { background: var(--accent); color: var(--accent-ink); font-size: 15px; box-shadow: 0 -2px 10px #0006; }
+/* ガチャ: ①種類をえらぶ ②回す ③ほかの遊び */
+.g-sec { align-self: stretch; display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 16px; text-align: left; }
+.g-num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 14px; font-weight: 900; flex-shrink: 0; }
+.gt-pick { align-self: stretch; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gt-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px 8px; border-radius: 16px; border: 3px solid transparent; background: #ffffff0f; color: var(--text); opacity: .7; transition: transform .15s, opacity .15s; }
+.gt-card b { font-size: 13.5px; white-space: nowrap; }
+.gt-card small { font-size: 12px; color: var(--dim); white-space: nowrap; }
+.gt-mini { width: 56px; height: 56px; display: grid; place-items: center; font-size: 40px; }
+.gt-card.gt-skin .gt-mini { filter: hue-rotate(160deg); }
+.gt-card.gt-ally .gt-mini { filter: hue-rotate(-60deg) saturate(1.3); }
+.gt-card.on { opacity: 1; transform: translateY(-3px); }
+.gt-card.on small { color: var(--text); }
+.gt-card.gt-normal.on { border-color: #b98bff; background: linear-gradient(#5a3fb0, #2e2160); box-shadow: 0 0 16px #b98bff66; }
+.gt-card.gt-skin.on { border-color: #5ce1ff; background: linear-gradient(#1d6a80, #173048); box-shadow: 0 0 16px #5ce1ff66; }
+.gt-card.gt-ally.on { border-color: #ff9a4d; background: linear-gradient(#8a3e17, #4a2010); box-shadow: 0 0 16px #ff9a4d66; }
+.gt-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); padding: 1px 8px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 900; white-space: nowrap; }
+.gacha-pane { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 8px; border-radius: 18px; border: 2px solid #b98bff66; background: #2e216044; }
+.gacha-pane.gt-skin { border-color: #5ce1ff66; background: #17304844; }
+.gacha-pane.gt-ally { border-color: #ff9a4d66; background: #4a201044; }
+.g-extra { align-self: stretch; display: flex; flex-direction: column; gap: 8px; }
+.gx-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; text-align: left; color: var(--text); border: 2px solid var(--line); background: var(--panel); }
+.gx-card.gx-chal { border-color: #ffd640aa; background: linear-gradient(90deg, #5a4210, #2a1f40); box-shadow: 0 0 12px #ffd64033; }
+.gx-card.gx-rw { border-color: #ff7ad9aa; background: linear-gradient(90deg, #5a1f4a, #2a1f40); }
+.gx-em { font-size: 34px; line-height: 1; }
+.gx-txt { display: flex; flex-direction: column; gap: 2px; }
+.gx-txt b { font-size: 16px; }
+.gx-txt small { font-size: 12.5px; color: var(--dim); }
+/* 並べ替えチャレンジ */
+.fc-start { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.fc-mult { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6px 12px; border-radius: 999px; background: #5a421066; border: 2px solid #ffd64088; font-size: 14px; margin-bottom: 6px; }
+.fc-mult b { color: #ffd640; font-size: 16px; }
+.fc-mult small { color: var(--dim); }
+.fc-table { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 100%; }
+.fc-cell { display: flex; flex-direction: column; align-items: center; padding: 4px 2px; border-radius: 10px; background: #ffd6401a; border: 2px solid transparent; }
+.fc-cell small { font-size: 11px; color: var(--dim); }
+.fc-cell b { font-size: 15px; color: #ffd640; }
+.fc-cell.lose { background: #ff4d6d1a; }
+.fc-cell.lose b { color: #ff8a9c; }
+.fc-cell.on { border-color: var(--accent); transform: scale(1.06); }
+.fc-net { font-size: 30px; font-weight: 900; margin: 0; }
+.fc-net.plus { color: #ffd640; }
+.fc-net.minus { color: #ff8a9c; }
+.gacha-box > *, .gacha-pane > * { flex-shrink: 0; }
+/* タイトル・ストーリー・看守チェックの絵 */
+.title-key { width: 100%; max-height: 42vh; object-fit: cover; border-radius: 20px; box-shadow: 0 8px 24px #000a; }
+.story-img { width: 100%; max-height: 40vh; object-fit: cover; border-radius: 18px; box-shadow: 0 8px 24px #000a; animation: fadein .4s; }
+.nav-em img.spr.ico { width: 28px; height: 28px; }
+.gem-pill img.spr.ico { width: 1.2em; height: 1.2em; }

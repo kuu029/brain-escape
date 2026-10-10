@@ -21,6 +21,14 @@ export const MEM_BOSS = {
   sci: { card: 'hakase', name: 'フラスコ・ハカセーノ', emoji: '🧪' },
 };
 export const MOB_KINDS = ['grunt', 'runner', 'tank', 'review'];
+// 難易度: n = ふつうの敵の数 / pace = 出てくる間隔（小さいほど次々来る）/ walk = 歩く時間（小さいほど速い）
+//   big = いっしょに来る最大人数 / bossHp = ボスに必要な正解数 / gem = 💎の倍率 / ticket = 勝ったときのガチャ券
+export const DEF_LEVELS = {
+  easy: { name: 'やさしい', emoji: '🌱', n: 12, pace: 1.15, walk: 1.2, big: 2, bossHp: 2, gem: 0.8, ticket: 0, desc: '看守が少なく、ゆっくり。まずはここから' },
+  normal: { name: 'ふつう', emoji: '⚔️', n: DEF_N, pace: 1, walk: 1, big: 3, bossHp: BOSS_HP, gem: 1, ticket: 0, desc: 'いつもの暗号ディフェンス' },
+  hard: { name: 'むずかしい', emoji: '🔥', n: 22, pace: 0.85, walk: 0.85, big: 3, bossHp: 4, gem: 1.8, ticket: 1, desc: '大軍が速くせまる！ 💎1.8倍＋勝てばガチャ券' },
+  oni: { name: 'おに', emoji: '👹', n: 28, pace: 0.78, walk: 0.8, big: 4, bossHp: 5, gem: 2.6, ticket: 2, desc: '超大軍＆超スピード。💎2.6倍＋勝てばガチャ券2枚' },
+};
 
 // 出題に使うカード: 見たことのあるカード。少なければ、まだのカードも足して40枚以上に（同じ問題ばかりにならないように）
 export function defensePool(M, subject) {
@@ -30,11 +38,11 @@ export function defensePool(M, subject) {
 }
 
 // 出てくる組（1〜3体いっしょ）: 時刻（秒）と人数。だんだん人数が多く、間隔が短く
-export function waveGroups() {
+export function waveGroups(N = DEF_N, big = 3) {
   const out = [];
   let t = 0.5, n = 0, i = 0;
-  while (n < DEF_N) {
-    const size = Math.min(DEF_N - n, i < 2 ? 1 : i < 5 ? 2 : 3 - (i % 2));
+  while (n < N) {
+    const size = Math.min(N - n, big, i < 2 ? 1 : i < 5 ? 2 : i >= 12 && big >= 4 ? 4 - (i % 2) : 3 - (i % 2));
     out.push({ t, size });
     n += size;
     t += Math.max(5.5, 9 - i * 0.45) * (size >= 3 ? 1.35 : size >= 2 ? 1.2 : 1);
@@ -44,10 +52,12 @@ export function waveGroups() {
 }
 export const travelOf = (i) => Math.max(14, 21 - i * 0.4);
 
-export function createDefense({ subject, pool, rng, party = [] }) {
+export function createDefense({ subject, pool, rng, party = [], level = 'normal' }) {
+  const L = DEF_LEVELS[level] || DEF_LEVELS.normal;
   // 社会・理科は説明文を読むので、出てくる間隔も歩く時間も 1.6 倍ゆっくり
   const st = {
-    subject, slow: subject === 'en' ? 1 : SLOW_TERM, t: 0, lives: DEF_LIVES, enemies: [], allies: [], groups: waveGroups(), g: 0, spawned: 0,
+    subject, level: DEF_LEVELS[level] ? level : 'normal', n: L.n, walk: L.walk, bossHp: L.bossHp,
+    slow: (subject === 'en' ? 1 : SLOW_TERM) * L.pace, t: 0, lives: DEF_LIVES, enemies: [], allies: [], groups: waveGroups(L.n, L.big), g: 0, spawned: 0,
     kills: 0, misses: 0, answered: 0, clears: 0, shift: 0, over: null, nextId: 1, bossSpawned: false, bossDown: false, sel: null,
     gauge: 0, party: party.filter((id) => GAME_CARDS.some((c) => c.id === id)), used: {},
   };
@@ -73,7 +83,7 @@ function spawn(st, lane, boss = false) {
   const i = st.spawned;
   const card = drawCard(st);
   st.enemies.push({
-    id: st.nextId++, boss, lane, x: 0, speed: 1 / ((boss ? 26 : travelOf(i)) * st.slow), hp: boss ? BOSS_HP : 1, maxHp: boss ? BOSS_HP : 1,
+    id: st.nextId++, boss, lane, x: 0, speed: 1 / ((boss ? 26 : travelOf(i)) * (st.slow / (DEF_LEVELS[st.level].pace)) * st.walk), hp: boss ? st.bossHp : 1, maxHp: boss ? st.bossHp : 1,
     kind: boss ? 'boss' : MOB_KINDS[i % MOB_KINDS.length], card, form: pickForm(st, card), dead: false,
   });
   if (!boss) st.spawned++;
@@ -122,7 +132,10 @@ export function tick(st, dt) {
   }
   const now = st.t + st.shift;
   while (st.g < st.groups.length && now >= st.groups[st.g].t * st.slow) {
-    for (const l of st.rng.shuffle([0, 1, 2]).slice(0, st.groups[st.g].size)) spawn(st, l);
+    // 4体の組は、1本のレーンに2体（少しずらして）
+    const size = st.groups[st.g].size;
+    const lanes = st.rng.shuffle([0, 1, 2]);
+    for (let k = 0; k < size; k++) { spawn(st, lanes[k % 3]); if (k >= 3) st.enemies[st.enemies.length - 1].x = -0.08; }
     st.g++;
     ev.push({ t: 'spawn' });
   }
@@ -201,4 +214,4 @@ export function defQuestion(st, e) {
 }
 
 // 報酬（💎）: 撃退数 ＋ ボス撃破 ＋ 全滅ボーナスの回数
-export const defGems = (st) => Math.max(1, Math.round(st.kills * 0.6)) + (st.bossDown ? 8 : 0) + st.clears;
+export const defGems = (st) => Math.round((Math.max(1, Math.round(st.kills * 0.6)) + (st.bossDown ? 8 : 0) + st.clears) * DEF_LEVELS[st.level].gem);

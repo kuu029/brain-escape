@@ -109,14 +109,18 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
       // 脱獄王: 数学の全ボス撃破
       const mathBoss = Object.entries(BOSS_CARD).filter(([u]) => UNIT[u]?.subject === 'math').map(([, c]) => c);
       if (mathBoss.every((c) => s.collection.cards[c]) && addCard('crown')) out.cards.push('crown');
-    } else if (unitId && BOSS_CARD[unitId] && unitState(unitId).bossCleared && Math.random() < BOSS_DROP) {
-      // レアドロップ: ボスを倒したことのある単元の練習で、まれにボスカード（召喚チケット +1）
-      addCard(BOSS_CARD[unitId]);
-      out.drops.push(`card:${BOSS_CARD[unitId]}`);
-    } else if (Math.random() < 0.35) {
-      const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)];
-      if (addCard(id)) out.cards.push(id);
-      else gems += 3;
+    } else {
+      // 練習・リベンジのウェーブも、勝てば少し💎（解くのがゆっくりでも、ちゃんとたまるように）
+      if (mode !== 'diagnosis') gems += WAVE_GEMS;
+      if (unitId && BOSS_CARD[unitId] && unitState(unitId).bossCleared && Math.random() < BOSS_DROP) {
+        // レアドロップ: ボスを倒したことのある単元の練習で、まれにボスカード（召喚チケット +1）
+        addCard(BOSS_CARD[unitId]);
+        out.drops.push(`card:${BOSS_CARD[unitId]}`);
+      } else if (Math.random() < 0.35) {
+        const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)];
+        if (addCard(id)) out.cards.push(id);
+        else gems += 3;
+      }
     }
   }
   s.gems += gems;
@@ -127,14 +131,16 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
 }
 
 // ---------- ガチャ（カード＋スキン。ダブりはかけらに）----------
-export const GACHA_COST = 30;
-export const GACHA5_COST = 140;
-export const GACHA10_COST = 270;
+// 値段（2026-10 に見直し: 解くのがゆっくりでも、1日に何回かは回せるように少し安く）
+export const GACHA_COST = 25;
+export const GACHA5_COST = 115;
+export const GACHA10_COST = 225;
+export const WAVE_GEMS = 6; // 練習・リベンジのウェーブに勝ったとき
 // ガチャの種類: ノーマル（カード＋スキン）／スキン特化（★3・★4 スキンだけ・高い）／なかま特化（★2〜★4 のなかまだけ・高い）
 export const GACHA_TYPES = {
   normal: { name: 'ノーマル', emoji: '🎰', cost: { 1: GACHA_COST, 5: GACHA5_COST, 10: GACHA10_COST }, rates: GACHA_RATES, cards: true, skins: true, desc: 'キャラもスキンも出る。ガチャ券が使える' },
-  skin: { name: 'スキン特化', emoji: '🎨', cost: { 1: 60, 10: 540 }, rates: [{ rarity: 3, weight: 72, shards: 5 }, { rarity: 4, weight: 28, shards: 10 }], cards: false, skins: true, desc: '★3・★4 のタワースキンだけ！' },
-  ally: { name: 'なかま特化', emoji: '🤝', cost: { 1: 80, 10: 720 }, rates: [{ rarity: 2, weight: 52, shards: 2 }, { rarity: 3, weight: 36, shards: 5 }, { rarity: 4, weight: 12, shards: 10 }], cards: true, skins: false, desc: '★2〜★4 のなかまだけ！ 高レアが出やすい' },
+  skin: { name: 'スキン特化', emoji: '🎨', cost: { 1: 50, 10: 450 }, rates: [{ rarity: 3, weight: 72, shards: 5 }, { rarity: 4, weight: 28, shards: 10 }], cards: false, skins: true, desc: '★3・★4 のタワースキンだけ！' },
+  ally: { name: 'なかま特化', emoji: '🤝', cost: { 1: 70, 10: 630 }, rates: [{ rarity: 2, weight: 52, shards: 2 }, { rarity: 3, weight: 36, shards: 5 }, { rarity: 4, weight: 12, shards: 10 }], cards: true, skins: false, desc: '★2〜★4 のなかまだけ！ 高レアが出やすい' },
 };
 export const gachaCost = (n, type = 'normal') => GACHA_TYPES[type].cost[n] ?? (n === 10 ? GACHA10_COST : n === 5 ? GACHA5_COST : GACHA_COST * n);
 function rollOne(rand = Math.random, type = 'normal') {

@@ -4,7 +4,7 @@ import { S, streakAlive, dayLog, cleared, save } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
 import { nextUnit, GACHA10_COST, claimLogin, gachaTickets, LOGIN_CAL } from '../game/progress.js';
 import { BOSSES } from '../game/content.js';
-import { spriteHTML, bgUrl } from '../game/art.js';
+import { spriteHTML, bgUrl, iconHTML } from '../game/art.js';
 import { backdrop } from '../ui/deco.js';
 import { go } from '../core/router.js';
 import { todayMissions, claim } from '../game/missions.js';
@@ -21,7 +21,7 @@ export function topBar(back = null) {
     back ? h('button', { class: 'back', type: 'button', onclick: back, 'aria-label': 'もどる' }, '‹') : h('span', { class: 'who' }, `👤 ${s.nickname}`),
     h('span', { class: 'spacer' }),
     h('span', { class: 'pill' }, `🔥 ${streakAlive()}日`),
-    h('span', { class: 'pill gem-pill' }, '💎 ', h('b', {}, String(s.gems))));
+    h('span', { class: 'pill gem-pill' }, h('span', { html: iconHTML('icon-gem', '💎', 'ダイヤ') }), ' ', h('b', {}, String(s.gems))));
 }
 
 export function render(el) {
@@ -70,19 +70,19 @@ export function render(el) {
       examCard(),
     ),
     h('nav', { class: 'bottom-nav' },
-      [['🎰', 'ガチャ', 'collection', { tab: 'gacha' }], ['🃏', 'コレクション', 'collection', {}], ['📊', '記録', 'records', {}], ['⚙️', '設定', 'settings', {}]].map(([em, label, to, p]) =>
-        btn(h('span', { class: 'nav-in' }, h('span', { class: 'nav-em' }, em), h('span', {}, label),
+      [['🎰', 'ガチャ', 'collection', { tab: 'gacha' }, 'gacha'], ['🃏', 'コレクション', 'collection', {}, 'collection'], ['📊', '記録', 'records', {}, 'records'], ['⚙️', '設定', 'settings', {}, 'settings']].map(([em, label, to, p, key]) =>
+        btn(h('span', { class: 'nav-in' }, h('span', { class: 'nav-em', html: iconHTML(`nav-${key}`, em, label) }), h('span', {}, label),
           // 10連ぶんの💎がたまったら、吹き出しでお知らせ
           label === 'ガチャ' && (gachaTickets() > 0 || s.gems >= GACHA10_COST) ? h('span', { class: 'nav-bubble' }, gachaTickets() > 0 ? `🎟 券 ×${gachaTickets()}` : '10連できるぞ！') : null), () => go(to, p), `nav${label === 'ガチャ' ? ' nav-gacha' : ''}`))),
   );
   // ログインボーナス（その日はじめて）: ガチャ券。7日カレンダーで今日の位置を見せる
   if (lb) {
     sfx('coin');
-    const cal = h('div', { class: 'lb-cal' }, LOGIN_CAL.map((n, i) => h('div', { class: `lb-day${i + 1 < lb.day ? ' past' : i + 1 === lb.day ? ' now' : ''}${i === LOGIN_CAL.length - 1 ? ' big' : ''}` }, h('small', {}, `${i + 1}日目`), h('b', {}, `🎟×${n}`))));
+    const cal = h('div', { class: 'lb-cal' }, LOGIN_CAL.map((n, i) => h('div', { class: `lb-day${i + 1 < lb.day ? ' past' : i + 1 === lb.day ? ' now' : ''}${i === LOGIN_CAL.length - 1 ? ' big' : ''}` }, h('small', {}, `${i + 1}日目`), h('b', { html: `${iconHTML('icon-ticket', '🎟', 'ガチャ券')}×${n}` }))));
     modal({
       title: '🎁 ログインボーナス',
       body: h('div', { class: 'modal-body center' },
-        h('div', { class: 'lb-get' }, `🎟 ガチャ券 ×${lb.got}`),
+        h('div', { class: 'lb-get', html: `${iconHTML('icon-ticket', '🎟', '')} ガチャ券 ×${lb.got}` }),
         h('p', {}, `連続 ${lb.count}日目！ いま ${lb.total}枚持ってる`),
         cal,
         h('small', { class: 'note' }, lb.day === LOGIN_CAL.length ? '7日目達成！ 明日からまた1日目。' : `明日も開くと 🎟×${lb.next}（7日目は ×${LOGIN_CAL[LOGIN_CAL.length - 1]}）。1日あけると1日目にもどるよ`)),

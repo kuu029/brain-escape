@@ -6,10 +6,12 @@ import { UNIT } from '../units/registry.js';
 import { backdrop } from '../ui/deco.js';
 import { GACHA_TYPES, CONSUMABLE, toolStock, gachaTickets, gacha, gachaCost, GACHA_COST, GACHA5_COST, GACHA10_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX, equippedTool, equipTool } from '../game/progress.js';
 import { SUMMON, gaugeNeed } from '../game/engine.js';
-import { cardSprite, towerSprite, spriteHTML } from '../game/art.js';
+import { cardSprite, towerSprite, spriteHTML, iconHTML, hasArt } from '../game/art.js';
 import { go } from '../core/router.js';
 import { topBar } from './home.js';
 import { sfx } from '../core/sound.js';
+import { CHAL_BETS, CHAL_MAX, chalLeft, startChal } from '../game/flowchal.js';
+import { chalTable } from './memory.js';
 import { REWARD, EXCHANGE, RGACHA_COST, RGACHA_RATES, rewardState, rewardTickets, exchangeReward, rewardGacha, useReward } from '../game/reward.js';
 
 const RARE = { 1: 'ノーマル', 2: 'レア', 3: 'スーパーレア', 4: 'レジェンド' };
@@ -24,10 +26,35 @@ function itemView(it) {
       text: it.starUp ? `★${star} に強化！ 光り方がもっと派手になった。` : 'タワーの見た目が変わる！ スキン欄で使えるよ。ダブると★が上がる。',
     };
   }
-  if (it.kind === 'reward') return { name: REWARD[it.id].name, html: `<span class="rw-big">${REWARD[it.id].emoji}</span>`, text: `カラーフィルタを ${REWARD[it.id].min}分 はずしてもらえる！「ごほうび」タブで使えるよ` };
+  if (it.kind === 'reward') return { name: REWARD[it.id].name, html: `<span class="rw-big">${iconHTML(`reward-${it.id}`, REWARD[it.id].emoji, REWARD[it.id].name)}</span>`, text: `カラーフィルタを ${REWARD[it.id].min}分 はずしてもらえる！「ごほうび」タブで使えるよ` };
   if (it.kind === 'gem') return { name: `はずれ… 💎${it.gems} もどった`, html: '<span class="rw-big">💎</span>', text: 'つぎこそ！' };
   const c = CARDS.find((x) => x.id === it.id);
   return { name: c.name, html: cardSprite(c.id), text: c.text };
+}
+
+// 並べ替えチャレンジ: 教科と、かける💎をえらんで始める
+async function chalStart(s) {
+  if (chalLeft() <= 0) return toast('今日のチャレンジは3回やったよ。また明日！', 2000);
+  let subj = 'soc';
+  let bet = CHAL_BETS.find((b) => s.gems >= b) ? CHAL_BETS.filter((b) => s.gems >= b)[0] : CHAL_BETS[0];
+  const body = h('div', { class: 'modal-body fc-start' });
+  const paint = () => {
+    const seg = (items, cur, set) => h('div', { class: 'ac-seg' }, items.map(([v, label, ok = true]) => h('button', { class: `ac-opt${cur === v ? ' on' : ''}${ok ? '' : ' poor'}`, type: 'button', onclick: () => { set(v); sfx('tap'); paint(); } }, label)));
+    body.replaceChildren(
+      h('p', { class: 'note' }, '「流れでつなげる」（年表・時代・原因と結果など）を10問。正解数で、かけた💎が何倍かになって返ってくる。まちがいが多いと、へる…！ 順番ガイドはなし。'),
+      h('b', {}, '教科'), seg([['soc', '🗾 社会'], ['sci', '🔬 理科']], subj, (v) => { subj = v; }),
+      h('b', {}, `かける💎（持っている 💎${s.gems}）`), seg(CHAL_BETS.map((b) => [b, `💎${b}`, s.gems >= b]), bet, (v) => { bet = v; }),
+      h('b', {}, '正解数と倍率'), chalTable(),
+      h('small', { class: 'note' }, `とちゅうでやめると、かけた💎はもどらない。1日${CHAL_MAX}回まで（今日あと${chalLeft()}回）`));
+  };
+  paint();
+  const go1 = await modal({ title: '🎲 並べ替えチャレンジ', body, buttons: [{ label: 'やめる', value: false }, { label: 'チャレンジ！', value: true, cls: 'primary' }] });
+  if (!go1) return;
+  if (s.gems < bet) return toast(`💎が足りない（あと ${bet - s.gems}）`);
+  if (!startChal(bet)) return toast('今日はもうできないよ');
+  save();
+  sfx('coin');
+  go('memory', { phase: 'flow', subject: subj, bet });
 }
 
 // ごほうびタブ: 解除券の交換・ごほうびガチャ・使う（使ったら大きく表示して、おうちの人に見せる）
@@ -59,7 +86,7 @@ function rewardTab(s) {
     h('p', { class: 'center' }, `💎 ${s.gems}`),
     h('h3', { class: 'sec' }, '🎫 持っている券'),
     h('div', { class: 'rw-list' }, Object.entries(REWARD).map(([id, r]) => h('div', { class: `rw-row r${r.rarity}` },
-      h('span', { class: 'rw-em' }, r.emoji), h('div', {}, h('b', {}, r.name), h('small', {}, `× ${T[id] || 0} 枚`)),
+      h('span', { class: 'rw-em', html: iconHTML(`reward-${id}`, r.emoji, r.name) }), h('div', {}, h('b', {}, r.name), h('small', {}, `× ${T[id] || 0} 枚`)),
       btn('使う', () => use(id), `small ${T[id] ? 'primary' : 'ghost'}`)))),
     h('h3', { class: 'sec' }, '💱 💎で交換（確実）'),
     h('div', { class: 'gacha-btns' }, Object.entries(EXCHANGE).map(([id, cost]) => btn(`${REWARD[id].name} 💎${cost}`, () => { if (exchangeReward(id)) { sfx('coin'); toast(`${REWARD[id].name}をゲット！`); go('collection', { tab: 'reward' }); } else toast(`💎が足りない（あと ${cost - s.gems}）`); }, s.gems >= cost ? 'primary' : 'ghost'))),
@@ -132,7 +159,7 @@ function gachaStage(results) {
   });
 }
 
-export function render(el, { tab = 'cards', gtype = 'normal' } = {}) {
+export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
   const s = S();
   const tabs = [['cards', '🃏 カード'], ['gacha', '🎰 ガチャ'], ['skins', '🎨 スキン'], ['tools', '🧰 道具'], ['reward', '🌈 ごほうび']];
   const owned = Object.keys(s.collection.cards).length;
@@ -182,12 +209,18 @@ export function render(el, { tab = 'cards', gtype = 'normal' } = {}) {
       go('collection', { tab: 'gacha', gtype: type });
     };
     const total = T.rates.reduce((a, r) => a + r.weight, 0);
+    const machine = (k) => spriteHTML(hasArt(`gacha-machine-${k}`) ? `gacha-machine-${k}` : 'gacha-machine', GACHA_TYPES[k].emoji, 'ガチャマシン');
     content.append(h('div', { class: 'gacha-box' },
-      h('div', { class: 'gt-seg' }, Object.entries(GACHA_TYPES).map(([k, t]) => h('button', { class: `gt-opt${k === type ? ' on' : ''}`, type: 'button', onclick: () => go('collection', { tab: 'gacha', gtype: k }) }, `${t.emoji} ${t.name}`)),
-        h('button', { class: 'gt-opt rw', type: 'button', onclick: () => go('collection', { tab: 'reward' }) }, '🌈 ごほうび')),
-      h('div', { class: `gacha-machine gt-${type}`, html: spriteHTML('gacha-machine', T.emoji, 'ガチャマシン') }),
+      // ① ガチャの種類: 大きなカードで、えらんでいるものに色と「えらび中」
+      h('h3', { class: 'g-sec' }, h('span', { class: 'g-num' }, '1'), 'ガチャをえらぶ'),
+      h('div', { class: 'gt-pick' }, Object.entries(GACHA_TYPES).map(([k, t]) => h('button', { class: `gt-card gt-${k}${k === type ? ' on' : ''}`, type: 'button', 'aria-pressed': String(k === type), onclick: () => { sfx('tap'); go('collection', { tab: 'gacha', gtype: k }); } },
+        k === type && h('span', { class: 'gt-badge' }, 'えらび中'),
+        h('span', { class: 'gt-mini', html: machine(k) }), h('b', {}, t.name), h('small', {}, `1回 💎${t.cost[1]}`)))),
+      h('h3', { class: 'g-sec' }, h('span', { class: 'g-num' }, '2'), `${T.emoji} ${T.name}ガチャを回す`),
+      h('div', { class: `gacha-pane gt-${type}` },
+      h('div', { class: `gacha-machine gt-${type}`, html: spriteHTML(hasArt(`gacha-machine-${type}`) ? `gacha-machine-${type}` : 'gacha-machine', T.emoji, 'ガチャマシン') }),
       h('p', { class: 'gt-desc' }, T.desc),
-      h('p', {}, `💎 ${s.gems}　🎟 ガチャ券 ${gachaTickets()}　🧩 かけら ${shards}`),
+      h('p', { html: `${iconHTML('icon-gem', '💎', 'ダイヤ')} ${s.gems}　${iconHTML('icon-ticket', '🎟', 'ガチャ券')} ガチャ券 ${gachaTickets()}　🧩 かけら ${shards}` }),
       // ガチャ券（ログインボーナス・ドロップ）: ノーマルだけ。1枚で1回。5枚あれば5連も
       type === 'normal' && gachaTickets() > 0 && h('div', { class: 'gacha-btns tix' },
         btn(`🎟 券で1回（のこり ${gachaTickets()}枚）`, () => pull(1, true), 'primary'),
@@ -199,7 +232,15 @@ export function render(el, { tab = 'cards', gtype = 'normal' } = {}) {
         type === 'normal' && h('div', {}, '★1〜2 キャラ ／ ★3〜4 キャラかタワースキン'),
         type === 'ally' && h('div', {}, '★3・★4 のなかまは技が強い（ゲージが多くいる）'),
         h('div', {}, 'スキンがダブると★アップ（最大★5）。キャラのダブりは 🧩かけら＋召喚チケット'),
-        h('div', {}, 'かけらはスキン欄で、スキンとの交換や★アップに使える'))));
+        h('div', {}, 'かけらはスキン欄で、スキンとの交換や★アップに使える'))),
+      // ③ 💎をふやす・使う（ガチャとは別の遊び）
+      h('h3', { class: 'g-sec' }, h('span', { class: 'g-num' }, '3'), 'ほかの遊び'),
+      h('div', { class: 'g-extra' },
+        h('button', { class: 'gx-card gx-chal', type: 'button', onclick: () => chalStart(s) },
+          h('span', { class: 'gx-em' }, '🎲'), h('span', { class: 'gx-txt' }, h('b', {}, '並べ替えチャレンジ'), h('small', {}, `💎をかけて社会・理科の「流れ」10問。正解が多いほど最大3倍！（今日あと${chalLeft()}回）`))),
+        h('button', { class: 'gx-card gx-rw', type: 'button', onclick: () => go('collection', { tab: 'reward' }) },
+          h('span', { class: 'gx-em' }, '🌈'), h('span', { class: 'gx-txt' }, h('b', {}, 'ごほうび（解除券）'), h('small', {}, 'カラーフィルタを少しはずしてもらえる券'))))));
+    if (chal) setTimeout(() => chalStart(s), 50);
   } else if (tab === 'skins') {
     // タワーごとにスキンを選ぶ。ダブり（またはかけら）で ★1→★5
     const ts = skinState();
@@ -235,13 +276,13 @@ export function render(el, { tab = 'cards', gtype = 'normal' } = {}) {
         // まだ持っていない道具は「どこでもらえるか」を出す（数学の単元を先に）
         const from = Object.values(UNIT).filter((u) => u.tool === id && !u.comingSoon).sort((a, b) => ((a.subject || 'math') === 'math' ? 0 : 1) - ((b.subject || 'math') === 'math' ? 0 : 1))[0];
         return h(ok ? 'button' : 'div', { class: `tool-row ${ok ? '' : 'locked'}${on === id ? ' on' : ''}`, ...(ok ? { type: 'button', onclick: () => { equipTool(id); sfx('build'); go('collection', { tab: 'tools' }); } } : {}) },
-          h('span', { class: 'c-em' }, have ? t.emoji : '🔒'),
+          h('span', { class: 'c-em', html: have ? iconHTML(`tool-${id}`, t.emoji, t.name) : '🔒' }),
           h('div', {}, h('b', {}, t.name, left !== null && have ? `（のこり ${left}枚・使い捨て）` : ''), h('small', {}, have ? t.desc : from ? `「${from.title}」の訓練を全部クリアでゲット` : t.desc),
             left === 0 && have && h('small', { class: 'warn-text' }, 'ウェーブに勝つと、たまにドロップするよ')),
           on === id && h('span', { class: 'm-ok tr-on' }, '🎒 持っていく'));
       })));
   }
-  backdrop(el, 'cell');
+  backdrop(el, 'cell', 'bg-collection');
   el.append(topBar(() => go('home')),
     h('div', { class: 'tabs' }, tabs.map(([id, label]) => h('button', { class: `tab ${id === tab ? 'on' : ''}`, type: 'button', onclick: () => go('collection', { tab: id }) }, label))),
     content);

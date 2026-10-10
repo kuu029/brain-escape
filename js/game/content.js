@@ -125,6 +125,10 @@ export const CARDS = [
   { id: 'kingyo', emoji: '🐠', name: 'キンギョ・ザクザクーノ', rarity: 3, gacha: true, text: '金魚すくいの名人。すくうのはなぜかコイン。' },
   { id: 'dragon', emoji: '🐉', name: 'ドラゴン・ケイサンキング', rarity: 4, gacha: true, text: '九九を火で吐く伝説の竜。7の段だけ苦手。' },
   { id: 'ufo', emoji: '🛸', name: 'UFO・アブダクター', rarity: 4, gacha: true, text: '敵をビームで吸いこんで、どこかへ連れていく。' },
+  // ★4 追加（それぞれ特別な力つき）
+  { id: 'eisei', emoji: '🛰️', name: 'エイセイ・ミハリーノ', rarity: 4, gacha: true, text: '宇宙から監獄をまるごと見はる人工衛星。どこにいる看守もねらい撃ち。' },
+  { id: 'daruma', emoji: '🔴', name: 'ダルマ・ナナコロビーノ', rarity: 4, gacha: true, text: '七回転んで八回起きる不屈のダルマ。こわされても1回だけ起き上がる。' },
+  { id: 'shinkansen', emoji: '🚄', name: 'シンカンセン・ノゾミーノ', rarity: 4, gacha: true, text: '超特急で道を逆走する。2マスずつ進んで、ぶつかった看守をはね飛ばす。' },
   // 暗号室（暗号ディフェンス）のボス。倒すとカード（なかまにすると必殺技）
   { id: 'golem', emoji: '📚', name: 'ジショ・ゴーレム', rarity: 3, text: '辞書を積み上げてできた巨人。ページをめくる音で攻撃してくる。' },
   { id: 'bushou', emoji: '🏯', name: 'ブショー・ネンピョーノ', rarity: 3, text: '年表を巻物にして背負った武将。年号をまちがえると怒る。' },
