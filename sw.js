@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = '3881346181';
+const VERSION = '13386c75be';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -99,12 +99,17 @@ const ASSETS = [
   './art/boss-sc-density.png',
   './art/boss-sc-gene.png',
   './art/boss-sc-humid.png',
+  './art/boss-sc-ion.png',
+  './art/boss-sc-lens.png',
   './art/boss-sc-ohm.png',
   './art/boss-sc-power.png',
   './art/boss-sc-pressure.png',
   './art/boss-sc-quake.png',
   './art/boss-sc-react.png',
   './art/boss-sc-sky.png',
+  './art/boss-sc-solub.png',
+  './art/boss-sc-sound.png',
+  './art/boss-sc-spring.png',
   './art/boss-sc-work.png',
   './art/boss-signed-numbers.png',
   './art/boss-similarity.png',
@@ -113,6 +118,7 @@ const ASSETS = [
   './art/boss-so-chrono.png',
   './art/boss-so-climate.png',
   './art/boss-so-jisa.png',
+  './art/boss-so-map.png',
   './art/boss-so-money.png',
   './art/boss-so-scale.png',
   './art/boss-so-stat.png',
@@ -265,6 +271,7 @@ const ASSETS = [
   './js/game/missions.js',
   './js/game/progress.js',
   './js/game/reward.js',
+  './js/game/unlock.js',
   './js/game/waves.js',
   './js/main.js',
   './js/memory/courses.js',

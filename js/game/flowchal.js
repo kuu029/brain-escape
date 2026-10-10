@@ -1,6 +1,6 @@
 // 並べ替えチャレンジ: 💎をかけて「流れでつなげる」（社会・理科）を10問。正解数で倍率が決まる
 //   たくさん正解すると💎がふえる。まちがいが多いと、かけた💎がへる（0〜3問正解なら全部なくなる）
-//   1日 CHAL_MAX 回まで（💎を集めるためだけに何十回もやらないように）。とちゅうでやめると、かけた💎はもどらない
+//   2時間ごとに CHAL_MAX 回まで（0時・2時・4時…で回数がもどる）。とちゅうでやめると、かけた💎はもどらない
 import { S, today } from '../core/store.js';
 
 export const CHAL_BETS = [10, 30, 50];
@@ -9,10 +9,16 @@ export const CHAL_MAX = 3;
 export const CHAL_MULT = [0, 0, 0, 0, 0.5, 0.8, 1.2, 1.5, 2, 2.5, 3];
 export const chalMult = (ok) => CHAL_MULT[Math.max(0, Math.min(10, ok))];
 
+export const CHAL_HOURS = 2;
+// いまの2時間の区切り（例: 2030-01-05#7 = 14時〜16時）
+export const chalSlot = (d = new Date()) => `${today()}#${Math.floor(d.getHours() / CHAL_HOURS)}`;
+// 次に回数がもどる時刻（時）
+export const chalNextHour = (d = new Date()) => (Math.floor(d.getHours() / CHAL_HOURS) + 1) * CHAL_HOURS % 24;
 function state() {
   const s = S();
   const c = (s.flowChal ||= { date: '', plays: 0, best: 0, log: [] });
-  if (c.date !== today()) { c.date = today(); c.plays = 0; }
+  const slot = chalSlot();
+  if (c.date !== slot) { c.date = slot; c.plays = 0; }
   return c;
 }
 export const chalLeft = () => CHAL_MAX - state().plays;

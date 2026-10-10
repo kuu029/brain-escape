@@ -1,6 +1,6 @@
 // コレクション: カード図鑑・ガチャ（カード＋スキン）・スキン・道具
 import { h, btn, modal, toast, sleep, confirmBox } from '../core/ui.js';
-import { S, save } from '../core/store.js';
+import { S, save, saveNow } from '../core/store.js';
 import { MEM_BOSS_CARDS, CARDS, SKINS, TOOLS, BOSS_CARD, SKIN_ITEMS, TOWER_TYPES, TOWER_LOOK, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from '../game/content.js';
 import { UNIT } from '../units/registry.js';
 import { backdrop } from '../ui/deco.js';
@@ -10,9 +10,10 @@ import { cardSprite, towerSprite, spriteHTML, iconHTML, hasArt } from '../game/a
 import { go } from '../core/router.js';
 import { topBar } from './home.js';
 import { sfx } from '../core/sound.js';
-import { CHAL_BETS, CHAL_MAX, chalLeft, startChal } from '../game/flowchal.js';
+import { CHAL_BETS, CHAL_MAX, CHAL_HOURS, chalLeft, chalNextHour, startChal } from '../game/flowchal.js';
 import { isEvent } from '../game/event.js';
 import { chalTable } from './memory.js';
+import { unlockCode, shortcutUrl, SHORTCUT_NAME } from '../game/unlock.js';
 import { REWARD, EXCHANGE, RGACHA_COST, RGACHA_RATES, rewardState, rewardTickets, exchangeReward, rewardGacha, useReward } from '../game/reward.js';
 
 const RARE = { 1: 'ノーマル', 2: 'レア', 3: 'スーパーレア', 4: 'レジェンド' };
@@ -35,7 +36,7 @@ function itemView(it) {
 
 // 並べ替えチャレンジ: 教科と、かける💎をえらんで始める
 async function chalStart(s) {
-  if (chalLeft() <= 0) return toast('今日のチャレンジは3回やったよ。また明日！', 2000);
+  if (chalLeft() <= 0) return toast(`チャレンジは${CHAL_MAX}回やったよ。${chalNextHour()}時にまたできる！`, 2200);
   let subj = 'soc';
   let bet = CHAL_BETS.find((b) => s.gems >= b) ? CHAL_BETS.filter((b) => s.gems >= b)[0] : CHAL_BETS[0];
   const body = h('div', { class: 'modal-body fc-start' });
@@ -46,7 +47,7 @@ async function chalStart(s) {
       h('b', {}, '教科'), seg([['soc', '🗾 社会'], ['sci', '🔬 理科']], subj, (v) => { subj = v; }),
       h('b', {}, `かける💎（持っている 💎${s.gems}）`), seg(CHAL_BETS.map((b) => [b, `💎${b}`, s.gems >= b]), bet, (v) => { bet = v; }),
       h('b', {}, '正解数と倍率'), chalTable(),
-      h('small', { class: 'note' }, `とちゅうでやめると、かけた💎はもどらない。1日${CHAL_MAX}回まで（今日あと${chalLeft()}回）`));
+      h('small', { class: 'note' }, `とちゅうでやめると、かけた💎はもどらない。${CHAL_HOURS}時間ごとに${CHAL_MAX}回まで（あと${chalLeft()}回・${chalNextHour()}時にもどる）`));
   };
   paint();
   const go1 = await modal({ title: '🎲 並べ替えチャレンジ', body, buttons: [{ label: 'やめる', value: false }, { label: 'チャレンジ！', value: true, cls: 'primary' }] });
@@ -69,6 +70,26 @@ function rewardTab(s) {
     const rec = useReward(id);
     if (!rec) return;
     sfx('win');
+    // 合言葉が設定されていれば、ショートカット用の解除コードを出す（白黒の解除と、時間が来たら戻すのは iPhone のショートカットがする）
+    const secret = S().settings.unlockSecret;
+    if (secret) {
+      const code = await unlockCode(secret, new Date(rec.at), rec.min);
+      rec.code = code;
+      saveNow();
+      const copy = async () => { try { await navigator.clipboard.writeText(code); toast('コードをコピーした'); } catch { toast('コピーできなかった。コードを見て入力してね'); } };
+      await copy();
+      await modal({
+        title: '🌈 カラーフィルタ解除',
+        body: h('div', { class: 'modal-body center rw-show' },
+          h('div', { class: 'rw-min' }, `${rec.min}分`),
+          h('div', { class: 'rw-code' }, code),
+          h('p', { class: 'note' }, `コードはコピーしたよ。ホーム画面の「${SHORTCUT_NAME}」をタップするか、下のボタンを押してね。`),
+          h('small', { class: 'note' }, 'コードは10分以内・1回だけ使える。時間が来たら白黒にもどるよ。')),
+        buttons: [{ label: 'とじる', value: false }, { label: '▶ ショートカットで解除', value: true, cls: 'primary' }],
+      }).then((v) => { if (v) location.href = shortcutUrl(code); });
+      go('collection', { tab: 'reward' });
+      return;
+    }
     await modal({
       title: '🌈 カラーフィルタ解除',
       body: h('div', { class: 'modal-body center rw-show' }, h('div', { class: 'rw-min' }, `${rec.min}分`), h('p', {}, `${fmt(rec.at)} に使用`), h('small', { class: 'note' }, 'おうちの人へ: この時間だけカラーフィルタをはずしてあげてください（時間はおうちの人が測ります）')),
@@ -95,7 +116,7 @@ function rewardTab(s) {
     btn(`1回 💎${RGACHA_COST}`, pullR, 'boss'),
     h('div', { class: 'rates' }, h('b', {}, '出るもの'), ...RGACHA_RATES.map((r) => h('div', {}, `${r.id === 'gem' ? `はずれ（💎${r.gems} もどる）` : REWARD[r.id].name}：${r.weight}%`))),
     log.length > 0 && h('h3', { class: 'sec' }, '📜 使った記録'),
-    log.length > 0 && h('div', { class: 'rw-log' }, log.slice(0, 10).map((x) => h('div', {}, `${fmt(x.at)}　${x.min}分`))));
+    log.length > 0 && h('div', { class: 'rw-log' }, log.slice(0, 10).map((x) => h('div', {}, `${fmt(x.at)}　${x.min}分${x.code ? `　${x.code}` : ''}`))));
 }
 
 // カプセルを開ける演出（全画面）
@@ -262,7 +283,7 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
       h('h3', { class: 'g-sec' }, h('span', { class: 'g-num' }, '3'), 'ほかの遊び'),
       h('div', { class: 'g-extra' },
         h('button', { class: 'gx-card gx-chal', type: 'button', onclick: () => chalStart(s) },
-          h('span', { class: 'gx-em' }, '🎲'), h('span', { class: 'gx-txt' }, h('b', {}, '並べ替えチャレンジ'), h('small', {}, `💎をかけて社会・理科の「流れ」10問。正解が多いほど最大3倍！（今日あと${chalLeft()}回）`))),
+          h('span', { class: 'gx-em' }, '🎲'), h('span', { class: 'gx-txt' }, h('b', {}, '並べ替えチャレンジ'), h('small', {}, `💎をかけて社会・理科の「流れ」10問。正解が多いほど最大3倍！（あと${chalLeft()}回・${chalNextHour()}時にもどる）`))),
         h('button', { class: 'gx-card gx-rw', type: 'button', onclick: () => go('collection', { tab: 'reward' }) },
           h('span', { class: 'gx-em' }, '🌈'), h('span', { class: 'gx-txt' }, h('b', {}, 'ごほうび（解除券）'), h('small', {}, 'カラーフィルタを少しはずしてもらえる券'))))));
     if (chal) setTimeout(() => chalStart(s), 50);

@@ -1644,3 +1644,4 @@ svg.climate { width: 100%; max-width: 320px; height: auto; display: block; margi
 .kb-m { position: absolute; left: 1px; bottom: -2px; line-height: 1; font-size: 14px; color: #ff8a5c; font-weight: 800; }
 .mapsym { font-size: 64px; line-height: 1; text-align: center; padding: 6px 0; font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif; }
 svg.mapdir { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto; }
+.rw-code { font-family: ui-monospace, Menlo, monospace; font-size: 26px; font-weight: 800; letter-spacing: .06em; color: #ffd640; margin: 6px 0 10px; user-select: all; -webkit-user-select: all; }

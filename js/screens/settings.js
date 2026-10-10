@@ -31,6 +31,29 @@ function versionBox() {
   })();
   return box;
 }
+// ごほうびの合言葉: 入れるときだけ見える。保存したあとは「設定ずみ」とだけ出す
+function unlockBox(s) {
+  const box = h('div', { class: 'up-btns' });
+  const paint = () => {
+    box.replaceChildren(s.settings.unlockSecret
+      ? h('p', { class: 'note' }, '✅ 合言葉は設定ずみ（変えると、ショートカットの合言葉も変える必要がある）')
+      : h('p', { class: 'note warn-text' }, 'まだ設定されていない（設定するまでは、これまでどおり「おうちの人に見せる」方式）'),
+    btn(s.settings.unlockSecret ? '合言葉を変える' : '合言葉を設定する', async () => {
+      const inp = h('input', { class: 'mr-input', type: 'password', autocomplete: 'off', placeholder: '8文字以上（英数字）' });
+      const ok = await modal({ title: '🔐 合言葉', body: h('div', { class: 'modal-body' }, h('p', { class: 'note' }, '弟さんに見られないように入れてください。ショートカットにも同じ合言葉を入れます。'), inp), buttons: [{ label: 'やめる', value: false }, { label: '保存', value: true, cls: 'primary' }] });
+      if (!ok) return;
+      const v = inp.value.trim();
+      if (v.length < 8 || !/^[A-Za-z0-9]+$/.test(v)) return toast('英数字8文字以上にしてね', 2200);
+      s.settings.unlockSecret = v;
+      save();
+      toast('合言葉を保存した');
+      paint();
+    }, 'ghost'));
+  };
+  paint();
+  return box;
+}
+
 // 最新版にする: キャッシュとオフライン用の仕組みを消して、サーバーから読みこみ直す（勉強の記録は消えない）
 async function forceUpdate() {
   if (!(await confirmBox('最新版にする', 'アプリのファイルをサーバーから読みこみ直します。勉強の記録・💎・コレクションは消えません。', '読みこみ直す', 'やめる'))) return;
@@ -135,6 +158,9 @@ export function render(el) {
         btn('📂 ファイルから復元', () => fileIn.click(), 'ghost'),
         btn('📝 文字から復元', pasteBox, 'ghost')),
       fileIn,
+      h('h3', { class: 'sec' }, '🔐 ごほうびの合言葉（おうちの人用）'),
+      h('p', { class: 'note' }, '解除券を使うと、この合言葉から「解除コード」を作る。iPhone のショートカット「ごほうび解除」に同じ合言葉を入れておくと、コードを確かめて、券の分数だけ白黒を解除する。'),
+      unlockBox(s),
       h('h3', { class: 'sec' }, '📲 アプリの版'),
       h('p', { class: 'note' }, 'アップロードしたのに画面が変わらないときは、ここで確認して「最新版にする」を押す。'),
       versionBox(),

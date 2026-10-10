@@ -194,7 +194,9 @@ export const cleared = (id) => !!(state.units[id] && (state.units[id].bossCleare
 // ---------- バックアップ ----------
 export function exportText() {
   saveNow();
-  return JSON.stringify({ app: APP_ID, kind: 'backup', exportedAt: new Date().toISOString(), data: state });
+  // ごほうびの合言葉はバックアップに入れない（弟さんが文字のバックアップから読めてしまうので）
+  const data = { ...state, settings: { ...state.settings, unlockSecret: undefined } };
+  return JSON.stringify({ app: APP_ID, kind: 'backup', exportedAt: new Date().toISOString(), data });
 }
 export function importText(text) {
   let obj;
@@ -208,7 +210,9 @@ export function importText(text) {
     return { ok: false, error: 'このアプリのバックアップではないみたい。' };
   }
   if (data.version > VERSION) return { ok: false, error: '新しいバージョンのアプリで作ったバックアップです。' };
+  const secret = state?.settings?.unlockSecret; // 合言葉は、いまの端末のものをそのまま使う
   state = migrate(data);
+  if (secret) state.settings.unlockSecret = secret;
   saveNow();
   return { ok: true };
 }

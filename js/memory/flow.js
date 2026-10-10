@@ -46,6 +46,25 @@ function fieldQ(rng) {
   return { type: 'field', stem: `${c.q}\n${c.a}`, ask: 'どの分野の用語？', ...textChoice(rng, right, wrongs), why: `${c.q} は ${right}の用語。`, check: { kind: 'flow-field', id: c.id, field: right } };
 }
 
+// 仲間はずれ: 同じ分野（理科）・同じ時代（社会）の用語3つに、ちがう1つをまぜる。組み合わせが多いので、答えを丸暗記しにくい
+export function oddQ(rng, groups, what) {
+  const byG = {};
+  for (const c of CARDS) if (groups[c.deck] && c.read !== null) (byG[groups[c.deck]] ||= []).push(c);
+  const names = Object.keys(byG);
+  const g = rng.pick(names);
+  const og = rng.pick(names.filter((n) => n !== g));
+  const same = rng.shuffle([...byG[g]]).filter((c, i, a) => a.findIndex((x) => x.q === c.q) === i).slice(0, 3);
+  const odd = rng.pick(byG[og].filter((c) => !same.some((x) => x.q === c.q)));
+  return {
+    type: 'odd', stem: '仲間はずれはどれ？', ask: `3つは同じ${what}。1つだけちがう${what}のもの`,
+    ...textChoice(rng, odd.q, same.map((c) => ({ t: c.q }))),
+    why: [...same.map((c) => `${c.q}（${g}）`), `${odd.q}（${og}）← これだけ${og}`].join('\n'),
+    check: { kind: 'flow-odd', what, ids: same.map((c) => c.id), odd: odd.id },
+  };
+}
+const oddSoc = (rng) => oddQ(rng, ERA, '時代');
+const oddSci = (rng) => oddQ(rng, FIELD, '分野');
+
 // ---------- つながりの問題（データは下の表。答えは表のとおり、選択肢は短く） ----------
 // [問題文, 答え, ひとこと解説]
 export const REGION = ['北海道地方', '東北地方', '関東地方', '中部地方', '近畿地方', '中国・四国地方', '九州地方'];
@@ -365,8 +384,8 @@ function linkQ(rng, key) {
 
 // 社会 11種類・理科 8種類を同じくらいの割合で
 const L = (key) => (rng) => linkQ(rng, key);
-const SOC_Q = [orderQ, firstQ, eraQ, L('region'), L('cont'), L('power'), L('cause-soc'), L('actor'), L('cause-econ'), L('climate'), L('jclimate')];
-const SCI_Q = [fieldQ, L('unit'), L('class'), L('cause-sci'), L('organ'), L('gas'), L('formula'), L('rock')];
+const SOC_Q = [orderQ, firstQ, eraQ, oddSoc, oddSoc, L('region'), L('cont'), L('power'), L('cause-soc'), L('actor'), L('cause-econ'), L('climate'), L('jclimate')];
+const SCI_Q = [fieldQ, oddSci, oddSci, oddSci, L('unit'), L('class'), L('cause-sci'), L('organ'), L('gas'), L('formula'), L('rock')];
 export function flowQuestion(subject, rng) {
   return rng.pick(subject === 'sci' ? SCI_Q : SOC_Q)(rng);
 }
@@ -385,7 +404,7 @@ const GUIDES = {
   rock: { title: '堆積岩は粒の大きさで（大 → 小）', steps: ['れき（2mm以上）', '砂', '泥（0.06mm以下）'] },
 };
 export function flowGuide(p) {
-  if (['order', 'first', 'era', 'cause-soc'].includes(p.type)) return GUIDES.era;
+  if (['order', 'first', 'era', 'cause-soc'].includes(p.type) || (p.type === 'odd' && p.check.what === '時代')) return GUIDES.era;
   if (p.type === 'region' || p.type === 'power') return GUIDES[p.type];
   if (p.type === 'class') return ANIMAL.includes(p.check.ans) ? GUIDES.animal : GUIDES.plant;
   if (p.type === 'organ') return GUIDES.organ;

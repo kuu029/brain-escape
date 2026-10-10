@@ -6,7 +6,7 @@ import { spriteHTML } from '../game/art.js';
 import { topBar } from './home.js';
 import { backdrop } from '../ui/deco.js';
 import { PITY } from '../game/progress.js';
-import { CHAL_MAX } from '../game/flowchal.js';
+import { CHAL_MAX, CHAL_HOURS } from '../game/flowchal.js';
 import { ALLY_MAX_LV } from '../game/engine.js';
 
 // 案内役の絵（art/guide-*.png。なければ 🐶）
@@ -57,7 +57,7 @@ export const TOPICS = [
   { id: 'chal', em: '🎲', title: '並べ替えチャレンジ', mood: 'think', say: 'これは勝負だ…！ 自信があるときにやるといい。', items: [
     '💎をかけて「流れでつなげる」を10問。正解数で倍率が決まる（10問で×3、7問で×1.5）',
     '0〜3問しか正解できないと、かけた💎は全部なくなる。とちゅうでやめても、もどらない',
-    `1日${CHAL_MAX}回まで`,
+    `${CHAL_HOURS}時間ごとに${CHAL_MAX}回まで（0時・2時・4時…で回数がもどる）`,
   ] },
   { id: 'reward', em: '🌈', title: 'ごほうび（解除券）', say: 'がんばったら、ちゃんとごほうびだ。', items: [
     '💎で交換するか、ごほうびガチャで当てると「カラーフィルタ解除券」がもらえる',

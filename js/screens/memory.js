@@ -223,7 +223,7 @@ function flowView(el, subject, bet = 0) {
       gemEl,
       chalTable(ok),
       bonusChips(bonus),
-      FC.chalLeft() > 0 ? btn(`🎲 もう1回（今日あと${FC.chalLeft()}回）`, () => go('collection', { tab: 'gacha', chal: 1 }), 'primary big') : h('p', { class: 'note center' }, '今日のチャレンジはおしまい。また明日！'),
+      FC.chalLeft() > 0 ? btn(`🎲 もう1回（あと${FC.chalLeft()}回）`, () => go('collection', { tab: 'gacha', chal: 1 }), 'primary big') : h('p', { class: 'note center' }, `この2時間のチャレンジはおしまい。${FC.chalNextHour()}時にまたできる！`),
       btn('🎰 ガチャへ', () => go('collection', { tab: 'gacha' }), 'ghost')));
     if (R.pay > 0) flyGems(R.pay + (bonus?.gems || 0), gemEl, 400);
   }
