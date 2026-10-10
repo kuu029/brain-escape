@@ -3,6 +3,7 @@ import { S, unitState, cleared, save, saveNow, today, dayDiff } from '../core/st
 import { UNIT, GEN, SUBJECTS, unitsOf } from '../units/registry.js';
 import { BOSS_CARD, BOSS_CARD_IDS, GACHA_CARDS, SKINS, CARDS, GACHA_RATES, TOWER_TYPES, SKIN_ITEMS, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from './content.js';
 import { bump } from './missions.js';
+import { setAllyLevelSource, ALLY_MAX_LV } from './engine.js';
 import { claimActivity } from './bonus.js';
 
 export function isUnlocked(id) {
@@ -143,14 +144,33 @@ export const GACHA_TYPES = {
   ally: { name: 'なかま特化', emoji: '🤝', cost: { 1: 70, 10: 630 }, rates: [{ rarity: 2, weight: 52, shards: 2 }, { rarity: 3, weight: 36, shards: 5 }, { rarity: 4, weight: 12, shards: 10 }], cards: true, skins: false, desc: '★2〜★4 のなかまだけ！ 高レアが出やすい' },
 };
 export const gachaCost = (n, type = 'normal') => GACHA_TYPES[type].cost[n] ?? (n === 10 ? GACHA10_COST : n === 5 ? GACHA5_COST : GACHA_COST * n);
-function rollOne(rand = Math.random, type = 'normal') {
+// ---------- なかまの育成 ----------
+// collection.allyLv = { id: レベル }。🧩かけらでレベルアップ（Lv1→5）
+export const ALLY_UP_COST = [0, 5, 10, 18, 30]; // いまの Lv → 次へ（Lv1→2 は 5 かけら）
+export const allyLv = (id) => S().collection.allyLv?.[id] || 1;
+export const allyUpCost = (id) => (allyLv(id) >= ALLY_MAX_LV ? null : ALLY_UP_COST[allyLv(id)]);
+export function levelUpAlly(id) {
+  const c = S().collection;
+  const cost = allyUpCost(id);
+  if (cost === null || !c.cards[id] || (c.shards || 0) < cost) return false;
+  c.shards -= cost;
+  (c.allyLv ||= {})[id] = allyLv(id) + 1;
+  saveNow();
+  return true;
+}
+setAllyLevelSource((id) => (S() ? allyLv(id) : 1));
+
+// 天井: その種類で★4 が出ないまま、この回数目になったら★4 確定（★4 が出たら数えなおし）
+export const PITY = { normal: 50, skin: 10, ally: 30 };
+export const pityLeft = (type = 'normal') => PITY[type] - ((S().collection.pity || {})[type] || 0);
+function rollOne(rand = Math.random, type = 'normal', force = 0) {
   const T = GACHA_TYPES[type];
   // その種類で出るものがない段は、くじから外す
   const poolOf = (rarity) => [
     ...(T.cards ? CARDS.filter((c) => GACHA_CARDS.includes(c.id) && c.rarity === rarity).map((c) => ({ kind: 'card', id: c.id })) : []),
     ...(T.skins ? SKIN_ITEMS.filter((sk) => sk.rarity === rarity).map((sk) => ({ kind: 'skin', id: sk.id })) : []),
   ];
-  const rates = T.rates.filter((r) => poolOf(r.rarity).length);
+  const rates = T.rates.filter((r) => poolOf(r.rarity).length && (!force || r.rarity === force));
   const total = rates.reduce((a, r) => a + r.weight, 0);
   let x = rand() * total;
   const tier = rates.find((r) => (x -= r.weight) < 0) || rates[0];
@@ -190,8 +210,11 @@ export function gacha(n = 1, { ticket = false, type = 'normal' } = {}) {
     s.gems -= cost;
   }
   const out = [];
+  const P = (s.collection.pity ||= {});
   for (let i = 0; i < n; i++) {
-    const r = rollOne(Math.random, type);
+    const r = rollOne(Math.random, type, (P[type] || 0) >= PITY[type] - 1 ? 4 : 0);
+    P[type] = r.rarity >= 4 ? 0 : (P[type] || 0) + 1;
+    s.collection.pulls = (s.collection.pulls || 0) + 1;
     let isNew;
     if (r.kind === 'card') isNew = addCard(r.id);
     let star = 0;

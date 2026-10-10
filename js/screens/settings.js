@@ -80,6 +80,13 @@ export function render(el) {
       h('section', { class: 'set-row' }, h('span', {}, '盤面の演出スピード'),
         h('button', { class: `toggle ${s.settings.fxFast ? 'on' : ''}`, type: 'button', onclick: () => { s.settings.fxFast = !s.settings.fxFast; save(); go('settings'); } }, s.settings.fxFast ? '⚡ はやい' : '🐢 ふつう')),
       h('section', { class: 'set-row' }, h('span', {}, `ニックネーム: ${s.nickname}`), btn('変更', rename, 'small')),
+      // 入試の日（ホームに「あと○日」を出す）
+      h('section', { class: 'set-row' }, h('span', {}, '📅 入試の日'), (() => {
+        const inp = h('input', { class: 'date-input', type: 'date', value: s.settings.examDate || '' });
+        inp.addEventListener('change', () => { s.settings.examDate = inp.value || null; save(); });
+        return inp;
+      })()),
+      h('p', { class: 'note' }, '公立高校の一般選抜（学力検査）の日を入れると、ホームに「入試まであと○日」が出るよ。'),
       h('h3', { class: 'sec' }, '💾 バックアップ'),
       h('p', { class: 'note' }, 'データはこのスマホの中だけに保存されている。Safari の履歴・Webサイトデータを消すと消えちゃうので、ときどきバックアップしておこう。'),
       h('div', { class: 'up-btns' },

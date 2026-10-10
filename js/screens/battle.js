@@ -178,7 +178,7 @@ export function render(el, params) {
       clearTimeout(armTimer);
       armTimer = setTimeout(() => { armed = null; paintTools(); }, 3500);
       sfx('tap');
-      toast(E.canSummon(st, id) ? `${c.name}：${E.SUMMON[id].desc}（もう1回タップで召喚）` : `${c.name}：${E.SUMMON[id].desc}（正解 ${E.gaugeNeed(id)} 回でゲージ満タン）`, 2400);
+      toast(E.canSummon(st, id) ? `${c.name}：${E.allyDesc(id)}（もう1回タップで召喚）` : `${c.name}：${E.allyDesc(id)}（正解 ${E.gaugeNeed(id)} 回でゲージ満タン）`, 2400);
       paintTools();
       return;
     }

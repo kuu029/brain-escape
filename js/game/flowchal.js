@@ -33,6 +33,7 @@ export function settleChal(bet, ok) {
   const c = state();
   S().gems += pay;
   c.best = Math.max(c.best || 0, pay - bet);
+  if (ok >= 10) c.perfect = true;
   c.log = [{ at: Date.now(), bet, ok, pay }, ...(c.log || [])].slice(0, 20);
   return { ok, mult, pay, net: pay - bet };
 }

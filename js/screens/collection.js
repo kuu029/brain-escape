@@ -4,8 +4,8 @@ import { S, save } from '../core/store.js';
 import { MEM_BOSS_CARDS, CARDS, SKINS, TOOLS, BOSS_CARD, SKIN_ITEMS, TOWER_TYPES, TOWER_LOOK, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from '../game/content.js';
 import { UNIT } from '../units/registry.js';
 import { backdrop } from '../ui/deco.js';
-import { GACHA_TYPES, CONSUMABLE, toolStock, gachaTickets, gacha, gachaCost, GACHA_COST, GACHA5_COST, GACHA10_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX, equippedTool, equipTool } from '../game/progress.js';
-import { SUMMON, gaugeNeed } from '../game/engine.js';
+import { allyLv, allyUpCost, levelUpAlly, PITY, pityLeft, GACHA_TYPES, CONSUMABLE, toolStock, gachaTickets, gacha, gachaCost, GACHA_COST, GACHA5_COST, GACHA10_COST, exchangeSkin, starUpSkin, equipSkin, skinState, tickets, party, toggleParty, PARTY_MAX, equippedTool, equipTool } from '../game/progress.js';
+import { SUMMON, gaugeNeed, allyDesc, ALLY_MAX_LV, DEPLOY } from '../game/engine.js';
 import { cardSprite, towerSprite, spriteHTML, iconHTML, hasArt } from '../game/art.js';
 import { go } from '../core/router.js';
 import { topBar } from './home.js';
@@ -174,6 +174,22 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
       ['英語棟のボス', CARDS.filter((c) => bossOf[c.id] && UNIT[bossOf[c.id]]?.subject === 'english')],
       ['暗号室のボス', CARDS.filter((c) => MEM_BOSS_CARDS.includes(c.id))],
     ];
+    // なかまの技とレベルアップ（🧩かけらで Lv1→5。その場で数字が変わる）
+    const allyBox = (id) => {
+      const box = h('div', { class: 'ally-info' });
+      const paint = () => {
+        const cost = allyUpCost(id);
+        const lv = allyLv(id);
+        box.replaceChildren(
+          h('b', {}, `🤝 なかまの技　Lv${lv}${lv >= ALLY_MAX_LV ? '（MAX）' : ''}`), h('p', {}, allyDesc(id)),
+          h('small', {}, `ウェーブ中、正解 ${gaugeNeed(id)} 回でゲージ満タン → 召喚（チケット1枚）。のこり ×${tickets()[id] || 0}`),
+          cost !== null && h('div', { class: 'lv-up' },
+            h('small', {}, `次の Lv${lv + 1}: ${lv + 1 === 3 || lv + 1 === 5 ? 'ゲージ −1・' : ''}${DEPLOY[id] ? 'ダメージや体力が上がる' : '技が早く出せる'}`),
+            btn(`⬆ レベルアップ 🧩${cost}（持っている ${s.collection.shards || 0}）`, () => { if (!levelUpAlly(id)) return toast(`🧩かけらが足りない（あと ${cost - (s.collection.shards || 0)}）`); sfx('upgrade'); paint(); }, (s.collection.shards || 0) >= cost ? 'primary small' : 'ghost small')));
+      };
+      paint();
+      return box;
+    };
     const cardView = (c) => {
       const n = s.collection.cards[c.id];
       // まだ持っていないカードはシルエットで見せる（正体はお楽しみ）
@@ -182,12 +198,13 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
       const open = () => modal({
         title: `${c.name}`,
         body: h('div', { class: 'modal-body center' }, h('div', { class: 'card-big', html: cardSprite(c.id) }), h('div', { class: 'stars' }, '★'.repeat(c.rarity)), h('p', {}, c.text),
-          ally && h('div', { class: 'ally-info' }, h('b', {}, '🤝 なかまの技'), h('p', {}, SUMMON[c.id].desc), h('small', {}, `ウェーブ中、正解 ${gaugeNeed(c.id)} 回でゲージ満タン → 召喚（チケット1枚）。のこり ×${tickets()[c.id] || 0}`)),
+          ally && allyBox(c.id),
           h('small', { class: 'note' }, `所持 ${n}枚`)),
         buttons: ally ? [{ label: '閉じる', value: null }, { label: inParty ? 'なかまから外す' : `なかまにする（最大${PARTY_MAX}体）`, value: 'party', cls: 'primary' }] : undefined,
       }).then((v) => { if (v === 'party') { toggleParty(c.id); sfx('build'); go('collection', { tab: 'cards' }); } });
       return n
         ? h('button', { class: `card r${c.rarity}${inParty ? ' in-party' : ''}`, type: 'button', onclick: open },
+          ally && allyLv(c.id) > 1 && h('span', { class: 'c-lv' }, `Lv${allyLv(c.id)}`),
           h('span', { class: 'c-stars' }, '★'.repeat(c.rarity)), inParty && h('span', { class: 'c-party' }, '🤝'), h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name), ally && h('small', { class: 'c-tix' }, `×${tickets()[c.id] || 0}`))
         : h('div', { class: `card unknown r${c.rarity}` }, h('span', { class: 'c-stars' }, '★'.repeat(c.rarity)), h('div', { class: 'c-art sil', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, '？？？'));
     };
@@ -225,12 +242,15 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
       type === 'normal' && gachaTickets() > 0 && h('div', { class: 'gacha-btns tix' },
         btn(`🎟 券で1回（のこり ${gachaTickets()}枚）`, () => pull(1, true), 'primary'),
         gachaTickets() >= 5 && btn('🎟 券5枚で5回', () => pull(5, true), 'boss')),
+      // 天井: ★4 確定まであと何回か
+      h('div', { class: 'pity' }, h('span', {}, '★4 確定まで'), h('span', { class: 'pity-bar' }, h('i', { style: { width: `${(1 - pityLeft(type) / PITY[type]) * 100}%` } })), h('b', {}, `あと ${pityLeft(type)} 回`)),
       h('div', { class: 'gacha-btns' }, Object.entries(T.cost).map(([n, cost]) => btn(`${n}回 💎${cost}${n === '10' ? '（おトク）' : ''}`, () => pull(Number(n)), n === '1' ? 'primary' : `boss${n === '10' && s.gems >= cost ? ' ready10' : ''}`))),
       h('div', { class: 'rates' },
         h('b', {}, '出る確率'),
         h('div', {}, T.rates.map((r) => `★${r.rarity} ${Math.round((r.weight / total) * 100)}%`).join('　')),
         type === 'normal' && h('div', {}, '★1〜2 キャラ ／ ★3〜4 キャラかタワースキン'),
         type === 'ally' && h('div', {}, '★3・★4 のなかまは技が強い（ゲージが多くいる）'),
+        h('div', {}, `${PITY[type]}回のうちに★4 が出なければ、${PITY[type]}回目は★4 確定（天井）`),
         h('div', {}, 'スキンがダブると★アップ（最大★5）。キャラのダブりは 🧩かけら＋召喚チケット'),
         h('div', {}, 'かけらはスキン欄で、スキンとの交換や★アップに使える'))),
       // ③ 💎をふやす・使う（ガチャとは別の遊び）

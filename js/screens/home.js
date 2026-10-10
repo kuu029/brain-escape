@@ -1,10 +1,12 @@
 // ホーム: ロゴ・脱獄進捗・ゲームのポスター（数学・英語）＋ デイリーミッション
 import { h, btn, toast, modal } from '../core/ui.js';
-import { S, streakAlive, dayLog, cleared, save } from '../core/store.js';
+import { S, streakAlive, dayLog, cleared, save, today } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
 import { nextUnit, GACHA10_COST, claimLogin, gachaTickets, LOGIN_CAL } from '../game/progress.js';
 import { BOSSES } from '../game/content.js';
 import { spriteHTML, bgUrl, iconHTML } from '../game/art.js';
+import { checkAchievements, ACH, TIER } from '../game/achieve.js';
+import { pendingEnding } from './ending.js';
 import { backdrop } from '../ui/deco.js';
 import { go } from '../core/router.js';
 import { todayMissions, claim } from '../game/missions.js';
@@ -21,11 +23,56 @@ export function topBar(back = null) {
     back ? h('button', { class: 'back', type: 'button', onclick: back, 'aria-label': 'もどる' }, '‹') : h('span', { class: 'who' }, `👤 ${s.nickname}`),
     h('span', { class: 'spacer' }),
     h('span', { class: 'pill' }, `🔥 ${streakAlive()}日`),
+    h('button', { class: 'pill help-pill', type: 'button', 'aria-label': '遊び方ガイド', onclick: () => go('guide') }, '？'),
     h('span', { class: 'pill gem-pill' }, h('span', { html: iconHTML('icon-gem', '💎', 'ダイヤ') }), ' ', h('b', {}, String(s.gems))));
+}
+
+// 新しく達成した実績のお知らせ（ほかのお知らせが出ていないときに）
+function showAchieve(el) {
+  const s = S();
+  const ids = (s.achieveNew || []).filter((id) => ACH[id]);
+  if (!ids.length || !el.isConnected || document.querySelector('.modal-back')) return;
+  s.achieveNew = [];
+  save();
+  sfx('win');
+  modal({
+    title: '🏆 実績を達成！',
+    body: h('div', { class: 'modal-body center ach-new' }, ids.map((id) => {
+      const a = ACH[id];
+      return h('div', { class: `ach-row t-${a.tier}` }, h('span', { class: 'ach-badge', html: spriteHTML(`badge-${id}`, a.emoji, a.name) }), h('div', {}, h('b', {}, a.name), h('small', {}, `${a.desc}｜${TIER[a.tier].name}バッジ 💎+${TIER[a.tier].gems}`)));
+    })),
+    buttons: [{ label: 'OK', value: false }, { label: '🏆 実績を見る', value: true, cls: 'primary' }],
+  }).then((v) => { if (v) go('records', { tab: 'achieve' }); });
+}
+
+// 入試まであと何日 ＋ この7日の勉強時間
+export function daysUntil(dateStr, now = new Date()) {
+  if (!dateStr) return null;
+  const t = new Date(`${dateStr}T00:00:00`);
+  const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((t - d0) / 86400000);
+}
+function weekMinutes() {
+  const s = S();
+  let sec = 0;
+  for (let i = 0; i < 7; i++) { const d = new Date(Date.now() - i * 86400000); sec += s.log[today(d)]?.seconds || 0; }
+  return Math.round(sec / 60);
+}
+function countdown() {
+  const n = daysUntil(S().settings.examDate);
+  const wk = `この7日 ${weekMinutes()}分`;
+  if (n === null) return h('button', { class: 'cd-line set', type: 'button', onclick: () => go('settings') }, h('span', {}, '📅 入試の日を決めると、カウントダウンが出るよ'), h('small', {}, wk));
+  if (n < 0) return h('div', { class: 'cd-line' }, h('span', {}, '🌸 入試おつかれさま！'), h('small', {}, wk));
+  return h('div', { class: `cd-line${n <= 30 ? ' hot' : ''}` }, h('span', {}, n === 0 ? '🔥 今日が入試！ 自分を信じろ' : h('span', {}, '📅 入試まで あと ', h('b', {}, String(n)), ' 日')), h('small', {}, wk));
 }
 
 export function render(el) {
   const s = S();
+  // エンディング（数学のボス全部・数学＋英語のボス全部）: まだ見ていなければ、先に見せる
+  const end = pendingEnding();
+  if (end) return go('ending', { kind: end });
+  // 実績: 新しく達成したものは、あとでまとめてお知らせ（💎はここで入る）
+  for (const a of checkAchievements()) (s.achieveNew ||= []).push(a.id);
   const lb = claimLogin(); // 先にもらっておく（ナビの「券あり」吹き出しに反映するため）
   const mins = Math.floor(dayLog().seconds / 60);
   const mlist = h('div', { class: 'missions' });
@@ -57,6 +104,7 @@ export function render(el) {
           h('span', { class: 'em-label' }, '🔓 脱獄進捗'),
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),
           h('b', { class: 'em-pct' }, `${pct}%`))),
+      countdown(),
       todayCard(),
       h('div', { class: 'mboard' },
         h('h3', { class: 'mboard-title' }, '📋 今日の指令'),
@@ -87,8 +135,8 @@ export function render(el) {
         cal,
         h('small', { class: 'note' }, lb.day === LOGIN_CAL.length ? '7日目達成！ 明日からまた1日目。' : `明日も開くと 🎟×${lb.next}（7日目は ×${LOGIN_CAL[LOGIN_CAL.length - 1]}）。1日あけると1日目にもどるよ`)),
       buttons: [{ label: 'あとで', value: false }, { label: '🎰 ガチャへ', value: true, cls: 'primary' }],
-    }).then((v) => { if (v) go('collection', { tab: 'gacha' }); });
-  }
+    }).then((v) => { if (v) go('collection', { tab: 'gacha' }); else showAchieve(el); });
+  } else showAchieve(el);
   // 学習のかたよりのおすすめ（1日1回）
   setTimeout(() => {
     if (!el.isConnected || document.querySelector('.modal-back')) return;

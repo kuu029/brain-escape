@@ -7,7 +7,7 @@
 // 間隔反復（SRS）のレベルは変えない（ゲームとしての練習）
 import { CARDS, CARD, makeQuestion } from './engine.js';
 import { CARDS as GAME_CARDS } from '../game/content.js';
-import { gaugeNeed } from '../game/engine.js';
+import { gaugeNeed, allyLevel } from '../game/engine.js';
 
 export const DEF_N = 15; // ふつうの敵の数（このあとボス）
 export const LANES = 3;
@@ -101,7 +101,8 @@ export function selectTarget(st, id) {
 // なかま: ぶつかった看守を、おしもどして、しばらく止める（たおさない）
 //   ★1・2 は1体、★3 は2体、★4・ボスカードは3体まで。レアなほど、遠くへ・長く。ボスは半分だけ
 export const allyHits = (id) => { const c = GAME_CARDS.find((x) => x.id === id); return !c ? 1 : c.rarity >= 4 ? 3 : c.rarity === 3 ? 2 : 1; };
-export const allyPower = (id) => { const n = allyHits(id); return { hits: n, knock: [0, 0.25, 0.32, 0.4][n], stun: [0, 4, 5.5, 7][n] }; };
+// なかまのレベル: 1つ上がるごとに足止めが1割長く、Lv5 はもう1体ぶつかれる
+export const allyPower = (id) => { const n = allyHits(id); const lv = allyLevel(id); return { hits: n + (lv >= 5 ? 1 : 0), knock: [0, 0.25, 0.32, 0.4][n], stun: [0, 4, 5.5, 7][n] * (1 + 0.1 * (lv - 1)) }; };
 export const CLEAR_GAUGE = 1; // 全滅ボーナス: ゲージ +1（と、💎 +1）
 export const allyNeed = (id) => gaugeNeed(id);
 // たおさないかわりに、ゲージがたまるたびに何回でも出撃できる

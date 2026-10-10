@@ -11,6 +11,8 @@ import { backdrop } from '../ui/deco.js';
 import { rich } from '../core/mathml.js';
 import { histRow } from './exam.js';
 import { askList, askItem } from '../ui/asklater.js';
+import { ACHIEVEMENTS, checkAchievements, achieveCount } from '../game/achieve.js';
+import { ENDINGS, seenEndings } from './ending.js';
 
 const GOAL_MIN = 15; // 1日の目安（グラフに点線で出す）
 // 称号: ウェーブ突破 + ボス撃破×3 のポイントで上がる
@@ -72,7 +74,24 @@ function lastDays(n) {
   return out;
 }
 
-export function render(el) {
+// 実績（バッジ）: 達成したものは色つき、まだのものはシルエットと進み具合
+function achieveBox(s) {
+  for (const a of checkAchievements(s)) (s.achieveNew ||= []).push(a.id); // 達成のお知らせはホームで
+  const got = s.achieve || {};
+  return h('div', { class: 'ach-box', id: 'ach' },
+    h('h3', { class: 'sec' }, `🏆 実績 ${achieveCount(s)} / ${ACHIEVEMENTS.length}`),
+    h('div', { class: 'ach-grid' }, ACHIEVEMENTS.map((a) => {
+      const { v, goal, unit = '' } = a.check(s);
+      const done = !!got[a.id];
+      return h('div', { class: `ach-cell t-${a.tier}${done ? ' done' : ''}` },
+        h('span', { class: 'ach-badge', html: spriteHTML(`badge-${a.id}`, a.emoji, a.name) }),
+        h('b', {}, a.name), h('small', {}, a.desc),
+        done ? h('small', { class: 'ach-date' }, `${got[a.id]} 達成`) : h('span', { class: 'ach-prog' }, h('i', { style: { width: `${Math.min(1, v / goal) * 100}%` } }), h('em', {}, `${Math.min(v, goal)}/${goal}${unit}`)));
+    })),
+    seenEndings().length > 0 && h('div', { class: 'up-btns' }, seenEndings().map((k) => btn(`🎬 ${ENDINGS[k].title}をもう一度見る`, () => go('ending', { kind: k, replay: true }), 'ghost'))));
+}
+
+export function render(el, { tab = null } = {}) {
   const s = S();
   const days = lastDays(14);
   const mins = days.map((d) => Math.round((s.log[d]?.seconds || 0) / 60));
@@ -141,6 +160,7 @@ export function render(el) {
         h('div', {}, h('b', {}, `${Math.round((s.log[t]?.seconds || 0) / 60)}分`), h('small', {}, '今日')),
         h('div', {}, h('b', {}, `🔥${streakAlive()}日`), h('small', {}, `連続（最高${s.streak.best || 0}）`)),
         h('div', {}, h('b', {}, `${totalMin}分`), h('small', {}, '合計'))),
+      achieveBox(s),
       h('h3', { class: 'sec' }, '📅 直近14日（分）'),
       chart,
       h('p', { class: 'note' }, '⏱ 問題や解説に向き合っていた時間だけを数えているよ（1問 最大3分。放置した時間は入らない）。棒をタップすると、その日の内訳が見られる。'),
@@ -159,4 +179,5 @@ export function render(el) {
         h('p', { class: 'note' }, '最近まちがえた問題'),
         recent.map(({ m, p }) => h('div', { class: 'wl-item' }, h('small', {}, `${m.date}｜${UNIT[m.unit]?.title || ''}`), h('div', { rich: p.stem })))),
       h('p', { class: 'note center' }, `これまでの正解 ${s.stats.correct} / ${s.stats.asked} 問・ウェーブ突破 ${s.stats.waves} 回・ボス撃破 ${s.stats.bosses} 回`)));
+  if (tab === 'achieve') setTimeout(() => el.querySelector('#ach')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50);
 }

@@ -390,19 +390,40 @@ function deploy(st, id, d, ev, opt = {}) {
     ev.push({ t: 'deploy', kind: 'raider', id, pos: EXIT });
   }
 }
+function deployDesc(d) {
+  let t = d.kind === 'tower' ? `${DEPLOY_LABEL.tower}: 空きマスに立って ${d.turns}ターン、近くの${d.splash ? '敵ぜんぶ' : '敵'}に${d.dmg}ダメージ`
+    : d.kind === 'guard' ? `${DEPLOY_LABEL.guard}: 道に立ちふさがって敵を止める（${d.hp}回まで）。となりの敵に${d.dmg}ダメージ`
+      : `${DEPLOY_LABEL.raider}: ゴールから逆走して、ぶつかった敵に${d.dmg}ダメージ（${d.hp}体まで）`;
+  if (d.global) t += '。盤面のどこの敵でもねらえる';
+  if (d.revive) t += `。こわされても1回だけ起き上がる（${d.revive}回ぶん）`;
+  if (d.speed > 1) t += `。${d.speed}マスずつ走る`;
+  if (d.knock) t += `。ぶつかった敵を${d.knock}マスはね飛ばす`;
+  return t;
+}
 for (const [id, d] of Object.entries(DEPLOY)) {
   const s = SUMMON[id];
   if (!s) continue;
   s.deploy = d;
-  s.desc = d.kind === 'tower' ? `${DEPLOY_LABEL.tower}: 空きマスに立って ${d.turns}ターン、近くの${d.splash ? '敵ぜんぶ' : '敵'}に${d.dmg}ダメージ`
-    : d.kind === 'guard' ? `${DEPLOY_LABEL.guard}: 道に立ちふさがって敵を止める（${d.hp}回まで）。となりの敵に${d.dmg}ダメージ`
-      : `${DEPLOY_LABEL.raider}: ゴールから逆走して、ぶつかった敵に${d.dmg}ダメージ（${d.hp}体まで）`;
-  if (d.global) s.desc += '。盤面のどこの敵でもねらえる';
-  if (d.revive) s.desc += `。こわされても1回だけ起き上がる（${d.revive}回ぶん）`;
-  if (d.speed > 1) s.desc += `。${d.speed}マスずつ走る`;
-  if (d.knock) s.desc += `。ぶつかった敵を${d.knock}マスはね飛ばす`;
+  s.desc = deployDesc(d);
 }
-export const gaugeNeed = (id) => SUMMON[id]?.need || GAUGE_NEED;
+// レベルをふくめた技の説明
+export const allyDesc = (id) => (DEPLOY[id] ? deployDesc(deployAt(id)) : SUMMON[id]?.desc || '');
+// なかまのレベル（1〜5）。progress.js が持ち主のデータを教える（テストや診断ではいつも Lv1）
+//   Lv3・Lv5 でゲージが1つずつ少なくてよくなる。出撃するなかまは、ダメージ・体力・いる時間がふえる
+export const ALLY_MAX_LV = 5;
+let lvOf = () => 1;
+export const setAllyLevelSource = (fn) => { lvOf = fn; };
+export const allyLevel = (id) => Math.max(1, Math.min(ALLY_MAX_LV, lvOf(id) || 1));
+export const gaugeNeed = (id) => Math.max(2, (SUMMON[id]?.need || GAUGE_NEED) - (allyLevel(id) >= 5 ? 2 : allyLevel(id) >= 3 ? 1 : 0));
+// レベルで強くした出撃のすがた
+export function deployAt(id, lv = allyLevel(id)) {
+  const d = DEPLOY[id];
+  if (!d) return null;
+  const up = lv - 1, half = Math.floor(up / 2);
+  if (d.kind === 'tower') return { ...d, dmg: d.dmg + half, turns: d.turns + up };
+  if (d.kind === 'guard') return { ...d, hp: d.hp + up, dmg: d.dmg + half, turns: d.turns + up };
+  return { ...d, hp: d.hp + Math.ceil(up / 2), dmg: d.dmg + half };
+}
 export const GAUGE_MAX = 6;
 export const canSummon = (st, id) => !!SUMMON[id] && !st.over && (st.gauge || 0) >= gaugeNeed(id) && !st.summoned?.[id];
 // タワー型で、置くマスをえらぶ必要があるか（空きマスがあるとき）
@@ -413,7 +434,7 @@ export function summon(st, id, opt = {}) {
   st.gauge = 0;
   (st.summoned ||= {})[id] = true;
   ev.push({ t: 'summon', id });
-  if (SUMMON[id].deploy) deploy(st, id, SUMMON[id].deploy, ev, opt);
+  if (SUMMON[id].deploy) deploy(st, id, deployAt(id), ev, opt);
   else SUMMON[id].run(st, ev);
   if (!st.queue.length && !alive(st).length && st.mode !== 'diagnosis') {
     st.over = 'win';
