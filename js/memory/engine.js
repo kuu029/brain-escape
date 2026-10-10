@@ -8,7 +8,7 @@
 import { today } from '../core/store.js';
 import { textChoice, spellAns, orderAns } from '../units/english/kit-en.js';
 import { EN_DECKS, EN_CARDS, enDistinct } from './decks/en.js';
-import { SOC, SCI, termDistinct, normJa } from './decks/terms.js';
+import { SOC, SCI, JA, termDistinct, normJa } from './decks/terms.js';
 import { COURSES } from './courses.js';
 
 const MIN = 60 * 1000;
@@ -22,6 +22,8 @@ export const MEM_SUBJECTS = {
   // 社会・理科は手で書いた用語データ（教科書と照らし合わせて確認済み）
   soc: { id: 'soc', name: '社会', emoji: '🗾', newBase: 15, ready: true, distinct: termDistinct },
   sci: { id: 'sci', name: '理科', emoji: '🔬', newBase: 15, ready: true, distinct: termDistinct },
+  // 国語: 漢字の読み書き・四字熟語・ことわざ・慣用句・古語（手で書いたデータ）
+  ja: { id: 'ja', name: '国語', emoji: '📖', newBase: 20, ready: true, distinct: termDistinct },
 };
 export const MODES = {
   easy: { name: 'イージー', desc: '4択だけ', mult: 1 },
@@ -45,8 +47,8 @@ export const SLOW_MS = { e2j: 6000, j2e: 6000, tile: 15000, input: 20000 };
 // 時間のバーの長さ
 export const LIMIT_MS = { e2j: 8000, j2e: 8000, tile: 18000, input: 25000 };
 
-export const DECKS = [...EN_DECKS, ...SOC.decks, ...SCI.decks];
-export const CARDS = [...EN_CARDS, ...SOC.cards, ...SCI.cards];
+export const DECKS = [...EN_DECKS, ...SOC.decks, ...SCI.decks, ...JA.decks];
+export const CARDS = [...EN_CARDS, ...SOC.cards, ...SCI.cards, ...JA.cards];
 export const CARD = Object.fromEntries(CARDS.map((c) => [c.id, c]));
 export const DECK = Object.fromEntries(DECKS.map((d) => [d.id, { ...d, cards: CARDS.filter((c) => c.deck === d.id) }]));
 
@@ -189,19 +191,19 @@ export function makeQuestion(card, form, rng) {
 function termQuestion(card, form, rng) {
   if (form === 'e2j' || form === 'j2e') {
     const ds = distractors(card, rng);
-    if (form === 'e2j') return { form, stem: card.q, ask: card.read === null ? 'この年のできごとは？' : 'どういう意味？', ...textChoice(rng, card.a, ds.map((d) => ({ t: d.a }))), others: ds.map((d) => d.id) };
-    return { form, stem: card.a, ask: card.read === null ? '何年？' : 'この用語は？', ...textChoice(rng, card.q, ds.map((d) => ({ t: d.q }))), others: ds.map((d) => d.id) };
+    if (form === 'e2j') return { form, stem: card.q, ask: card.ask?.e2j || (card.read === null ? 'この年のできごとは？' : 'どういう意味？'), ...textChoice(rng, card.a, ds.map((d) => ({ t: d.a }))), others: ds.map((d) => d.id) };
+    return { form, stem: card.a, ask: card.ask?.j2e || (card.read === null ? '何年？' : 'この用語は？'), ...textChoice(rng, card.q, ds.map((d) => ({ t: d.q }))), others: ds.map((d) => d.id) };
   }
   if (form === 'tile') {
     const chars = [...card.q];
     // まぎらわしい文字（同じデッキのほかの用語の文字）を少しまぜる
     const pool = [...new Set(CARDS.filter((c) => c.deck === card.deck && c.id !== card.id).flatMap((c) => [...c.q]))].filter((ch) => !chars.includes(ch) && ch !== '・');
     const decoys = rng.shuffle(pool).slice(0, chars.length > 8 ? 2 : 3).map((t) => ({ t }));
-    return { form, stem: card.a, ask: card.read === null ? `数字をならべて年号に（${chars.length}文字）` : `文字をならべて用語に（${chars.length}文字）`, ...orderAns(rng, chars, { end: '', decoys }) };
+    return { form, stem: card.a, ask: card.read === null ? `数字をならべて年号に（${chars.length}文字）` : `${card.ask?.tile || '文字をならべて用語に'}（${chars.length}文字）`, ...orderAns(rng, chars, { end: '', decoys }) };
   }
   // 入力: 最初の1文字と文字数をヒントに出す（年号は数字なので出さない）
   const hint = card.read === null ? '' : `（ヒント: 「${[...card.q][0]}」で始まる${[...card.q].length}文字）`;
-  return { form, stem: card.a, ask: card.read === null ? '何年？（数字を入力）' : `用語を入力${hint}`, input: { kind: 'text', accept: card.accept, ja: true }, answerText: card.q };
+  return { form, stem: card.a, ask: card.read === null ? '何年？（数字を入力）' : `${card.ask?.input || '用語を入力'}${hint}`, input: { kind: 'text', accept: card.accept, ja: true }, answerText: card.q };
 }
 // 「あやしい正解」の時間と、時間のバーの長さ。用語は説明を読むので長めにする
 const TERM_SLOW = 1.7;

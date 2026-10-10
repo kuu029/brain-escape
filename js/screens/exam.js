@@ -46,17 +46,19 @@ function introView(el) {
     if (d && !(await confirmBox('とちゅうの模試があるよ', '新しく始めると、とちゅうの模試は消えるよ。', '新しく始める', 'やめる', true))) return;
     const k = EXAM_KINDS[kind];
     const en = subj === 'english';
+    const term = subj === 'soc' || subj === 'sci';
+    const ja = subj === 'ja';
     const ok = await paperCheck({
       title: `${SUBJECT_JA[subj]} ${k.name}（${k.minutes}分）を始める？`,
       lines: [
         `⏱ 制限時間は <b>${k.minutes}分</b>。合図のあとスタート。アプリを閉じても時間は進む`,
-        en ? '🔊 リスニングは<b>音が出る</b>。音量を上げるか、イヤホンを用意' : paper ? '✏️ 証明・作図は<b>紙に書く</b>（終わったら採点）' : '📱 証明は【　】をうめる、作図は手順をならべる',
-        en ? (kind === 'full' ? '✏️ 英語で書く問題は<b>紙に書く</b>（終わったら採点）' : '放送はそれぞれ <b>2回まで</b>') : 'むずかしい問題は飛ばして、あとで戻ってOK',
+        ja ? '📱 読解・漢字・文法は<b>選ぶ・ならべる</b> 問題（自動で採点）' : term ? '📱 全部 <b>選ぶ・ならべる</b> 問題（自動で採点）' : en ? '🔊 リスニングは<b>音が出る</b>。音量を上げるか、イヤホンを用意' : paper ? '✏️ 証明・作図は<b>紙に書く</b>（終わったら採点）' : '📱 証明は【　】をうめる、作図は手順をならべる',
+        ja && kind === 'full' ? '✏️ 作文は<b>紙に書く</b>（原稿用紙かノートを用意。終わったら採点）' : !term && en ? (kind === 'full' ? '✏️ 英語で書く問題は<b>紙に書く</b>（終わったら採点）' : '放送はそれぞれ <b>2回まで</b>') : 'むずかしい問題は飛ばして、あとで戻ってOK',
       ],
     });
     if (!ok) return;
     await countdown('はじめ！');
-    s.examDraft = { subject: subj, kind, seed: newSeed(), paperMode: en ? false : paper, plays: {}, startedAt: Date.now(), answers: {}, cur: 0 };
+    s.examDraft = { subject: subj, kind, seed: newSeed(), paperMode: en || term || ja ? false : paper, plays: {}, startedAt: Date.now(), answers: {}, cur: 0 };
     saveNow();
     go('exam', { phase: 'sheet' });
   };
@@ -68,7 +70,7 @@ function introView(el) {
   const kinds = h('div', { class: 'ex-kinds' });
   const paintSubj = () => {
     subjBar.replaceChildren(...Object.entries(SUBJECT_JA).map(([k, ja]) => h('button', { class: subj === k ? 'on' : '', type: 'button', onclick: () => { sfx('tap'); subj = k; s.settings.examSubject = k; save(); paintSubj(); } }, ja)));
-    aboutP.textContent = `滋賀県の公立高校入試に近い形。${EXAM_DESC[subj].about}`;
+    aboutP.textContent = subj === 'soc' || subj === 'sci' || subj === 'ja' ? EXAM_DESC[subj].about : `滋賀県の公立高校入試に近い形。${EXAM_DESC[subj].about}`;
     paperHead.style.display = seg.style.display = subj === 'math' ? '' : 'none';
     kinds.replaceChildren(...Object.entries(EXAM_KINDS).map(([k, v]) => h('button', { class: `ex-kind k-${k}`, type: 'button', onclick: () => { sfx('tap'); start(k); } },
       h('span', { class: 'ek-time' }, `${v.minutes}分`), h('b', {}, `${SUBJECT_JA[subj]} ${v.name}`), h('small', {}, EXAM_DESC[subj][k]), h('span', { class: 'ek-go' }, 'スタート ▶'))));
@@ -167,7 +169,7 @@ function sheetView(el) {
         h('div', { class: 'qcard-tags' }, h('span', { class: 'tag' }, `${q.label} ${q.pts}点`), h('span', { class: 'tag tag-dim' }, '✏️ 紙に書く')),
         h('div', { class: 'qstem', rich: q.paper.ask }),
         q.p.fig && h('div', { class: 'qfig', html: q.p.fig })),
-      h('p', { class: 'note' }, q.paperAlways ? '英語で紙（ノート）に書こう。提出したあとに、答えの例を見ながら採点するよ。' : '紙に書こう。提出したあとに、模範解答を見ながら採点するよ。'),
+      h('p', { class: 'note' }, q.paperNote || (q.paperAlways ? '英語で紙（ノート）に書こう。提出したあとに、答えの例を見ながら採点するよ。' : '紙に書こう。提出したあとに、模範解答を見ながら採点するよ。')),
       btn(cur ? '✔ 書けた（もう一度押すと取り消し）' : '✏️ 紙に書けた', () => { if (cur) delete d.answers[q.id]; else d.answers[q.id] = 'paper'; save(); paintNav(); if (!cur) goNext(); else show(i); }, cur ? 'ghost' : 'primary big'));
     } else {
       const card = problemCard(q.p, { label: `${q.label} ${q.pts}点` });

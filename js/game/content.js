@@ -43,6 +43,14 @@ export const BOSSES = {
   'en-relative': { emoji: '🦑', name: 'イカ・カンケーイ' },
   'en-indirect': { emoji: '🦊', name: 'キツネ・シッテルカ' },
   'en-subjunctive': { emoji: '🦄', name: 'ユニコーン・イフイフ' },
+  // 国語棟
+  'ja-hinshi': { emoji: '👜', name: 'カバン・ヒンシーノ' },
+  'ja-kana': { emoji: '📜', name: 'マキモノ・カナヅカイ' },
+  'ja-katsuyou': { emoji: '🦋', name: 'チョウ・ヘンゲーノ' },
+  'ja-keigo': { emoji: '🐈', name: 'ネコ・ゴザイマス' },
+  'ja-shikibetsu': { emoji: '🔍', name: 'ムシメガネ・ミワケール' },
+  'ja-kaeriten': { emoji: '🪃', name: 'ブーメラン・カエリテン' },
+  'ja-kakari': { emoji: '🕷️', name: 'クモ・カカリムスビ' },
   'proportion': { emoji: '🪜', name: 'ハシゴ・ヒレイーノ' },
   'linear-function': { emoji: '🎢', name: 'コースター・カタムキーノ' },
   'quadratic-function': { emoji: '🏀', name: 'バスケ・ホウブツセン' },
@@ -133,6 +141,15 @@ export const CARDS = [
   { id: 'golem', emoji: '📚', name: 'ジショ・ゴーレム', rarity: 3, text: '辞書を積み上げてできた巨人。ページをめくる音で攻撃してくる。' },
   { id: 'bushou', emoji: '🏯', name: 'ブショー・ネンピョーノ', rarity: 3, text: '年表を巻物にして背負った武将。年号をまちがえると怒る。' },
   { id: 'hakase', emoji: '🧪', name: 'フラスコ・ハカセーノ', rarity: 3, text: 'フラスコから謎の気体を出す博士。石灰水がにごると喜ぶ。' },
+  { id: 'fude', emoji: '🖌️', name: 'フデ・ショドーノ', rarity: 3, text: '暗号室・国語のボス。とめ・はね・はらいに、ものすごくうるさい。' },
+  // 国語棟のボス
+  { id: 'kaban', emoji: '👜', name: 'カバン・ヒンシーノ', rarity: 3, text: '10個のポケットに、ことばを品詞ごとに仕分けるカバン。' },
+  { id: 'makimono', emoji: '📜', name: 'マキモノ・カナヅカイ', rarity: 3, text: '「けふ」と書いて「きょう」と読ませる、古い巻物。' },
+  { id: 'chou', emoji: '🦋', name: 'チョウ・ヘンゲーノ', rarity: 3, text: '続くことばによって姿を変える。「書か・書き・書く・書け・書こ」。' },
+  { id: 'neko', emoji: '🐈', name: 'ネコ・ゴザイマス', rarity: 3, text: '執事のネコ。「ご覧になる」と「拝見する」をまちがえると、しっぽが逆立つ。' },
+  { id: 'mushimegane', emoji: '🔍', name: 'ムシメガネ・ミワケール', rarity: 3, text: '同じ「られる」でも、受け身か可能かを見ぬく鑑定士。' },
+  { id: 'boomerang', emoji: '🪃', name: 'ブーメラン・カエリテン', rarity: 3, text: 'レ点で投げると、1字もどってくる。' },
+  { id: 'kumo', emoji: '🕷️', name: 'クモ・カカリムスビ', rarity: 3, text: '「こそ」の糸を張ると、文末が已然形にからめとられる。' },
 ];
 // ボス撃破でもらえるカード
 export const BOSS_CARD = {
@@ -142,11 +159,12 @@ export const BOSS_CARD = {
   'en-words2': 'tako', 'en-future': 'yogen', 'en-pastprog': 'namakemono', 'en-modal': 'washi', 'en-there': 'harinezumi', 'en-inf': 'kangaroo', 'en-compare': 'kirin', 'en-conj': 'wani',
   'en-words3': 'zou', 'en-passive': 'kujaku', 'en-perfect': 'kame', 'en-participle': 'chameleon', 'en-relative': 'ika', 'en-indirect': 'kitsune', 'en-subjunctive': 'unicorn',
   'proportion': 'hashigo', 'linear-function': 'coaster', 'quadratic-function': 'basket', 'angles': 'hasami', 'congruence': 'puzzle', 'circle-angle': 'mezamashi', 'similarity': 'matryoshka', 'pythagoras': 'tent', 'solids': 'hako', 'probability': 'coin', 'data': 'risu', 'word-mix': 'kujira',
+  'ja-hinshi': 'kaban', 'ja-kana': 'makimono', 'ja-katsuyou': 'chou', 'ja-keigo': 'neko', 'ja-shikibetsu': 'mushimegane', 'ja-kaeriten': 'boomerang', 'ja-kakari': 'kumo',
 };
 // ガチャに出るカード（ボス・称号以外）
 export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2 || c.gacha).map((c) => c.id);
 // ボスカード（ボス撃破・まれにドロップ）。なかまとして呼ぶと必殺技（正解が多くいる）
-export const MEM_BOSS_CARDS = ['golem', 'bushou', 'hakase'];
+export const MEM_BOSS_CARDS = ['golem', 'bushou', 'hakase', 'fude'];
 export const BOSS_CARD_IDS = [...new Set([...Object.values(BOSS_CARD), 'crown', ...MEM_BOSS_CARDS])];
 
 // タワー

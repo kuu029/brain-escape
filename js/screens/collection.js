@@ -11,6 +11,7 @@ import { go } from '../core/router.js';
 import { topBar } from './home.js';
 import { sfx } from '../core/sound.js';
 import { CHAL_BETS, CHAL_MAX, chalLeft, startChal } from '../game/flowchal.js';
+import { isEvent } from '../game/event.js';
 import { chalTable } from './memory.js';
 import { REWARD, EXCHANGE, RGACHA_COST, RGACHA_RATES, rewardState, rewardTickets, exchangeReward, rewardGacha, useReward } from '../game/reward.js';
 
@@ -172,6 +173,7 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
       ['看守・なかま', CARDS.filter((c) => !bossOf[c.id] && !MEM_BOSS_CARDS.includes(c.id))],
       ['数学のボス', CARDS.filter((c) => bossOf[c.id] && (UNIT[bossOf[c.id]]?.subject || 'math') === 'math')],
       ['英語棟のボス', CARDS.filter((c) => bossOf[c.id] && UNIT[bossOf[c.id]]?.subject === 'english')],
+      ['国語棟のボス', CARDS.filter((c) => bossOf[c.id] && UNIT[bossOf[c.id]]?.subject === 'japanese')],
       ['暗号室のボス', CARDS.filter((c) => MEM_BOSS_CARDS.includes(c.id))],
     ];
     // なかまの技とレベルアップ（🧩かけらで Lv1→5。その場で数字が変わる）
@@ -229,10 +231,11 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
     const machine = (k) => spriteHTML(hasArt(`gacha-machine-${k}`) ? `gacha-machine-${k}` : 'gacha-machine', GACHA_TYPES[k].emoji, 'ガチャマシン');
     content.append(h('div', { class: 'gacha-box' },
       // ① ガチャの種類: 大きなカードで、えらんでいるものに色と「えらび中」
+      isEvent('gachafes') && h('div', { class: 'ev-chip' }, '🎰 週末イベント「ガチャ祭り」開催中！ ぜんぶ2割引き'),
       h('h3', { class: 'g-sec' }, h('span', { class: 'g-num' }, '1'), 'ガチャをえらぶ'),
       h('div', { class: 'gt-pick' }, Object.entries(GACHA_TYPES).map(([k, t]) => h('button', { class: `gt-card gt-${k}${k === type ? ' on' : ''}`, type: 'button', 'aria-pressed': String(k === type), onclick: () => { sfx('tap'); go('collection', { tab: 'gacha', gtype: k }); } },
         k === type && h('span', { class: 'gt-badge' }, 'えらび中'),
-        h('span', { class: 'gt-mini', html: machine(k) }), h('b', {}, t.name), h('small', {}, `1回 💎${t.cost[1]}`)))),
+        h('span', { class: 'gt-mini', html: machine(k) }), h('b', {}, t.name), h('small', {}, `1回 💎${gachaCost(1, k)}`)))),
       h('h3', { class: 'g-sec' }, h('span', { class: 'g-num' }, '2'), `${T.emoji} ${T.name}ガチャを回す`),
       h('div', { class: `gacha-pane gt-${type}` },
       h('div', { class: `gacha-machine gt-${type}`, html: spriteHTML(hasArt(`gacha-machine-${type}`) ? `gacha-machine-${type}` : 'gacha-machine', T.emoji, 'ガチャマシン') }),
@@ -244,7 +247,7 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
         gachaTickets() >= 5 && btn('🎟 券5枚で5回', () => pull(5, true), 'boss')),
       // 天井: ★4 確定まであと何回か
       h('div', { class: 'pity' }, h('span', {}, '★4 確定まで'), h('span', { class: 'pity-bar' }, h('i', { style: { width: `${(1 - pityLeft(type) / PITY[type]) * 100}%` } })), h('b', {}, `あと ${pityLeft(type)} 回`)),
-      h('div', { class: 'gacha-btns' }, Object.entries(T.cost).map(([n, cost]) => btn(`${n}回 💎${cost}${n === '10' ? '（おトク）' : ''}`, () => pull(Number(n)), n === '1' ? 'primary' : `boss${n === '10' && s.gems >= cost ? ' ready10' : ''}`))),
+      h('div', { class: 'gacha-btns' }, Object.keys(T.cost).map((n) => [n, gachaCost(Number(n), type)]).map(([n, cost]) => btn(`${n}回 💎${cost}${n === '10' ? '（おトク）' : ''}`, () => pull(Number(n)), n === '1' ? 'primary' : `boss${n === '10' && s.gems >= cost ? ' ready10' : ''}`))),
       h('div', { class: 'rates' },
         h('b', {}, '出る確率'),
         h('div', {}, T.rates.map((r) => `★${r.rarity} ${Math.round((r.weight / total) * 100)}%`).join('　')),

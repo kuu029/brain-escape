@@ -44,6 +44,13 @@ import enParticiple from './english/en-participle.js';
 import enRelative from './english/en-relative.js';
 import enIndirect from './english/en-indirect.js';
 import enSubjunctive from './english/en-subjunctive.js';
+import jaHinshi from './japanese/ja-hinshi.js';
+import jaKana from './japanese/ja-kana.js';
+import jaKatsuyou from './japanese/ja-katsuyou.js';
+import jaKeigo from './japanese/ja-keigo.js';
+import jaShikibetsu from './japanese/ja-shikibetsu.js';
+import jaKaeriten from './japanese/ja-kaeriten.js';
+import jaKakari from './japanese/ja-kakari.js';
 
 export const UNITS = [
   signedNumbers,
@@ -91,6 +98,14 @@ export const UNITS = [
   enRelative,
   enIndirect,
   enSubjunctive,
+  // 国語
+  jaHinshi,
+  jaKana,
+  jaKatsuyou,
+  jaKeigo,
+  jaShikibetsu,
+  jaKaeriten,
+  jaKakari,
 ];
 for (const u of UNITS) u.subject ||= 'math';
 
@@ -112,6 +127,14 @@ export const SUBJECTS = {
       { n: 1, title: '第1段階　中1（英語棟1F）' },
       { n: 2, title: '第2段階　中2（英語棟2F）' },
       { n: 3, title: '第3段階　中3（屋上）' },
+    ],
+  },
+  japanese: {
+    title: 'ブレイン脱獄 国語棟', sub: '国語', map: '🗺️ 国語棟 マップ',
+    stages: [
+      { n: 1, title: '第1段階　ことばの基本（国語棟1F）' },
+      { n: 2, title: '第2段階　文法（国語棟2F）' },
+      { n: 3, title: '第3段階　古文・漢文（天守閣）' },
     ],
   },
 };

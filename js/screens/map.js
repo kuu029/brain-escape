@@ -18,8 +18,8 @@ const FLOOR_BOTTOM = 40;
 const GOAL_H = 150;
 const START_H = 70;
 const ZIG = [50, 24, 50, 76]; // マスの横位置（%）。くねくね道になる
-const GOAL = { math: ['🌅', '外の世界（脱出口）'], english: ['🗽', '自由の屋上（脱出口）'] };
-const SUBJ_KEY = { math: 'math', english: 'en' };
+const GOAL = { math: ['🌅', '外の世界（脱出口）'], english: ['🗽', '自由の屋上（脱出口）'], japanese: ['🏯', '天守閣のてっぺん（脱出口）'] };
+const SUBJ_KEY = { math: 'math', english: 'en', japanese: 'ja' };
 const STARS = { new: 0, trained: 1, practicing: 2, mastered: 3 };
 
 export function render(el, { focus = null, subject = null } = {}) {

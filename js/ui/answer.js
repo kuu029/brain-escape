@@ -67,7 +67,7 @@ export function answerPad(p, onSubmit, opts = {}) {
 
   if (p.input.kind === 'choice') {
     const label = (c) => (p.input.text ? h('span', { class: 'en' }, c) : h('span', { class: 'math', html: tex(c) }));
-    const grid = h('div', { class: `choices n${p.input.choices.length}${p.input.text ? ' text' : ''}` },
+    const grid = h('div', { class: `choices n${p.input.choices.length}${p.input.text ? ' text' : ''}${p.input.text && p.input.choices.some((c) => c.length > 16) ? ' long' : ''}` },
       p.input.choices.map((c, i) => h('button', { class: 'choice', type: 'button', onclick: () => { sfx('tap'); submit(i); } }, label(c))));
     root = h('div', { class: 'pad' }, grid);
     return {

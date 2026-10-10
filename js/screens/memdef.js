@@ -17,8 +17,9 @@ import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
 import { MEM_SUBJECTS } from '../memory/engine.js';
 import * as D from '../memory/defense.js';
+import { isEvent } from '../game/event.js';
 
-const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science' };
+const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science', ja: 'japanese' };
 
 export function defenseView(el, subject, started = false) {
   const M0 = S().memory;
@@ -251,7 +252,7 @@ export function defenseView(el, subject, started = false) {
     const lr = ((rec.lv ||= {})[level] ||= { best: 0, wins: 0 });
     lr.best = Math.max(lr.best, st.kills);
     if (win) lr.wins++;
-    const gems = D.defGems(st);
+    const gems = D.defGems(st) * (isEvent('gemfever') ? 2 : 1); // 週末イベント「💎フィーバー」
     S().gems += gems;
     // むずかしい・おに: 勝つとガチャ券
     const tix = win ? LV.ticket : 0;

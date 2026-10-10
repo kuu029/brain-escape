@@ -19,6 +19,7 @@ export const MEM_BOSS = {
   en: { card: 'golem', name: 'ジショ・ゴーレム', emoji: '📚' },
   soc: { card: 'bushou', name: 'ブショー・ネンピョーノ', emoji: '🏯' },
   sci: { card: 'hakase', name: 'フラスコ・ハカセーノ', emoji: '🧪' },
+  ja: { card: 'fude', name: 'フデ・ショドーノ', emoji: '🖌️' },
 };
 export const MOB_KINDS = ['grunt', 'runner', 'tank', 'review'];
 // 難易度: n = ふつうの敵の数 / pace = 出てくる間隔（小さいほど次々来る）/ walk = 歩く時間（小さいほど速い）

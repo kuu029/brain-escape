@@ -6,6 +6,7 @@ import { nextUnit, GACHA10_COST, claimLogin, gachaTickets, LOGIN_CAL } from '../
 import { BOSSES } from '../game/content.js';
 import { spriteHTML, bgUrl, iconHTML } from '../game/art.js';
 import { checkAchievements, ACH, TIER } from '../game/achieve.js';
+import { currentEvent, nextEvent } from '../game/event.js';
 import { pendingEnding } from './ending.js';
 import { backdrop } from '../ui/deco.js';
 import { go } from '../core/router.js';
@@ -43,6 +44,18 @@ function showAchieve(el) {
     })),
     buttons: [{ label: 'OK', value: false }, { label: '🏆 実績を見る', value: true, cls: 'primary' }],
   }).then((v) => { if (v) go('records', { tab: 'achieve' }); });
+}
+
+// 週末イベント: 土日は大きなバナー、平日は「今週末は…」の1行
+function eventCard() {
+  const ev = currentEvent();
+  if (ev) {
+    const img = bgUrl(`event-${ev.id}`);
+    return h('div', { class: `ev-card ev-${ev.id}${img ? ' has-img' : ''}`, style: img ? { backgroundImage: `linear-gradient(90deg, #0b0716ee 30%, #0b071655), url(${img})` } : {} },
+      h('small', {}, '🎉 週末イベント開催中（日曜まで）'), h('b', {}, ev.name), h('span', {}, ev.desc));
+  }
+  const nx = nextEvent();
+  return nx.ev ? h('p', { class: 'ev-next' }, `🎉 今週末のイベント: ${nx.ev.name}（あと${nx.days}日）`) : '';
 }
 
 // 入試まであと何日 ＋ この7日の勉強時間
@@ -105,6 +118,7 @@ export function render(el) {
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),
           h('b', { class: 'em-pct' }, `${pct}%`))),
       countdown(),
+      eventCard(),
       todayCard(),
       h('div', { class: 'mboard' },
         h('h3', { class: 'mboard-title' }, '📋 今日の指令'),
@@ -114,6 +128,7 @@ export function render(el) {
       h('h3', { class: 'sec home-sec' }, '🎮 ぜんぶのモード'),
       gameCard('math', '数学棟', '数学', () => go('map')),
       gameCard('english', '英語棟', '英語', () => go('map', { subject: 'english' })),
+      gameCard('japanese', '国語棟', '国語', () => go('map', { subject: 'japanese' })),
       memoryCard(),
       examCard(),
     ),
@@ -151,15 +166,15 @@ export function render(el) {
 //   暗号の復習が5枚以上たまっていれば暗号室、なければ数学（次に英語）の「次はこれ」
 function todayPick() {
   const M = S().memory;
-  const dues = ['en', 'soc', 'sci'].map((sj) => [sj, dueList(M, sj, Date.now()).length]).sort((a, b) => b[1] - a[1]);
+  const dues = ['en', 'soc', 'sci', 'ja'].map((sj) => [sj, dueList(M, sj, Date.now()).length]).sort((a, b) => b[1] - a[1]);
   if (dues[0][1] >= 5) {
     const [sj, n] = dues[0];
-    return { em: '🔐', label: `暗号の復習 ${Math.min(n, 20)}枚`, sub: `${{ en: '英単語', soc: '社会', sci: '理科' }[sj]}・約3分`, to: ['memory', { subject: sj }] };
+    return { em: '🔐', label: `暗号の復習 ${Math.min(n, 20)}枚`, sub: `${{ en: '英単語', soc: '社会', sci: '理科', ja: '国語' }[sj]}・約3分`, to: ['memory', { subject: sj }] };
   }
-  for (const subj of ['math', 'english']) {
+  for (const subj of ['math', 'english', 'japanese']) {
     const u = nextUnit(subj);
     const cta = u && unitNext(u.id).cta;
-    if (cta) return { em: u.emoji, label: cta.label.replace(/^\S+\s/, ''), sub: `${subj === 'math' ? '数学' : '英語'}｜${u.title}・約3分`, to: cta.to, html: true };
+    if (cta) return { em: u.emoji, label: cta.label.replace(/^\S+\s/, ''), sub: `${{ math: '数学', english: '英語', japanese: '国語' }[subj]}｜${u.title}・約3分`, to: cta.to, html: true };
   }
   return { em: '🔐', label: '新しい暗号を覚える', sub: '暗号室・約3分', to: ['memory', {}] };
 }
@@ -190,7 +205,7 @@ function bannerAttrs(key, cls) {
 // 暗号室（暗記）のポスター: 復習どきの枚数
 function memoryCard() {
   const M = S().memory;
-  const due = ['en', 'soc', 'sci'].reduce((a, sj) => a + dueList(M, sj, Date.now()).length, 0);
+  const due = ['en', 'soc', 'sci', 'ja'].reduce((a, sj) => a + dueList(M, sj, Date.now()).length, 0);
   const seen = Object.keys(M.cards || {}).length;
   return h('button', { class: 'game-card memory', type: 'button', ...bannerAttrs('banner-memory', 'memory'), onclick: () => { sfx('tap'); go('memory'); } },
     h('span', { class: 'gc-shine', 'aria-hidden': 'true' }),
@@ -222,7 +237,7 @@ function gameCard(subj, title, sub, onPlay) {
   const done = list.filter((u) => cleared(u.id)).length;
   const next = nextUnit(subj);
   const boss = next && BOSSES[next.id];
-  const banner = bgUrl(`banner-${subj === 'math' ? 'math' : 'en'}`);
+  const banner = bgUrl(`banner-${{ math: 'math', english: 'en', japanese: 'ja' }[subj]}`);
   return h('button', {
     class: `game-card ${subj}${banner ? ' has-img' : ''}`, type: 'button',
     style: banner ? { backgroundImage: `linear-gradient(90deg, #0b0716e6 30%, #0b071640), url(${banner})` } : {},

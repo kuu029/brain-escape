@@ -23,7 +23,7 @@ import { flyGems } from '../ui/gems.js';
 import { canSpeak, speakLines, stopSpeech } from '../ui/speech.js';
 
 const POS = { n: '名詞', v: '動詞', adj: '形容詞', adv: '副詞', prep: '前置詞', conj: '接続詞', wh: '疑問詞', pron: '代名詞', int: 'あいさつ等', num: '数', idiom: '熟語' };
-const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science' };
+const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science', ja: 'japanese' };
 const mem = () => S().memory;
 // 数え方: 英単語は「語」、社会・理科の用語は「枚」
 const unitOf = (subject) => (subject === 'en' ? '語' : '枚');
