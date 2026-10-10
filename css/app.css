@@ -22,6 +22,9 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; }
+/* 横にはみ出す演出があっても、画面ごと横にスライドしないように（iPhone で横にずれる違和感の防止） */
+html, body { overflow-x: clip; }
+#app, .screen { overflow-x: clip; }
 body {
   background: radial-gradient(120% 80% at 50% 0%, #2b1d58 0%, var(--bg) 60%) fixed, var(--bg);
   color: var(--text);

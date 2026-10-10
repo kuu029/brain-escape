@@ -377,7 +377,7 @@ export function render(el, params) {
     const card = problemCard(p, { review: !!cur.target, label: mode !== 'practice' ? label : '' });
     qarea.append(card, feedback, pad.el);
     studyBegin(180);
-    card.animate([{ opacity: 0, transform: 'translateX(24px)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' });
+    card.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' });
   }
 
   function afterPlayback() {
