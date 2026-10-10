@@ -14,7 +14,7 @@ import { CHAL_BETS, CHAL_MAX, CHAL_HOURS, chalLeft, chalNextHour, startChal } fr
 import { isEvent } from '../game/event.js';
 import { chalTable } from './memory.js';
 import { unlockCode, shortcutUrl, SHORTCUT_NAME } from '../game/unlock.js';
-import { REWARD, EXCHANGE, RGACHA_COST, RGACHA_RATES, rewardState, rewardTickets, rgachaTickets, exchangeReward, rewardGacha, useReward, GACHA_BONUS, BONUS_NAME, CONVERT, convertReward } from '../game/reward.js';
+import { REWARD, EXCHANGE, RGACHA_RATES, exchangeCost, rgachaCost, priceFactor, rewardState, rewardTickets, rgachaTickets, exchangeReward, rewardGacha, useReward, GACHA_BONUS, BONUS_NAME, CONVERT, convertReward } from '../game/reward.js';
 
 const RARE = { 1: 'ノーマル', 2: 'レア', 3: 'スーパーレア', 4: 'レジェンド' };
 
@@ -104,7 +104,7 @@ function rewardTab(s) {
   };
   const pullR = async (ticket = false) => {
     const res = rewardGacha(Math.random, { ticket });
-    if (!res) return toast(ticket ? '🎫 ごほうびガチャ券がない' : `💎が足りない（あと ${RGACHA_COST - s.gems}）`);
+    if (!res) return toast(ticket ? '🎫 ごほうびガチャ券がない' : `💎が足りない（あと ${rgachaCost() - s.gems}）`);
     await gachaStage([res]);
     go('collection', { tab: 'reward' });
   };
@@ -122,10 +122,11 @@ function rewardTab(s) {
       return btn(label, () => { if (!convertReward(i)) return toast(`${REWARD[c.from].name}が足りない`); sfx('coin'); toast(`${REWARD[c.to].min}分 解除券${c.m > 1 ? ` ×${c.m}` : ''} にした`); go('collection', { tab: 'reward' }); }, `small ${ok ? 'primary' : 'ghost'}`);
     })),
     h('h3', { class: 'sec' }, '💱 💎で交換（確実）'),
-    h('div', { class: 'gacha-btns' }, Object.entries(EXCHANGE).map(([id, cost]) => btn(`${REWARD[id].name} 💎${cost}`, () => { if (exchangeReward(id)) { sfx('coin'); toast(`${REWARD[id].name}をゲット！`); go('collection', { tab: 'reward' }); } else toast(`💎が足りない（あと ${cost - s.gems}）`); }, s.gems >= cost ? 'primary' : 'ghost'))),
+    priceFactor() > 1 && h('p', { class: 'note' }, `📈 入試が近いので、ごほうびの値段が ×${priceFactor().toFixed(2)} になっている（入試の日に向けて少しずつ上がる）`),
+    h('div', { class: 'gacha-btns' }, Object.keys(EXCHANGE).map((id) => [id, exchangeCost(id)]).map(([id, cost]) => btn(`${REWARD[id].name} 💎${cost}`, () => { if (exchangeReward(id)) { sfx('coin'); toast(`${REWARD[id].name}をゲット！`); go('collection', { tab: 'reward' }); } else toast(`💎が足りない（あと ${cost - s.gems}）`); }, s.gems >= cost ? 'primary' : 'ghost'))),
     h('h3', { class: 'sec' }, '🎰 ごほうびガチャ（一発勝負）'),
     rgachaTickets() > 0 && btn(`🎫 ごほうびガチャ券で1回（のこり ${rgachaTickets()}枚）`, () => pullR(true), 'primary'),
-    btn(`1回 💎${RGACHA_COST}`, () => pullR(false), 'boss'),
+    btn(`1回 💎${rgachaCost()}`, () => pullR(false), 'boss'),
     h('small', { class: 'note' }, `🎫 ごほうびガチャ券は、ウェーブ勝利でたまにドロップ（ボスは出やすい）。ノーマルガチャのおまけでも出る`),
     h('div', { class: 'rates' }, h('b', {}, '出るもの'), ...RGACHA_RATES.map((r) => h('div', {}, `${r.id === 'gem' ? `はずれ（💎${r.gems} もどる）` : REWARD[r.id].name}：${r.weight}%`))),
     log.length > 0 && h('h3', { class: 'sec' }, '📜 使った記録'),

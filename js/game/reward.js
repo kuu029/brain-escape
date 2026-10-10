@@ -10,10 +10,25 @@ export const REWARD = {
   u30: { min: 30, name: '30分 解除券', emoji: '🌈', rarity: 3 },
   u60: { min: 60, name: '60分 解除券', emoji: '🌟', rarity: 4 },
 };
-// 交換レート（💎）。15分 ≒ 半日ちょっと勉強したぶん
-export const EXCHANGE = { u15: 140, u30: 260 };
-// ごほうびガチャ: 1回 💎70。期待値は交換より少しおトク（約7.5分）、ただし当たりはずれが大きい
-export const RGACHA_COST = 70;
+// 値段の考え方: 💎は1分の勉強でだいたい 10〜12 たまる（単元を変えながらの多めの見積もり）。
+//   いちばんおトクなごほうびガチャでも「勉強1分 ≒ カラー1分」をこえないようにする
+// 交換レート（💎・入試まで120日より前の値段）
+export const EXCHANGE = { u15: 180, u30: 340 };
+// ごほうびガチャ: 1回 💎100。期待値は約7.5分（はずれの💎20もどりをひくと 約💎86）
+export const RGACHA_COST = 100;
+// 入試が近づくと値段が少しずつ上がる: 120日前から上がりはじめて、入試の日に1.5倍
+export const PRICE_RAMP = { days: 120, max: 1.5 };
+export function priceFactor(now = new Date()) {
+  const ex = S().settings?.examDate;
+  if (!ex) return 1;
+  const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const n = Math.round((new Date(`${ex}T00:00:00`) - d0) / 86400000);
+  if (n < 0 || n >= PRICE_RAMP.days) return 1;
+  return 1 + (PRICE_RAMP.max - 1) * (1 - n / PRICE_RAMP.days);
+}
+const r10 = (x) => Math.round(x / 10) * 10;
+export const exchangeCost = (id, now) => r10(EXCHANGE[id] * priceFactor(now));
+export const rgachaCost = (now) => r10(RGACHA_COST * priceFactor(now));
 export const RGACHA_RATES = [
   { id: 'u60', weight: 3 },
   { id: 'u30', weight: 9 },
@@ -32,7 +47,7 @@ export const rgachaTickets = () => rewardState().gtix;
 
 export function exchangeReward(id) {
   const s = S();
-  const cost = EXCHANGE[id];
+  const cost = EXCHANGE[id] && exchangeCost(id);
   if (!cost || s.gems < cost) return false;
   s.gems -= cost;
   rewardState().tix[id]++;
@@ -49,8 +64,9 @@ export function rewardGacha(rand = Math.random, { ticket = false } = {}) {
     if (R.gtix < 1) return null;
     R.gtix--;
   } else {
-    if (s.gems < RGACHA_COST) return null;
-    s.gems -= RGACHA_COST;
+    const cost = rgachaCost();
+    if (s.gems < cost) return null;
+    s.gems -= cost;
   }
   const total = RGACHA_RATES.reduce((a, r) => a + r.weight, 0);
   let x = rand() * total;
