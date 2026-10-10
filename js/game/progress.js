@@ -6,6 +6,7 @@ import { bump } from './missions.js';
 import { setAllyLevelSource, setGaugeBonus, ALLY_MAX_LV } from './engine.js';
 import { isEvent } from './event.js';
 import { claimActivity } from './bonus.js';
+import { addReward, rollBonus, RGT_DROP } from './reward.js';
 
 export function isUnlocked(id) {
   const u = UNIT[id];
@@ -229,11 +230,13 @@ export function gacha(n = 1, { ticket = false, type = 'normal' } = {}) {
       star = Math.min(SKIN_MAX_STAR, (ts[r.id] || 0) + 1);
       const up = !isNew && star > ts[r.id];
       ts[r.id] = star;
-      if (up) { out.push({ kind: 'skin', id: r.id, rarity: r.rarity, isNew: false, starUp: true, star, shards: 0 }); continue; }
+      if (up) { out.push({ kind: 'skin', id: r.id, rarity: r.rarity, isNew: false, starUp: true, star, shards: 0 }); if (type === 'normal') { const bn = rollBonus(); if (bn) { addReward(bn); out[out.length - 1].bonus = bn; } } continue; }
     }
     const shards = isNew ? 0 : r.dupShards;
     s.collection.shards = (s.collection.shards || 0) + shards;
     out.push({ kind: r.kind, id: r.id, rarity: r.rarity, isNew, shards, star });
+    // ノーマルガチャだけ: 低確率で解除券・ごほうびガチャ券がおまけでつく
+    if (type === 'normal') { const b = rollBonus(); if (b) { addReward(b); out[out.length - 1].bonus = b; } }
   }
   saveNow();
   return out;
@@ -332,13 +335,14 @@ export function equippedTool() {
   return ok.includes(s.toolOn) ? s.toolOn : ok[ok.length - 1];
 }
 
-// ウェーブ勝利のドロップ（たまに）: へそくり・ガチャ券。ボス撃破は券が出やすい
+// ウェーブ勝利のドロップ（たまに）: へそくり・ガチャ券・ごほうびガチャ券。ボス撃破は券が出やすい
 export const DROP = { coins: 0.12, ticket: 0.06, bossTicket: 0.3 };
 export const BOSS_DROP = 0.05; // 練習ウェーブでボスカードが落ちる確率（ボス撃破ずみの単元）
 export function rollDrops(boss, rand = Math.random) {
   const out = [];
   if (S().tools.includes('coins') && rand() < DROP.coins) { toolStock().coins = (toolStock().coins || 0) + 1; out.push('coins'); }
   if (rand() < (boss ? DROP.bossTicket : DROP.ticket)) { S().collection.gachaTickets = gachaTickets() + 1; out.push('ticket'); }
+  if (rand() < (boss ? RGT_DROP.boss : RGT_DROP.wave)) { addReward('gtix'); out.push('rgt'); }
   return out;
 }
 export function equipTool(id) {

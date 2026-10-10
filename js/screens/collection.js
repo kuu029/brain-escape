@@ -14,11 +14,16 @@ import { CHAL_BETS, CHAL_MAX, CHAL_HOURS, chalLeft, chalNextHour, startChal } fr
 import { isEvent } from '../game/event.js';
 import { chalTable } from './memory.js';
 import { unlockCode, shortcutUrl, SHORTCUT_NAME } from '../game/unlock.js';
-import { REWARD, EXCHANGE, RGACHA_COST, RGACHA_RATES, rewardState, rewardTickets, exchangeReward, rewardGacha, useReward } from '../game/reward.js';
+import { REWARD, EXCHANGE, RGACHA_COST, RGACHA_RATES, rewardState, rewardTickets, rgachaTickets, exchangeReward, rewardGacha, useReward, GACHA_BONUS, BONUS_NAME } from '../game/reward.js';
 
 const RARE = { 1: 'ノーマル', 2: 'レア', 3: 'スーパーレア', 4: 'レジェンド' };
 
 function itemView(it) {
+  const v = itemView0(it);
+  if (it.bonus) { v.name += `　＋おまけ ${BONUS_NAME[it.bonus]}！`; v.text += `　🎁 おまけで ${BONUS_NAME[it.bonus]} もゲット！「ごほうび」タブで使えるよ`; }
+  return v;
+}
+function itemView0(it) {
   if (it.kind === 'skin') {
     const sk = SKIN_ITEMS.find((x) => x.id === it.id);
     const star = it.star || 1;
@@ -97,9 +102,9 @@ function rewardTab(s) {
     });
     go('collection', { tab: 'reward' });
   };
-  const pullR = async () => {
-    const res = rewardGacha();
-    if (!res) return toast(`💎が足りない（あと ${RGACHA_COST - s.gems}）`);
+  const pullR = async (ticket = false) => {
+    const res = rewardGacha(Math.random, { ticket });
+    if (!res) return toast(ticket ? '🎫 ごほうびガチャ券がない' : `💎が足りない（あと ${RGACHA_COST - s.gems}）`);
     await gachaStage([res]);
     go('collection', { tab: 'reward' });
   };
@@ -113,7 +118,9 @@ function rewardTab(s) {
     h('h3', { class: 'sec' }, '💱 💎で交換（確実）'),
     h('div', { class: 'gacha-btns' }, Object.entries(EXCHANGE).map(([id, cost]) => btn(`${REWARD[id].name} 💎${cost}`, () => { if (exchangeReward(id)) { sfx('coin'); toast(`${REWARD[id].name}をゲット！`); go('collection', { tab: 'reward' }); } else toast(`💎が足りない（あと ${cost - s.gems}）`); }, s.gems >= cost ? 'primary' : 'ghost'))),
     h('h3', { class: 'sec' }, '🎰 ごほうびガチャ（一発勝負）'),
-    btn(`1回 💎${RGACHA_COST}`, pullR, 'boss'),
+    rgachaTickets() > 0 && btn(`🎫 ごほうびガチャ券で1回（のこり ${rgachaTickets()}枚）`, () => pullR(true), 'primary'),
+    btn(`1回 💎${RGACHA_COST}`, () => pullR(false), 'boss'),
+    h('small', { class: 'note' }, `🎫 ごほうびガチャ券は、ウェーブ勝利でたまにドロップ（ボスは出やすい）。ノーマルガチャのおまけでも出る`),
     h('div', { class: 'rates' }, h('b', {}, '出るもの'), ...RGACHA_RATES.map((r) => h('div', {}, `${r.id === 'gem' ? `はずれ（💎${r.gems} もどる）` : REWARD[r.id].name}：${r.weight}%`))),
     log.length > 0 && h('h3', { class: 'sec' }, '📜 使った記録'),
     log.length > 0 && h('div', { class: 'rw-log' }, log.slice(0, 10).map((x) => h('div', {}, `${fmt(x.at)}　${x.min}分${x.code ? `　${x.code}` : ''}`))));
@@ -275,6 +282,7 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
         h('b', {}, '出る確率'),
         h('div', {}, T.rates.map((r) => `★${r.rarity} ${Math.round((r.weight / total) * 100)}%`).join('　')),
         type === 'normal' && h('div', {}, '★1〜2 キャラ ／ ★3〜4 キャラかタワースキン'),
+        type === 'normal' && h('div', {}, `🎁 おまけ（1回ごと）: 15分 解除券 ${GACHA_BONUS.u15 * 100}%・ごほうびガチャ券 ${GACHA_BONUS.gtix * 100}%`),
         type === 'ally' && h('div', {}, '★3・★4 のなかまは技が強い（ゲージが多くいる）'),
         h('div', {}, `${PITY[type]}回のうちに★4 が出なければ、${PITY[type]}回目は★4 確定（天井）`),
         h('div', {}, 'スキンがダブると★アップ（最大★5）。キャラのダブりは 🧩かけら＋召喚チケット'),
