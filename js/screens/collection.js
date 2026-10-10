@@ -66,7 +66,7 @@ function rewardTab(s) {
   const fmt = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const use = async (id) => {
     const r = REWARD[id];
-    if (!(await confirmBox(`${r.name}を使う？`, 'おうちの人に、この画面を見せてね。使うと1枚へるよ。', '使う！', 'やめる'))) return;
+    if (!(await confirmBox(`${r.name}を使う？`, S().settings.unlockSecret ? '解除コードが出るよ。すぐにショートカットで解除してね（時間は今から数える）。使うと1枚へるよ。' : 'おうちの人に、この画面を見せてね。使うと1枚へるよ。', '使う！', 'やめる'))) return;
     const rec = useReward(id);
     if (!rec) return;
     sfx('win');
