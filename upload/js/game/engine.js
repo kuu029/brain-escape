@@ -312,6 +312,7 @@ for (const [unit, id] of Object.entries(BOSS_CARD)) {
 // 暗号室のボス: 英単語は足止め、社会は押し戻し、理科は全体こうげき
 SUMMON.golem = { need: 6, boss: true, desc: '必殺: 敵ぜんぶ3ターン停止', run: (st) => { st.frozen = Math.max(st.frozen, 3); } };
 SUMMON.bushou = { need: 6, boss: true, desc: '必殺: 敵ぜんぶを3マス押し戻す＋1ダメージ', run: (st, ev) => alive(st).forEach((e) => { back(st, e, 3, ev); hit(st, e, 1, ev, 'ally'); }) };
+SUMMON.fude = { need: 6, boss: true, desc: '必殺: 墨の一筆で、敵ぜんぶを2マス押し戻す＋2ダメージ', run: (st, ev) => alive(st).forEach((e) => { back(st, e, 2, ev); hit(st, e, 2, ev, 'ally'); }) };
 SUMMON.hakase = { need: 6, boss: true, desc: '必殺: 謎の気体で敵ぜんぶに3ダメージ＋コイン +30', run: (st, ev) => { alive(st).forEach((e) => hit(st, e, 3, ev, 'ally')); st.coins += 30; } };
 for (const id of ['kaeru', 'crown']) SUMMON[id] = { need: 6, boss: true, desc: '大必殺: 敵ぜんぶに6ダメージ＋ライフ +1', run: (st, ev) => { alive(st).forEach((e) => hit(st, e, 6, ev, 'ally')); st.lives = Math.min(MAX_LIVES, st.lives + 1); } };
 

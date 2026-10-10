@@ -173,6 +173,7 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
       ['看守・なかま', CARDS.filter((c) => !bossOf[c.id] && !MEM_BOSS_CARDS.includes(c.id))],
       ['数学のボス', CARDS.filter((c) => bossOf[c.id] && (UNIT[bossOf[c.id]]?.subject || 'math') === 'math')],
       ['英語棟のボス', CARDS.filter((c) => bossOf[c.id] && UNIT[bossOf[c.id]]?.subject === 'english')],
+      ['国語棟のボス', CARDS.filter((c) => bossOf[c.id] && UNIT[bossOf[c.id]]?.subject === 'japanese')],
       ['暗号室のボス', CARDS.filter((c) => MEM_BOSS_CARDS.includes(c.id))],
     ];
     // なかまの技とレベルアップ（🧩かけらで Lv1→5。その場で数字が変わる）

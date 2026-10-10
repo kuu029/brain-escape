@@ -529,6 +529,9 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
 .lang-en .qstem { font-size: 17px; line-height: 1.55; }
 .choices.text .choice { min-height: 54px; padding: 6px 8px; font-size: 17px; font-weight: 800; line-height: 1.2; }
 .choices.text .en { word-break: break-word; }
+/* 長い文の選択肢（読解など）は1列に */
+.choices.long { grid-template-columns: 1fr; }
+.choices.long .choice { min-height: 48px; padding: 8px 12px; font-size: 15px; font-weight: 700; line-height: 1.45; text-align: left; justify-content: flex-start; }
 .tr-en { white-space: pre-line; font-size: 17px; line-height: 1.6; font-weight: 700; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
 .tr-qstem { white-space: normal; font-size: 17px; font-weight: 700; margin-top: 6px; }
 .subj-row td { color: var(--accent); font-weight: 900; padding-top: 10px; }
@@ -874,6 +877,8 @@ body.combo-flash::after { content: ""; position: fixed; inset: 0; pointer-events
 .ex-passage u { text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: var(--accent); }
 .ex-passage .ex-notes { font-size: 12px; color: var(--dim); }
 .ex-passage .ex-q-en { font-size: 16px; font-weight: 700; }
+.ex-passage .ex-ja-title { text-align: center; font-weight: 700; margin-bottom: 8px; }
+.ex-passage p.ex-ja { margin: 0 0 4px; line-height: 1.8; }
 .ex-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 13px; }
 .ex-table caption { font-weight: 800; padding-bottom: 4px; }
 .ex-table th, .ex-table td { border: 1px solid #ffffff33; padding: 4px 6px; text-align: left; }
@@ -1576,3 +1581,14 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .ev-card.ev-allyfes:not(.has-img) { background: linear-gradient(90deg, #1f5a44, #4d3d9e); }
 .ev-next { margin: 0; font-size: 13px; color: var(--dim); text-align: center; }
 .ev-chip { align-self: stretch; padding: 6px 12px; border-radius: 12px; background: #ffd64026; border: 2px solid #ffd640aa; color: #ffd640; font-weight: 800; font-size: 13.5px; }
+/* 国語棟 */
+.game-card.japanese:not(.has-img) { background: radial-gradient(60% 90% at 90% 50%, #ffcf6b55, transparent 70%), repeating-linear-gradient(90deg, transparent 0 26px, #0000001f 26px 29px), linear-gradient(135deg, #8a2a1c, #3b2a8a); }
+.game-card.japanese { border-color: #ffcf6b; box-shadow: 0 8px 30px rgba(138, 42, 28, .35); cursor: pointer; }
+.game-card.japanese .gc-shine { animation-delay: 4s; }
+.fl-ja-1:not(.has-img) { background: radial-gradient(40% 18% at 85% 30%, #ffcf6b2a, transparent 70%), repeating-linear-gradient(90deg, transparent 0 40px, #3b2414 40px 44px), linear-gradient(#3b2414, #241408); }
+.fl-ja-2:not(.has-img) { background: radial-gradient(40% 18% at 15% 35%, #ff8a5c30, transparent 70%), repeating-linear-gradient(0deg, transparent 0 48px, #4a1f12 48px 54px), linear-gradient(#5a2414, #2a120a); }
+.fl-ja-3:not(.has-img) { background: radial-gradient(70% 25% at 50% 0%, #ffd64055, transparent 70%), radial-gradient(1px 1px at 30% 40%, #fff, transparent), radial-gradient(1px 1px at 70% 55%, #fff, transparent), linear-gradient(#2a1748, #1b1236); }
+/* 漢文（返り点） */
+.kanbun { display: flex; justify-content: center; gap: 6px; padding: 8px 0; }
+.kb-c { position: relative; display: inline-block; width: 44px; height: 48px; line-height: 48px; text-align: center; font-size: 30px; font-family: serif; background: #ffffff10; border-radius: 8px; }
+.kb-m { position: absolute; left: 1px; bottom: -2px; line-height: 1; font-size: 14px; color: #ff8a5c; font-weight: 800; }

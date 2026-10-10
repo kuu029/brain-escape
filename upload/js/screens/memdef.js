@@ -19,7 +19,7 @@ import { MEM_SUBJECTS } from '../memory/engine.js';
 import * as D from '../memory/defense.js';
 import { isEvent } from '../game/event.js';
 
-const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science' };
+const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science', ja: 'japanese' };
 
 export function defenseView(el, subject, started = false) {
   const M0 = S().memory;
