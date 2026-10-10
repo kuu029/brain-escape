@@ -213,7 +213,7 @@ function memoryCard() {
     h('div', { class: 'gc-body' },
       h('div', { class: 'gc-sub' }, '暗記 ｜ 暗号ラッシュ'),
       h('div', { class: 'gc-title' }, '暗号室'),
-      h('div', { class: 'gc-next' }, due ? `🔔 復習どき ${due} 枚` : seen ? `解読した暗号 ${seen} 枚` : '英単語・社会・理科。1回2〜4分'),
+      h('div', { class: 'gc-next' }, due ? `🔔 復習どき ${due} 枚` : seen ? `解読した暗号 ${seen} 枚` : '英単語・国語・社会・理科。1回2〜4分'),
       h('span', { class: 'gc-go' }, 'START ▶')),
     h('div', { class: 'gc-em' }, '🔐'));
 }

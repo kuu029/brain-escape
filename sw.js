@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = 'd8c9fbd259';
+const VERSION = '91b448817a';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -16,6 +16,7 @@ const ASSETS = [
   './art/badge-math.png',
   './art/badge-memory.png',
   './art/badge-oni.png',
+  './art/badge-science.png',
   './art/badge-streak30.png',
   './art/badge-streak7.png',
   './art/badge-time.png',
@@ -24,6 +25,7 @@ const ASSETS = [
   './art/banner-ja.jpg',
   './art/banner-math.jpg',
   './art/banner-memory.jpg',
+  './art/banner-sci.jpg',
   './art/bg-collection.jpg',
   './art/bg-defense.jpg',
   './art/bg-desk.jpg',
@@ -39,6 +41,9 @@ const ASSETS = [
   './art/bg-math-2.jpg',
   './art/bg-math-3.jpg',
   './art/bg-memory.jpg',
+  './art/bg-sci-1.jpg',
+  './art/bg-sci-2.jpg',
+  './art/bg-sci-3.jpg',
   './art/bg-win.jpg',
   './art/boss-angles.png',
   './art/boss-circle-angle.png',
@@ -84,6 +89,18 @@ const ASSETS = [
   './art/boss-pythagoras.png',
   './art/boss-quadratic-function.png',
   './art/boss-quadratic.png',
+  './art/boss-sc-buoy.png',
+  './art/boss-sc-conc.png',
+  './art/boss-sc-density.png',
+  './art/boss-sc-gene.png',
+  './art/boss-sc-humid.png',
+  './art/boss-sc-ohm.png',
+  './art/boss-sc-power.png',
+  './art/boss-sc-pressure.png',
+  './art/boss-sc-quake.png',
+  './art/boss-sc-react.png',
+  './art/boss-sc-sky.png',
+  './art/boss-sc-work.png',
   './art/boss-signed-numbers.png',
   './art/boss-similarity.png',
   './art/boss-simultaneous.png',
