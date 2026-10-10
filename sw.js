@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = 'dd012fcba6';
+const VERSION = '85b7f63105';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -53,6 +53,7 @@ const ASSETS = [
   './art/boss-angles.png',
   './art/boss-circle-angle.png',
   './art/boss-congruence.png',
+  './art/boss-construct.png',
   './art/boss-data.png',
   './art/boss-en-3sg.png',
   './art/boss-en-be.png',
@@ -61,6 +62,7 @@ const ASSETS = [
   './art/boss-en-future.png',
   './art/boss-en-indirect.png',
   './art/boss-en-inf.png',
+  './art/boss-en-listen.png',
   './art/boss-en-modal.png',
   './art/boss-en-participle.png',
   './art/boss-en-passive.png',
@@ -111,6 +113,7 @@ const ASSETS = [
   './art/boss-sc-sound.png',
   './art/boss-sc-spring.png',
   './art/boss-sc-work.png',
+  './art/boss-sc-write.png',
   './art/boss-signed-numbers.png',
   './art/boss-similarity.png',
   './art/boss-simultaneous.png',
@@ -123,6 +126,7 @@ const ASSETS = [
   './art/boss-so-scale.png',
   './art/boss-so-stat.png',
   './art/boss-so-vote.png',
+  './art/boss-so-write.png',
   './art/boss-solids.png',
   './art/boss-square-roots.png',
   './art/boss-word-mix.png',
