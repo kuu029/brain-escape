@@ -4,7 +4,7 @@ import { S, streakAlive, dayLog, cleared, save, today } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
 import { nextUnit, GACHA10_COST, claimLogin, gachaTickets, LOGIN_CAL } from '../game/progress.js';
 import { BOSSES } from '../game/content.js';
-import { spriteHTML, bgUrl, iconHTML } from '../game/art.js';
+import { spriteHTML, bgUrl, iconHTML, hasArt, cardSprite } from '../game/art.js';
 import { checkAchievements, ACH, TIER } from '../game/achieve.js';
 import { currentEvent, nextEvent } from '../game/event.js';
 import { pendingEnding } from './ending.js';
@@ -17,13 +17,15 @@ import { flyGems } from '../ui/gems.js';
 import { takeAdvice } from '../game/advice.js';
 import { slotStatus, SLOT_GEMS, SLOT_MAX } from '../game/bonus.js';
 import { unitNext } from './map.js';
+import { avatarHTML, pickAvatar } from '../ui/avatar.js';
 
 export function topBar(back = null) {
   const s = S();
   return h('header', { class: 'topbar' },
-    back ? h('button', { class: 'back', type: 'button', onclick: back, 'aria-label': 'もどる' }, '‹') : h('span', { class: 'who' }, `👤 ${s.nickname}`),
+    back ? h('button', { class: 'back', type: 'button', onclick: back, 'aria-label': 'もどる' }, '‹')
+      : h('button', { class: 'who', type: 'button', 'aria-label': 'アイコンを変える', onclick: async () => { sfx('tap'); if (await pickAvatar()) go('home'); } }, h('span', { html: avatarHTML(s) }), h('span', { class: 'who-name' }, s.nickname)),
     h('span', { class: 'spacer' }),
-    h('span', { class: 'pill' }, `🔥 ${streakAlive()}日`),
+    h('span', { class: 'pill streak-pill', title: '連続日数' }, h('span', { html: iconHTML('icon-fire', '🔥', '連続') }), h('b', {}, String(streakAlive())), h('small', {}, '日')),
     h('button', { class: 'pill help-pill', type: 'button', 'aria-label': '遊び方ガイド', onclick: () => go('guide') }, '？'),
     h('span', { class: 'pill gem-pill' }, h('span', { html: iconHTML('icon-gem', '💎', 'ダイヤ') }), ' ', h('b', {}, String(s.gems))));
 }
@@ -76,7 +78,7 @@ function countdown() {
   const wk = `この7日 ${weekMinutes()}分`;
   if (n === null) return h('button', { class: 'cd-line set', type: 'button', onclick: () => go('settings') }, h('span', {}, '📅 入試の日を決めると、カウントダウンが出るよ'), h('small', {}, wk));
   if (n < 0) return h('div', { class: 'cd-line' }, h('span', {}, '🌸 入試おつかれさま！'), h('small', {}, wk));
-  return h('div', { class: `cd-line${n <= 30 ? ' hot' : ''}` }, h('span', {}, n === 0 ? '🔥 今日が入試！ 自分を信じろ' : h('span', {}, '📅 入試まで あと ', h('b', {}, String(n)), ' 日')), h('small', {}, wk));
+  return h('div', { class: `cd-line${n <= 30 ? ' hot' : ''}` }, h('span', {}, n === 0 ? '🔥 今日が入試！ 自分を信じろ' : h('span', {}, h('span', { html: iconHTML('icon-calendar', '📅', '') }), ' 入試まで あと ', h('b', {}, String(n)), ' 日')), h('small', {}, wk));
 }
 
 export function render(el) {
@@ -111,17 +113,18 @@ export function render(el) {
     topBar(),
     h('div', { class: 'home' },
       h('div', { class: 'home-hero' },
-        h('div', { class: 'hlogo' }, h('span', { class: 'hlogo-a' }, 'ブレイン'), h('span', { class: 'hlogo-b' }, '脱獄')),
+        hasArt('logo') ? h('div', { class: 'hlogo-img', html: spriteHTML('logo', '', 'ブレイン脱獄') })
+          : h('div', { class: 'hlogo' }, h('span', { class: 'hlogo-en' }, 'BRAIN ESCAPE'), h('span', { class: 'hlogo-row' }, h('span', { class: 'hlogo-a' }, 'ブレイン'), h('span', { class: 'hlogo-b' }, '脱獄'))),
         h('p', { class: 'hello' }, `よう、${s.nickname}。今日も脱獄の時間だ。`),
         h('div', { class: 'escape-meter' },
-          h('span', { class: 'em-label' }, '🔓 脱獄進捗'),
+          h('span', { class: 'em-label', html: `${iconHTML('icon-key', '🗝️', '')} 脱獄進捗` }),
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),
           h('b', { class: 'em-pct' }, `${pct}%`))),
       countdown(),
       eventCard(),
       todayCard(),
       h('div', { class: 'mboard' },
-        h('h3', { class: 'mboard-title' }, '📋 今日の指令'),
+        h('h3', { class: 'mboard-title', html: `${iconHTML('icon-mission', '📋', '')} 今日の指令` }),
         mlist,
         hourLine(),
         h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ リベンジ待ち 👻${s.reviewQueue.length}`)),
@@ -165,25 +168,26 @@ export function render(el) {
 
 // 今日の1手: 迷わないように「いまやること」を1つだけ大きく出す
 //   暗号の復習が5枚以上たまっていれば暗号室、なければ数学（次に英語）の「次はこれ」
+const MEM_FACE = { en: 'golem', soc: 'bushou', sci: 'hakase', ja: 'fude' }; // 暗号室の教科ごとのボス
 function todayPick() {
   const M = S().memory;
   const dues = ['en', 'soc', 'sci', 'ja'].map((sj) => [sj, dueList(M, sj, Date.now()).length]).sort((a, b) => b[1] - a[1]);
   if (dues[0][1] >= 5) {
     const [sj, n] = dues[0];
-    return { em: '🔐', label: `暗号の復習 ${Math.min(n, 20)}枚`, sub: `${{ en: '英単語', soc: '社会', sci: '理科', ja: '国語' }[sj]}・約3分`, to: ['memory', { subject: sj }] };
+    return { em: '🔐', art: cardSprite(MEM_FACE[sj]), label: `暗号の復習 ${Math.min(n, 20)}枚`, sub: `${{ en: '英単語', soc: '社会', sci: '理科', ja: '国語' }[sj]}・約3分`, to: ['memory', { subject: sj }] };
   }
   for (const subj of ['math', 'english', 'japanese', 'science']) {
     const u = nextUnit(subj);
     const cta = u && unitNext(u.id).cta;
-    if (cta) return { em: u.emoji, label: cta.label.replace(/^\S+\s/, ''), sub: `${{ math: '数学', english: '英語', japanese: '国語', science: '理科' }[subj]}｜${u.title}・約3分`, to: cta.to, html: true };
+    if (cta) return { em: u.emoji, art: spriteHTML(`boss-${u.id}`, BOSSES[u.id]?.emoji || u.emoji, ''), label: cta.label.replace(/^\S+\s/, ''), sub: `${{ math: '数学', english: '英語', japanese: '国語', science: '理科' }[subj]}｜${u.title}・約3分`, to: cta.to, html: true };
   }
-  return { em: '🔐', label: '新しい暗号を覚える', sub: '暗号室・約3分', to: ['memory', {}] };
+  return { em: '🔐', art: cardSprite('golem'), label: '新しい暗号を覚える', sub: '暗号室・約3分', to: ['memory', {}] };
 }
 function todayCard() {
   const t = todayPick();
   return h('button', { class: 'today-card', type: 'button', onclick: () => { sfx('tap'); go(...t.to); } },
-    h('span', { class: 'tc-em' }, t.em),
-    h('span', { class: 'tc-body' }, h('small', {}, '👉 今日の1手'), h('b', t.html ? { html: t.label } : {}, t.html ? '' : t.label), h('small', { class: 'tc-sub' }, t.sub)),
+    h('span', { class: 'tc-em', html: t.art || t.em }),
+    h('span', { class: 'tc-body' }, h('small', { class: 'tc-tag' }, '今日の1手'), h('b', t.html ? { html: t.label } : {}, t.html ? '' : t.label), h('small', { class: 'tc-sub' }, t.sub)),
     h('span', { class: 'tc-go' }, '▶'));
 }
 

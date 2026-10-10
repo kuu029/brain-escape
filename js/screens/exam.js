@@ -181,7 +181,7 @@ function sheetView(el) {
         save();
         sfx('build');
         goNext();
-      }, { fire: '決定' });
+      }, { fire: '決定', auto: false });
       if (cur !== undefined) {
         if (q.p.input.kind === 'choice') pad.select?.(cur);
         if (q.p.input.kind === 'blanks') pad.fill?.(cur);

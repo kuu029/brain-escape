@@ -2,6 +2,10 @@
 import { h } from '../core/ui.js';
 import { tex, rich } from '../core/mathml.js';
 import { sfx } from '../core/sound.js';
+import { checkAnswer } from '../core/check.js';
+
+// つづり・並べかえは、正しく全部うまったら決定ボタンなしで自動で進む（少し待って、最後の1文字を見せてから）
+const AUTO_MS = 280;
 
 const ORDER_INST = '日本語に合うように並べかえよう\n';
 export function problemCard(p, { review = false, label = '' } = {}) {
@@ -33,8 +37,10 @@ function showValue(s) {
 
 // onSubmit(input) は Promise を返してもよい（その間は入力を止める）
 // opts.fire: 決定ボタンの文字（模試では「決定」）
+// opts.auto: false にすると、正しくうまっても自動で進まない（模試: 自動で進むと正解がばれるため）
 export function answerPad(p, onSubmit, opts = {}) {
   const fireLabel = opts.fire || '発射!';
+  const auto = opts.auto !== false;
   let locked = false;
   let root = null;
   const submit = async (val) => {
@@ -55,12 +61,12 @@ export function answerPad(p, onSubmit, opts = {}) {
     return pad;
   }
   if (p.input.kind === 'spell') {
-    const pad = keyboardPad(p, (v) => submit(v), fireLabel);
+    const pad = keyboardPad(p, (v) => submit(v), fireLabel, auto);
     root = pad.el;
     return pad;
   }
   if (p.input.kind === 'order') {
-    const pad = tilePad(p, (v) => submit(v), fireLabel);
+    const pad = tilePad(p, (v) => submit(v), fireLabel, auto);
     root = pad.el;
     return pad;
   }
@@ -171,7 +177,7 @@ export function answerPad(p, onSubmit, opts = {}) {
 
 // タイル入力（英語）: order = 単語タイルの並べかえ（spell は keyboardPad）
 // タイルは指が触れた瞬間に反応。置いたタイルはタップで元にもどり、ドラッグで並びを入れかえられる
-function tilePad(p, onFire, fireLabel = '発射!') {
+function tilePad(p, onFire, fireLabel = '発射!', auto = true) {
   const spell = p.input.kind === 'spell';
   const tiles = spell ? p.input.letters : p.input.tiles;
   const need = p.input.answer.length;
@@ -189,6 +195,14 @@ function tilePad(p, onFire, fireLabel = '発射!') {
     if (!spell && picked.length >= need) return shakeLine();
     picked.push(i);
     paint();
+    // 正しく全部うまったら自動で決定
+    if (auto && picked.length === need) {
+      const val = spell ? picked.map((k) => tiles[k]).join('') : [...picked];
+      if (checkAnswer(p, val).ok) {
+        const at = picked.join();
+        setTimeout(() => { if (picked.join() === at && line.isConnected) { sfx('tap'); onFire(val); } }, AUTO_MS);
+      }
+    }
   }
   function unpick(k) {
     picked.splice(k, 1);
@@ -311,7 +325,7 @@ function tilePad(p, onFire, fireLabel = '発射!') {
 // つづり: キーボードと同じ並び（QWERTY）。使う文字の候補だけ光らせて、ほかは押せない（探す時間をへらす）
 // 軽いヒント: 何文字か（マス）と、💡で次の1文字を入れる（使ったら pad.usedHint = true）
 const QWERTY = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
-function keyboardPad(p, onFire, fireLabel) {
+function keyboardPad(p, onFire, fireLabel, auto = true) {
   const word = p.input.answer;
   const need = word.length;
   const cand = new Set(p.input.letters.map((c) => c.toLowerCase()));
@@ -325,6 +339,10 @@ function keyboardPad(p, onFire, fireLabel) {
     if (typed.length >= need) { slots.classList.remove('shake'); void slots.offsetWidth; slots.classList.add('shake'); return; }
     typed += c;
     paint();
+    if (auto && typed.length === need && checkAnswer(p, typed).ok) {
+      const at = typed;
+      setTimeout(() => { if (typed === at && slots.isConnected) { sfx('tap'); onFire(typed); } }, AUTO_MS);
+    }
   };
   const key = (c) => h('button', {
     class: `kb-key${cand.has(c) ? ' hot' : ''}`,

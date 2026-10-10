@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = '91b448817a';
+const VERSION = 'c3681860ec';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -152,9 +152,14 @@ const ASSETS = [
   './art/guide-happy.png',
   './art/guide-normal.png',
   './art/guide-think.png',
+  './art/icon-calendar.png',
   './art/icon-coin.png',
+  './art/icon-fire.png',
   './art/icon-gem.png',
+  './art/icon-key.png',
+  './art/icon-mission.png',
   './art/icon-ticket.png',
+  './art/logo.png',
   './art/mob-en-grunt.png',
   './art/mob-en-review.png',
   './art/mob-en-runner.png',
@@ -276,6 +281,7 @@ const ASSETS = [
   './js/screens/training.js',
   './js/ui/answer.js',
   './js/ui/asklater.js',
+  './js/ui/avatar.js',
   './js/ui/board.js',
   './js/ui/deco.js',
   './js/ui/gems.js',
