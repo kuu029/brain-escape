@@ -18,6 +18,7 @@ import { takeAdvice } from '../game/advice.js';
 import { slotStatus, SLOT_GEMS, SLOT_MAX } from '../game/bonus.js';
 import { unitNext } from './map.js';
 import { avatarHTML, pickAvatar } from '../ui/avatar.js';
+import { studyColorUrl } from '../game/unlock.js';
 
 export function topBar(back = null) {
   const s = S();
@@ -116,6 +117,8 @@ export function render(el) {
         hasArt('logo') ? h('div', { class: 'hlogo-img', html: spriteHTML('logo', '', 'ブレイン脱獄') })
           : h('div', { class: 'hlogo' }, h('span', { class: 'hlogo-en' }, 'BRAIN ESCAPE'), h('span', { class: 'hlogo-row' }, h('span', { class: 'hlogo-a' }, 'ブレイン'), h('span', { class: 'hlogo-b' }, '脱獄'))),
         h('p', { class: 'hello' }, `よう、${s.nickname}。今日も脱獄の時間だ。`),
+        // ごほうびの合言葉を設定している（＝ショートカットを入れている）ときだけ: 勉強中はカラーにできる
+        s.settings.unlockSecret && btn('🎨 カラーにする', () => { location.href = studyColorUrl(); }, 'small ghost hm-color'),
         h('div', { class: 'escape-meter' },
           h('span', { class: 'em-label', html: `${iconHTML('icon-key', '🗝️', '')} 脱獄進捗` }),
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),

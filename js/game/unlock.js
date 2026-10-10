@@ -17,4 +17,7 @@ export async function unlockCode(secret, d, min) {
 }
 // ショートカットを動かす URL（入力にコードを渡す）
 export const SHORTCUT_NAME = 'ごほうび解除';
+// 勉強中だけカラーにする: ショートカット「勉強カラー」（カラーフィルタをオフにするだけ）。YouTube・Roblox を開くと白黒チェックで白黒にもどる
+export const STUDY_SHORTCUT = '勉強カラー';
+export const studyColorUrl = () => `shortcuts://run-shortcut?name=${encodeURIComponent(STUDY_SHORTCUT)}`;
 export const shortcutUrl = (code) => `shortcuts://run-shortcut?name=${encodeURIComponent(SHORTCUT_NAME)}&input=text&text=${encodeURIComponent(code)}`;
