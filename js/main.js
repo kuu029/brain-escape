@@ -1,7 +1,8 @@
 // 起動
 import { init, S } from './core/store.js';
 import { startTimer } from './core/timer.js';
-import { register, mount, go, currentScreen, markUpdateReady } from './core/router.js';
+import { register, mount, go, currentScreen, markUpdateReady, setOnGo } from './core/router.js';
+import { playBgm, trackFor } from './core/bgm.js';
 import * as onboarding from './screens/onboarding.js';
 import * as home from './screens/home.js';
 import * as map from './screens/map.js';
@@ -21,6 +22,7 @@ import * as guide from './screens/guide.js';
 init();
 const screens = { onboarding, home, map, diagnosis, training, battle, result, collection, records, settings, exam, memory, timeattack, ending, guide };
 for (const [k, v] of Object.entries(screens)) register(k, v);
+setOnGo((name, p) => playBgm(trackFor(name, p)));
 mount(document.getElementById('app'));
 startTimer();
 
@@ -28,6 +30,7 @@ const s = S();
 if (!s.nickname) go('onboarding', { step: 'title' });
 else if (!s.onboarded) go('diagnosis', { phase: 'intro' });
 else go('home');
+window.__booted = true; // index.html の「起動できなかったとき」の表示を出さない
 
 // オフライン用 Service Worker
 // （localhost で開発中はキャッシュが邪魔なので ?sw を付けたときだけ）

@@ -19,5 +19,23 @@
   <main id="app"></main>
   <noscript>JavaScript をオンにしてね。</noscript>
   <script type="module" src="js/main.js"></script>
+  <!-- 起動できなかったとき（ファイルの読みこみ失敗など）の非常口。勉強の記録（localStorage）は消さない -->
+  <script>
+    setTimeout(function () {
+      if (window.__booted) return;
+      var el = document.getElementById('app');
+      el.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#fff;font-size:17px;line-height:1.7">'
+        + '<p style="font-size:40px;margin:0">🔧</p><p>アプリを起動できませんでした。<br>ファイルがそろっていないか、古いファイルが残っているかも。</p>'
+        + '<p style="font-size:14px;color:#c9c2e8">勉強の記録・💎・コレクションは消えません。</p>'
+        + '<button id="rescue" style="font-size:18px;padding:14px 22px;border-radius:14px;border:0;background:#ffd640;color:#1b1236;font-weight:800">🔄 読みこみ直す</button></div>';
+      document.getElementById('rescue').onclick = function () {
+        var done = function () { location.replace('./?v=' + Date.now()); };
+        var p = [];
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) p.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }));
+        if (window.caches) p.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }));
+        Promise.all(p).then(done, done);
+      };
+    }, 8000);
+  </script>
 </body>
 </html>
