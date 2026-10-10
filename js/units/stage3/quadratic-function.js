@@ -136,6 +136,34 @@ function genCross(rng) {
   };
 }
 
+// 放物線と直線で囲まれた △OAB の面積（入試の関数の大問でよく出る形）
+//   直線 AB と y 軸の交点 (0, b) で、左右2つの三角形に分ける。検算は3点の座標から面積を出す公式で
+function genArea(rng) {
+  const a = F(rng.pick([1, 1, 2]), rng.chance(0.4) ? 2 : 1);
+  let p, q;
+  // A・B がグラフの中（y ≦ 16）に入るように
+  do { p = rng.int(-4, -1); q = rng.int(1, 4); } while ((a.d === 2 && (p % 2 || q % 2)) || p + q === 0 || a.mul(Math.max(p * p, q * q)).num() > 16);
+  const P = [p, a.mul(p * p)], Q = [q, a.mul(q * q)];
+  const k = a.mul(p + q), b = a.mul(p * q).neg();
+  const S = b.mul(q - p).div(2);
+  const shoelace = (pts) => Math.abs(pts.reduce((t, [x1, y1], i) => { const [x2, y2] = pts[(i + 1) % pts.length]; return t + x1 * y2 - x2 * y1; }, 0)) / 2;
+  return {
+    stem: `関数 ${m(paraTex(a))} のグラフ上に、${m('x')} 座標が ${m(p)}、${m(q)} の点 A、B がある。原点を O とするとき、${m('\\triangle OAB')} の面積は？（座標の1目もりを1cmとする）`,
+    fig: plane({ x: [-5, 5], y: [-2, Math.min(17, Math.max(P[1].num(), Q[1].num()) + 1)], fns: [{ f: (x) => a.num() * x * x }, { f: (x) => k.num() * x + b.num(), dash: true }], pts: [{ p: [p, P[1].num()], label: 'A' }, { p: [q, Q[1].num()], label: 'B' }] }, { w: 240, h: 220 }),
+    ...numAns([{ key: 'v', text: '面積', suffix: ' cm²' }], { v: S }, { wrong: [
+      { vals: { v: S.mul(2) }, msg: '三角形なので ÷2 をわすれずに。' },
+      { vals: { v: b.mul(q + p).div(2).abs() }, msg: '底辺 × 高さの「高さ」は、A と B の x 座標の差（右と左の長さの合計）。' },
+    ] }),
+    hint: 'まず直線 AB の式を出し、y 軸との交点 C を求める。△OAB = △OAC + △OBC（底辺 OC が共通）。',
+    steps: [
+      `A ${m(`(${p},\\ ${tnum(P[1])})`)}、B ${m(`(${q},\\ ${tnum(Q[1])})`)}`,
+      `直線 AB: ${m(lineTex(k, b))} → y 軸との交点 C ${m(`(0,\\ ${tnum(b)})`)}`,
+      `${m(`\\frac{1}{2}\\times ${tnum(b)}\\times ${-p}+\\frac{1}{2}\\times ${tnum(b)}\\times ${q}=${tnum(S)}`)}（cm²）`,
+    ],
+    check: { kind: 'fn', verify: (v) => Math.abs(v.v - shoelace([[0, 0], [p, P[1].num()], [q, Q[1].num()]])) < 1e-9 },
+  };
+}
+
 export default {
   id: 'quadratic-function',
   stage: 3,
@@ -157,6 +185,7 @@ export default {
     'qf-rate': { difficulty: 2, gen: genRate },
     'qf-graph': { difficulty: 2, gen: genGraph },
     'qf-cross': { difficulty: 3, gen: genCross },
+    'qf-area': { difficulty: 3, gen: genArea },
   },
   lessons: [
     {
@@ -203,7 +232,7 @@ export default {
     {
       id: 'qf-l4',
       title: 'グラフと直線',
-      unlocks: ['qf-graph', 'qf-cross'],
+      unlocks: ['qf-graph', 'qf-cross', 'qf-area'],
       build(rng) {
         const p = -rng.int(1, 2), q = rng.int(2, 3);
         const k = p + q, b = -p * q;

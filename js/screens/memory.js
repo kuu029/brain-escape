@@ -384,7 +384,7 @@ function rushView(el, subject, opts) {
     };
     stage.replaceChildren(cardEl);
     if (form === 'input') {
-      const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', placeholder: card.read === null ? '数字を入力（例: 1600）' : card.kind === 'term' ? '用語を入力（ひらがなでもOK）' : '英語で入力', ...(card.kind === 'term' ? { lang: 'ja' } : {}), ...(card.read === null ? { inputmode: 'numeric' } : {}) });
+      const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', placeholder: card.read === null ? '数字を入力（例: 1600）' : card.kanji ? '読みをひらがなで入力' : card.kind === 'term' ? '用語を入力（ひらがなでもOK）' : '英語で入力', ...(card.kind === 'term' ? { lang: 'ja' } : {}), ...(card.read === null ? { inputmode: 'numeric' } : {}) });
       const submit = () => { const v = inp.value; if (!v.trim()) return; inp.blur(); finishQ(ME.textOk(q, v), v); };
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
       stage.append(inp, h('div', { class: 'mr-ctrl' }, btn('わからない', () => finishQ(false, null), 'ghost'), btn('決定', submit, 'primary')));

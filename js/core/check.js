@@ -1,5 +1,15 @@
 // 解答の判定（DOMなし。テストからも使う）
 import { Frac } from './frac.js';
+import { normJa } from '../memory/decks/terms.js';
+
+// 文字入力（国語の漢字の読みなど）: 全角・半角、ひらがな・カタカナ、空白のちがいはゆるす
+const normT = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+function checkText(p, input) {
+  const s = String(input ?? '');
+  if (!s.trim()) return { ok: false, invalid: true, msg: '答えを入力してね' };
+  const norm = p.input.ja ? normJa : normT;
+  return { ok: p.input.accept.some((a) => norm(a) === norm(s)) };
+}
 
 function sameList(got, exp, unordered) {
   if (got.length !== exp.length) return false;
@@ -20,6 +30,7 @@ export function checkAnswer(p, input) {
   if (p.input.kind === 'order') return checkOrder(p, input);
   if (p.input.kind === 'blanks') return checkBlanks(p, input);
   if (p.input.kind === 'spell') return checkSpell(p, input);
+  if (p.input.kind === 'text') return checkText(p, input);
   if (p.input.kind === 'choice') {
     const ok = input === p.input.answer;
     const w = (p.wrong || []).find((x) => x.choice === input);

@@ -100,6 +100,8 @@ export function render(el, params) {
     paintTools();
     const canBuild = !diagMode && st.coins >= E.TOWERS.beam.cost && st.slots.some((x) => !x);
     board.el.classList.toggle('can-build', canBuild);
+    // 建設メニューを開いたままコインが増えたとき（へそくりなど）、「足りない」の表示を今のコインで直す
+    pop?.querySelectorAll('.bp-opt').forEach((b) => b.classList.toggle('poor', st.coins < Number(b.dataset.cost)));
   }
 
   // ---------- 予測 ----------
@@ -305,6 +307,7 @@ export function render(el, params) {
         const can = st.coins >= def.cost;
         return h('button', {
           class: `bp-opt${can ? '' : ' poor'}`,
+          'data-cost': def.cost,
           type: 'button',
           onclick: () => {
             if (!E.build(st, si, type)) { board.floatOnSlot(si, `あと🪙${def.cost - st.coins}`, 'info'); return; }

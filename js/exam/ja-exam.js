@@ -4,16 +4,16 @@ import { makeRng } from '../core/rng.js';
 import { CARDS, makeQuestion } from '../memory/engine.js';
 import { makeProblem, GEN } from '../units/registry.js';
 import { textChoice } from '../units/japanese/kit-ja.js';
-import { SETSUMEI, BUNGAKU, SAKUBUN, SAKUBUN_RULES, SAKUBUN_RUBRIC } from './ja-exam-data.js';
+import { SETSUMEI, BUNGAKU, KOBUN, SAKUBUN, SAKUBUN_RULES, SAKUBUN_RUBRIC } from './ja-exam-data.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const ul = (s) => esc(s).replace(/\[\[(.+?)\]\]/g, '<u>$1</u>');
 export const plain = (s) => String(s).replace(/\[\[(.+?)\]\]/g, '$1');
 // 会話（「…」）は字下げしない
-const passageHTML = (T) => `<p class="ex-ja-title">${esc(T.title)}</p>${T.paras.map((x) => `<p class="ex-ja">${/^「/.test(x) ? '' : '　'}${ul(x)}</p>`).join('')}`;
+const passageHTML = (T) => `<p class="ex-ja-title">${esc(T.title)}</p>${T.paras.map((x) => `<p class="ex-ja">${/^「/.test(x) ? '' : '　'}${ul(x)}</p>`).join('')}${T.notes ? `<p class="ex-notes">（注）${T.notes.map(esc).join('　')}</p>` : ''}`;
 
 const GRAMMAR = ['hs-which', 'hs-find', 'ky-kind', 'ky-form', 'kg-make', 'kg-kind', 'sb-rareru', 'sb-nai', 'sb-no'].filter((g) => GEN[g]);
-const KOTEN = ['kn-modern', 'kn-rule', 'kk-fill', 'kk-which', 'kt-nth', 'kt-order'].filter((g) => GEN[g]);
+const KANBUN = ['kt-nth', 'kt-order'].filter((g) => GEN[g]);
 const deckCards = (...decks) => CARDS.filter((c) => decks.includes(c.deck));
 
 function readQ(rng, T, q) {
@@ -52,7 +52,8 @@ const genQs = (rng, ids, n) => uniq(n, () => makeProblem(rng.pick(ids), rng.int(
 
 function kanjiQs(rng, nRead, nWrite) {
   const pool = rng.shuffle(deckCards('ja-kanji1', 'ja-kanji2'));
-  return [...pool.slice(0, nRead).map((c) => cardQ(c, 'e2j', rng)), ...pool.slice(nRead, nRead + nWrite).map((c) => cardQ(c, 'j2e', rng))];
+  // 読み = ひらがなで入力、書き = 読みに合う漢字を4択（送りがなが同じものから）
+  return [...pool.slice(0, nRead).map((c) => cardQ(c, 'input', rng)), ...pool.slice(nRead, nRead + nWrite).map((c) => cardQ(c, 'j2e', rng))];
 }
 function gokuQs(rng, n) {
   return rng.shuffle(deckCards('ja-yoji', 'ja-koto', 'ja-kanyo')).slice(0, n).map((c) => cardQ(c, rng.chance(0.5) ? 'j2e' : 'e2j', rng));
@@ -76,9 +77,10 @@ export function buildJaExam(kind, seed) {
     sections = [
       readingSec(rng, SETSUMEI, '説明的文章', '次の文章を読んで、あとの問いに答えなさい。', 4),
       readingSec(rng, BUNGAKU, '文学的文章', '次の文章を読んで、あとの問いに答えなさい。', 4),
-      { title: '漢字の読み書き', intro: '次の漢字の読み、読みにあう漢字を、ア〜エから1つずつ選びなさい。', qs: kanjiQs(rng, 5, 5).map((p) => ({ pts: 2, p })) },
+      { title: '漢字の読み書き', intro: '次の漢字の読みをひらがなで書きなさい。また、読みにあう漢字をア〜エから1つずつ選びなさい。', qs: kanjiQs(rng, 5, 5).map((p) => ({ pts: 2, p })) },
       { title: '言葉と文法', intro: '次の問いに答えなさい。', qs: [...gokuQs(rng, 3), ...genQs(rng, GRAMMAR, 4)].map((p) => ({ pts: 2, p })) },
-      { title: '古文・漢文', intro: '次の問いに答えなさい。', qs: [...deckCards('ja-kogo').length ? [cardQ(rng.pick(deckCards('ja-kogo')), 'e2j', rng)] : [], ...genQs(rng, KOTEN, 3)].map((p) => ({ pts: 3, p })) },
+      // 古文の本文を読む3問（4問から）＋ 漢文の返り点1問
+      (() => { const sec = readingSec(rng, KOBUN, '古文・漢文', '次の古文を読んで、あとの問いに答えなさい。（(4) は漢文の問題）', 3, 3); sec.qs.push(...genQs(rng, KANBUN, 1).map((p) => ({ pts: 3, p }))); return sec; })(),
       {
         title: '作文',
         intro: '次の問いに答えなさい。',

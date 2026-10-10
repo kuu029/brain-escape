@@ -2,6 +2,10 @@
 import { h } from '../core/ui.js';
 import { S } from '../core/store.js';
 import { sfx } from '../core/sound.js';
+import { iconHTML } from '../game/art.js';
+
+// 飛んでいく💎は、右上の表示と同じ紫のダイヤの絵（画像がなければ絵文字）
+const GEM = () => iconHTML('icon-gem', '💎', '');
 
 export function flyGems(n, from = null, delay = 0) {
   if (!(n > 0)) return;
@@ -10,7 +14,7 @@ export function flyGems(n, from = null, delay = 0) {
     let temp = null;
     // 💎表示がない画面（訓練など）では、右上に一時的に出す
     if (!pill) {
-      temp = h('span', { class: 'pill gem-pill gem-temp' }, '💎 ', h('b', {}, String(S().gems - n)));
+      temp = h('span', { class: 'pill gem-pill gem-temp' }, h('span', { html: GEM() }), ' ', h('b', {}, String(S().gems - n)));
       document.body.append(temp);
       pill = temp;
     }
@@ -23,7 +27,7 @@ export function flyGems(n, from = null, delay = 0) {
     const k = Math.min(8, Math.max(3, Math.ceil(n / 4)));
     let landed = 0;
     for (let i = 0; i < k; i++) {
-      const g = h('span', { class: 'gem-fly', 'aria-hidden': 'true' }, '💎');
+      const g = h('span', { class: 'gem-fly', 'aria-hidden': 'true', html: GEM() });
       document.body.append(g);
       const x0 = f.left + f.width / 2 + (Math.random() - 0.5) * 40, y0 = f.top + f.height / 2 + (Math.random() - 0.5) * 30;
       const x1 = t.left + 14, y1 = t.top + t.height / 2;

@@ -10,9 +10,10 @@ function build(subject, src) {
   for (const d of src) {
     decks.push({ id: d.id, subject, title: d.title });
     for (const [q, read, a, alts = [], ng = []] of d.list) {
-      // 国語の漢字デッキ: a は読み（読み問題・書き問題）。文字入力は漢字で書けたときだけ正解
+      // 国語の漢字デッキ: a は読み。4択は「読み → 漢字」、文字入力は「漢字 → 読み（ひらがな）」
+      //   （読みの4択は送りがなで答えがわかってしまうので出さない。漢字の入力は変換すれば書けてしまうので出さない）
       const c = d.kanji
-        ? { id: `${subject}:${q}`, deck: d.id, subject, kind: 'term', q, a: read, read, accept: [q, ...alts] }
+        ? { id: `${subject}:${q}`, deck: d.id, subject, kind: 'term', kanji: true, q, a: read, read, accept: [read] }
         : { id: `${subject}:${q}`, deck: d.id, subject, kind: 'term', q, a, read, accept: [q, read, ...alts].filter(Boolean) };
       if (d.ask) c.ask = d.ask;
       if (ng.length) c.ng = ng;

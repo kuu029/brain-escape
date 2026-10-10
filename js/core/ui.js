@@ -75,6 +75,21 @@ export const confirmBox = (title, body, yes = 'OK', no = 'やめる', danger = f
   modal({ title, body, buttons: [{ label: no, value: false }, { label: yes, value: true, cls: danger ? 'danger' : 'primary' }] });
 
 // 下から出るパネル。build(close) が中身を返す
+//   開いているあいだは、うしろの画面（マップなど）がスクロールしないように止める（誤操作の防止）
+//   パネルを下にスライドすると閉じる（パネルの中がいちばん上までスクロールされているとき）
+let sheetLocks = 0;
+let lockedY = 0;
+function lockScroll() {
+  if (sheetLocks++ > 0) return;
+  lockedY = window.scrollY;
+  Object.assign(document.body.style, { position: 'fixed', top: `-${lockedY}px`, left: '0', right: '0', overflow: 'hidden' });
+}
+function unlockScroll() {
+  if (--sheetLocks > 0) return;
+  sheetLocks = 0;
+  Object.assign(document.body.style, { position: '', top: '', left: '', right: '', overflow: '' });
+  window.scrollTo(0, lockedY);
+}
 export function sheet(build, cls = '') {
   let back = null;
   const close = () => {
@@ -82,11 +97,42 @@ export function sheet(build, cls = '') {
     back.classList.add('out');
     const b = back;
     back = null;
+    unlockScroll();
     setTimeout(() => b.remove(), 160);
   };
   const panel = h('div', { class: `sheet ${cls}` }, h('div', { class: 'sheet-grip' }), build(close));
   back = h('div', { class: 'modal-back sheet-back', onclick: (e) => { if (e.target === back) close(); } }, panel);
+  // うしろの画面に指の動きを伝えない（パネルの外をなぞってもマップが動かない）
+  back.addEventListener('touchmove', (e) => { if (!panel.contains(e.target)) e.preventDefault(); }, { passive: false });
+  // 下にスライドして閉じる
+  let y0 = null;
+  let dy = 0;
+  let t0 = 0;
+  panel.addEventListener('touchstart', (e) => {
+    y0 = panel.scrollTop <= 0 ? e.touches[0].clientY : null;
+    dy = 0;
+    t0 = Date.now();
+    panel.style.transition = 'none';
+  }, { passive: true });
+  panel.addEventListener('touchmove', (e) => {
+    if (y0 === null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy <= 0 || panel.scrollTop > 0) { dy = 0; panel.style.transform = ''; return; }
+    e.preventDefault(); // パネルの中身ではなく、パネルごと下へ
+    panel.style.transform = `translateY(${dy}px)`;
+  }, { passive: false });
+  panel.addEventListener('touchend', () => {
+    if (y0 === null) return;
+    y0 = null;
+    const fast = dy > 40 && dy / Math.max(1, Date.now() - t0) > 0.5;
+    panel.style.transition = 'transform .18s ease-out';
+    if (dy > 110 || fast) {
+      panel.style.transform = 'translateY(110%)';
+      close();
+    } else panel.style.transform = '';
+  });
   document.body.append(back);
+  lockScroll();
   return close;
 }
 

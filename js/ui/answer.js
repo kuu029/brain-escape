@@ -65,6 +65,11 @@ export function answerPad(p, onSubmit, opts = {}) {
     root = pad.el;
     return pad;
   }
+  if (p.input.kind === 'text') {
+    const pad = textPad(p, (v) => submit(v), fireLabel);
+    root = pad.el;
+    return pad;
+  }
   if (p.input.kind === 'order') {
     const pad = tilePad(p, (v) => submit(v), fireLabel, auto);
     root = pad.el;
@@ -380,6 +385,21 @@ function keyboardPad(p, onFire, fireLabel, auto = true) {
   pad.mark = () => {};
   pad.clearMarks = () => { typed = ''; paint(); };
   pad.disable = () => {};
+  return pad;
+}
+
+// 文字入力（国語の漢字の読みなど）。ここだけは標準のキーボード（ひらがな）を使う
+function textPad(p, onFire, fireLabel) {
+  const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', lang: 'ja', placeholder: 'ひらがなで入力' });
+  const fire = () => { const v = inp.value; if (!v.trim()) { inp.focus(); return; } inp.blur(); sfx('tap'); onFire(v); };
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); fire(); } });
+  const pad = { usedHint: false };
+  pad.el = h('div', { class: 'pad textpad' }, inp, h('button', { class: 'key fire', type: 'button', onclick: fire }, fireLabel));
+  pad.clear = () => { inp.value = ''; };
+  pad.mark = () => {};
+  pad.clearMarks = () => { inp.value = ''; };
+  pad.disable = () => { inp.disabled = true; };
+  setTimeout(() => inp.isConnected && inp.focus(), 50);
   return pad;
 }
 

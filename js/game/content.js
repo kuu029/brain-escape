@@ -51,6 +51,11 @@ export const BOSSES = {
   'ja-shikibetsu': { emoji: '🔍', name: 'ムシメガネ・ミワケール' },
   'ja-kaeriten': { emoji: '🪃', name: 'ブーメラン・カエリテン' },
   'ja-kakari': { emoji: '🕷️', name: 'クモ・カカリムスビ' },
+  'sc-solub': { emoji: '🧂', name: 'シオ・ケッショーノ' },
+  'sc-spring': { emoji: '🪀', name: 'バネ・ノビール' },
+  'sc-sound': { emoji: '🔔', name: 'カネ・シンドウスウ' },
+  'sc-lens': { emoji: '👓', name: 'メガネ・トツレンズ' },
+  'sc-ion': { emoji: '🔋', name: 'デンチ・イオーン' },
   // 社会棟
   'so-jisa': { emoji: '🕰️', name: 'セカイドケイ・ジサボケ' },
   'so-scale': { emoji: '🗺️', name: 'チズ・シュクシャーク' },
@@ -59,6 +64,7 @@ export const BOSSES = {
   'so-century': { emoji: '🏺', name: 'ドキ・セイキーノ' },
   'so-chrono': { emoji: '🗿', name: 'ハニワ・ナラベール' },
   'so-vote': { emoji: '🗳️', name: 'トウヒョウ・ドントン' },
+  'so-map': { emoji: '🧭', name: 'ジシャク・ホウイーノ' },
   'so-money': { emoji: '💴', name: 'サイフ・エンダカーノ' },
   // 理科棟
   'sc-density': { emoji: '⚖️', name: 'テンビン・ミツドーノ' },
@@ -172,6 +178,11 @@ export const CARDS = [
   { id: 'mushimegane', emoji: '🔍', name: 'ムシメガネ・ミワケール', rarity: 3, text: '同じ「られる」でも、受け身か可能かを見ぬく鑑定士。' },
   { id: 'boomerang', emoji: '🪃', name: 'ブーメラン・カエリテン', rarity: 3, text: 'レ点で投げると、1字もどってくる。' },
   { id: 'kumo', emoji: '🕷️', name: 'クモ・カカリムスビ', rarity: 3, text: '「こそ」の糸を張ると、文末が已然形にからめとられる。' },
+  { id: 'shio', emoji: '🧂', name: 'シオ・ケッショーノ', rarity: 3, text: '冷やされると、体からキラキラの結晶がこぼれ落ちる。でも塩化ナトリウムだけは出てこない。' },
+  { id: 'bane', emoji: '🪀', name: 'バネ・ノビール', rarity: 3, text: '引っぱる力が2倍になると、のびも2倍。きっちり比例するのが自まん。' },
+  { id: 'kane', emoji: '🔔', name: 'カネ・シンドウスウ', rarity: 3, text: '強くたたくと大きく、短くすると高く鳴る。真空の中では、だまりこむ。' },
+  { id: 'megane', emoji: '👓', name: 'メガネ・トツレンズ', rarity: 3, text: '焦点距離の2倍の位置に立つと、そっくりな（でも逆さまの）分身を出す。' },
+  { id: 'denchi', emoji: '🔋', name: 'デンチ・イオーン', rarity: 3, text: '＋と−を投げ合って、さいごは中和して水になる。' },
   // 社会棟のボス
   { id: 'sekaitokei', emoji: '🕰️', name: 'セカイドケイ・ジサボケ', rarity: 3, text: '東へ行くと進み、西へ行くとおくれる。いつも時差ボケでねむそう。' },
   { id: 'chizu', emoji: '🗺️', name: 'チズ・シュクシャーク', rarity: 3, text: '自分をくるくる丸めると、2万5千分の1サイズになる地図。' },
@@ -180,6 +191,7 @@ export const CARDS = [
   { id: 'doki', emoji: '🏺', name: 'ドキ・セイキーノ', rarity: 3, text: '1600年は16世紀だと、何度でも言い聞かせてくる土器。' },
   { id: 'haniwa', emoji: '🗿', name: 'ハニワ・ナラベール', rarity: 3, text: 'できごとを古い順にならべないと、通してくれない。' },
   { id: 'touhyou', emoji: '🗳️', name: 'トウヒョウ・ドントン', rarity: 3, text: '票を 1, 2, 3 でわって、商の大きい順に議席をくばる投票箱。' },
+  { id: 'jishaku', emoji: '🧭', name: 'ジシャク・ホウイーノ', rarity: 3, text: 'いつも北を指す針が自まん。「〇〇から見て」の〇〇に立って考える。' },
   { id: 'saifu', emoji: '💴', name: 'サイフ・エンダカーノ', rarity: 3, text: '1ドル = 80円になると、ふくらんでいばり出すサイフ。' },
   // 理科棟のボス
   { id: 'tenbin', emoji: '⚖️', name: 'テンビン・ミツドーノ', rarity: 3, text: '同じ大きさでも重さがちがうことを、見ぬいてしまう天びん。' },
@@ -205,7 +217,8 @@ export const BOSS_CARD = {
   'proportion': 'hashigo', 'linear-function': 'coaster', 'quadratic-function': 'basket', 'angles': 'hasami', 'congruence': 'puzzle', 'circle-angle': 'mezamashi', 'similarity': 'matryoshka', 'pythagoras': 'tent', 'solids': 'hako', 'probability': 'coin', 'data': 'risu', 'word-mix': 'kujira',
   'ja-hinshi': 'kaban', 'ja-kana': 'makimono', 'ja-katsuyou': 'chou', 'ja-keigo': 'neko', 'ja-shikibetsu': 'mushimegane', 'ja-kaeriten': 'boomerang', 'ja-kakari': 'kumo',
   'sc-density': 'tenbin', 'sc-conc': 'beaker', 'sc-pressure': 'kaba', 'sc-quake': 'namazu', 'sc-ohm': 'unagi', 'sc-power': 'denkyu', 'sc-react': 'lamp', 'sc-humid': 'kumori', 'sc-work': 'crane', 'sc-buoy': 'awa', 'sc-gene': 'endou', 'sc-sky': 'tsuki',
-  'so-jisa': 'sekaitokei', 'so-scale': 'chizu', 'so-climate': 'tenki', 'so-stat': 'graph', 'so-century': 'doki', 'so-chrono': 'haniwa', 'so-vote': 'touhyou', 'so-money': 'saifu',
+  'sc-solub': 'shio', 'sc-spring': 'bane', 'sc-sound': 'kane', 'sc-lens': 'megane', 'sc-ion': 'denchi',
+  'so-jisa': 'sekaitokei', 'so-scale': 'chizu', 'so-climate': 'tenki', 'so-stat': 'graph', 'so-century': 'doki', 'so-chrono': 'haniwa', 'so-vote': 'touhyou', 'so-money': 'saifu', 'so-map': 'jishaku',
 };
 // ガチャに出るカード（ボス・称号以外）
 export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2 || c.gacha).map((c) => c.id);

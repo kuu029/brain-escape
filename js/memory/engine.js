@@ -153,12 +153,16 @@ export function formFor(card, cs, mode, rng) {
   return lv <= 1 ? 'e2j' : lv <= 3 ? 'j2e' : 'tile';
 }
 
+export const okuri = (q) => (String(q).match(/[ぁ-ん]+$/) || [''])[0];
 function distractors(card, rng, n = 3) {
   const S = MEM_SUBJECTS[card.subject];
   const same = CARDS.filter((c) => c.subject === card.subject && c.id !== card.id && c.kind === card.kind);
   const near = same.filter((c) => c.deck === card.deck && c.pos === card.pos);
+  // 漢字: 送りがな（終わりのひらがな）が同じものを先に。ちがうと送りがなだけで答えがわかってしまう
+  const tail = card.kanji ? okuri(card.q) : null;
+  const sameTail = card.kanji ? same.filter((c) => c.kanji && okuri(c.q) === tail) : [];
   const out = [];
-  for (const base of [near, same.filter((c) => c.pos === card.pos), same]) {
+  for (const base of [sameTail, near, same.filter((c) => c.pos === card.pos), same]) {
     for (const c of rng.shuffle([...base])) {
       if (out.length >= n) break;
       if (out.includes(c) || !S.distinct(card, c) || out.some((o) => !S.distinct(o, c))) continue;
@@ -189,6 +193,8 @@ export function makeQuestion(card, form, rng) {
 
 // 社会・理科の用語: e2j = 用語 → 説明、j2e = 説明 → 用語、tile = 1文字ずつのタイル、input = 文字入力（ひらがなでもOK）
 function termQuestion(card, form, rng) {
+  // 国語の漢字: 読みは入力で答える（4択だと送りがなでわかってしまう）
+  if (card.kanji && (form === 'e2j' || form === 'input')) return { form: 'input', stem: card.q, ask: '読みをひらがなで入力', input: { kind: 'text', accept: [card.read], ja: true }, answerText: card.read };
   if (form === 'e2j' || form === 'j2e') {
     const ds = distractors(card, rng);
     if (form === 'e2j') return { form, stem: card.q, ask: card.ask?.e2j || (card.read === null ? 'この年のできごとは？' : 'どういう意味？'), ...textChoice(rng, card.a, ds.map((d) => ({ t: d.a }))), others: ds.map((d) => d.id) };

@@ -209,6 +209,92 @@ export const DIALOGS = [
       { ask: 'お知らせと対話の内容に合うものはどれですか。', correct: 'キャンプの参加費には食事代がふくまれている。', wrongs: ['キャンプには小学生も参加できる。', 'ナナは人前で話すのが得意だ。', 'キャンプでは料理をしない。'], evidence: ['meals included'], why: '3,000 yen (meals included)' },
     ],
   },
+  {
+    id: 'festival',
+    intro: '中学生のケンと留学生のルーシーが、夏祭りのポスターを見ながら話しています。ポスターと対話を読んで、あとの問いに答えなさい。',
+    table: {
+      caption: 'Kusatsu Summer Festival - Saturday, August 2',
+      head: ['Event', 'Place', 'Time'],
+      rows: [
+        ['Food Stands', 'Park', '15:00 - 21:00'],
+        ['Taiko Drum Show', 'Main Stage', '16:00 - 16:30'],
+        ['Dance Contest', 'Main Stage', '17:00 - 18:00'],
+        ['Fireworks', 'Lake Side', '19:30 - 20:00'],
+      ],
+    },
+    lines: [
+      ['Ken', 'Lucy, are you going to the summer festival this Saturday?'],
+      ['Lucy', 'Yes! I want to see the fireworks. I have never seen Japanese fireworks.'],
+      ['Ken', 'They are beautiful. My sister is in the Dance Contest, so I will go to the main stage first.'],
+      ['Lucy', 'Can I come with you? I\'d like to see her dance, too.'],
+      ['Ken', 'Of course. Let\'s meet at the park at 16:30 and eat something before the contest.'],
+      ['Lucy', 'OK. ( A ) should I wear? Should I wear a yukata?'],
+      ['Ken', 'If you have one, that would be nice. Many people wear yukata at the festival.'],
+      ['Lucy', 'My host mother has one for me. I\'m so excited!'],
+    ],
+    qs: [
+      { ask: 'What does Lucy want to see at the festival?', correct: 'The fireworks.', wrongs: ['The Taiko Drum Show.', 'The food stands.', 'Ken\'s school.'], evidence: ['I want to see the fireworks'], why: 'ルーシーは「花火を見たい」と言っている。' },
+      { ask: 'ポスターによると、ケンの妹が出るイベントはどこで行われますか。', correct: 'メインステージ', wrongs: ['湖のそば', '公園', '学校の体育館'], evidence: ['Dance Contest', 'Main Stage'], why: '妹が出るのは Dance Contest（Main Stage）。' },
+      { ask: '対話の ( A ) に入る最も適切な語はどれですか。', correct: 'What', wrongs: ['Where', 'When', 'Who'], evidence: ['( A ) should I wear?'], why: 'What should I wear? で「何を着たらいい？」。すぐあとに「ゆかたを着るべき？」と続く。' },
+      { ask: '対話とポスターの内容に合うものはどれですか。', correct: '2人は、ダンスコンテストの前に公園で何か食べるつもりだ。', wrongs: ['ルーシーは前に日本の花火を見たことがある。', '花火は公園で午後7時に始まる。', 'ルーシーはゆかたを持っていないので、着ていけない。'], evidence: ['eat something before the contest'], why: 'Let\'s meet at the park at 16:30 and eat something before the contest.' },
+    ],
+  },
+  {
+    id: 'survey',
+    intro: '中学生のアヤが、クラスで行ったアンケートの結果について、ALT のブラウン先生と話しています。表と対話を読んで、あとの問いに答えなさい。',
+    table: {
+      caption: 'Class Survey: What Do You Do to Save Energy? (35 students)',
+      head: ['Action', 'Students'],
+      rows: [
+        ['Turn off the lights', '15'],
+        ['Use a fan instead of an air conditioner', '8'],
+        ['Take shorter showers', '7'],
+        ['Unplug the TV', '5'],
+      ],
+    },
+    lines: [
+      ['Mr. Brown', 'Aya, what did your class learn from this survey?'],
+      ['Aya', 'Most students turn off the lights when they leave a room. But only five students unplug the TV.'],
+      ['Mr. Brown', 'I see. Why do you think so few students do that?'],
+      ['Aya', 'Maybe they don\'t know that a TV uses electricity even when it is off.'],
+      ['Mr. Brown', 'That\'s true. What are you going to do next?'],
+      ['Aya', 'We are going to make posters and put them on the walls of our school. We want more students to know about it.'],
+      ['Mr. Brown', 'Great idea. I\'m sure your posters will help.'],
+    ],
+    qs: [
+      { ask: 'How many students turn off the lights to save energy?', correct: 'Fifteen.', wrongs: ['Five.', 'Seven.', 'Eight.'], evidence: ['Turn off the lights', '15'], why: '表の Turn off the lights は 15人。' },
+      { ask: 'Why does Aya think few students unplug the TV?', correct: 'Because they may not know a TV uses electricity even when it is off.', wrongs: ['Because they watch TV all day.', 'Because their TVs are very old.', 'Because their parents tell them not to.'], evidence: ['a TV uses electricity even when it is off'], why: 'Maybe they don\'t know that a TV uses electricity even when it is off.' },
+      { ask: 'アヤのクラスがこれからしようとしていることは何ですか。', correct: 'ポスターを作って、学校のかべにはる。', wrongs: ['テレビを使わない日を作る。', 'もう一度アンケートをとる。', 'エアコンの使い方を調べる。'], evidence: ['make posters and put them on the walls of our school'], why: 'We are going to make posters and put them on the walls of our school.' },
+      { ask: '表と対話の内容に合うものはどれですか。', correct: 'アンケートに答えた生徒は35人だった。', wrongs: ['扇風機を使う生徒がいちばん多かった。', 'シャワーを短くする生徒は5人だった。', 'ブラウン先生はポスター作りに反対している。'], evidence: ['35 students'], why: '表のタイトルに 35 students とある。' },
+    ],
+  },
+  {
+    id: 'museum',
+    intro: '留学生のマイクと中学生のサキが、博物館の料金表を見ながら話しています。料金表と対話を読んで、あとの問いに答えなさい。',
+    table: {
+      caption: 'Biwako Museum - Tickets',
+      head: ['', 'Adults', 'Junior High Students', 'Children (6-12)'],
+      rows: [
+        ['Ticket', '800 yen', '400 yen', '200 yen'],
+        ['Group (10 people or more)', '700 yen', '300 yen', '150 yen'],
+      ],
+    },
+    lines: [
+      ['Mike', 'Saki, I\'m going to the Biwako Museum with my family next Sunday.'],
+      ['Saki', 'That\'s nice. You can see many kinds of fish from Lake Biwa there.'],
+      ['Mike', 'I know. I\'m going with my parents and my little brother. He is eight.'],
+      ['Saki', 'Then you need two adult tickets, one junior high student ticket, and one child ticket.'],
+      ['Mike', 'Right. So it will be ( A ) yen in total.'],
+      ['Saki', 'Yes. By the way, the museum has a special event about the lake\'s turtles this month.'],
+      ['Mike', 'Really? My brother loves turtles. He will be happy.'],
+    ],
+    qs: [
+      { ask: 'Who is Mike going to the museum with?', correct: 'His parents and his little brother.', wrongs: ['His friends from school.', 'Saki and her family.', 'His grandparents.'], evidence: ['I\'m going with my parents and my little brother'], why: 'I\'m going with my parents and my little brother.' },
+      { ask: '対話の ( A ) に入る数として正しいものはどれですか。', correct: '2,200', wrongs: ['1,800', '2,000', '2,400'], evidence: ['800 yen', '400 yen', '200 yen'], why: 'おとな 800円 × 2 ＋ 中学生 400円 ＋ 子ども 200円 ＝ 2,200円。' },
+      { ask: 'Why will Mike\'s brother be happy?', correct: 'Because there is a special event about turtles.', wrongs: ['Because he can buy a group ticket.', 'Because he can see fish from the sea.', 'Because Saki will go with him.'], evidence: ['special event about the lake\'s turtles'], why: 'My brother loves turtles. He will be happy.' },
+      { ask: '料金表と対話の内容に合うものはどれですか。', correct: '中学生のチケットは、おとなのチケットの半分の値段だ。', wrongs: ['団体のチケットは5人から買える。', 'マイクの弟は12才だ。', '博物館では海の魚だけを見ることができる。'], evidence: ['800 yen', '400 yen'], why: 'おとな 800円、中学生 400円。' },
+    ],
+  },
 ];
 
 // ---------- 大問3: スピーチ ----------
@@ -367,6 +453,73 @@ export const SPEECHES = [
     write: {
       ask: '英語を使ってやってみたいことを、英語2文以上で書きなさい。理由も書くこと。',
       model: ['I want to talk with people from other countries. I want to learn about their cultures.', 'I want to watch movies in English. It is a good way to learn real English.'],
+    },
+  },
+  {
+    id: 'smartphone',
+    intro: '中学生が英語の授業で行ったスピーチです。読んで、あとの問いに答えなさい。',
+    paras: [
+      'Hello, everyone. Do you use a smartphone every day? I do. I use it to talk with my friends, listen to music, and watch videos.',
+      'But last month, I had a problem. I used my smartphone until late at night, so I couldn\'t get up in the morning. I was late for school twice. My mother was angry and said, "You should make a rule for yourself."',
+      'So I made two rules. First, I don\'t use my smartphone after ten at night. Second, I put it in the living room when I study. [[At first, it was hard.]] I wanted to check my messages many times.',
+      'Now, I go to bed earlier, and I can study better. I also have more time to talk with my family. A smartphone is very useful, but we should use it in a good way. Thank you for listening.',
+    ],
+    notes: ['rule きまり', 'useful 役に立つ'],
+    qs: [
+      { ask: 'What does the speaker use a smartphone for?', correct: 'To talk with friends, listen to music, and watch videos.', wrongs: ['To take pictures of animals.', 'To read books and newspapers.', 'To play games with the family.'], evidence: ['talk with my friends, listen to music, and watch videos'], why: 'I use it to talk with my friends, listen to music, and watch videos.' },
+      { ask: 'Why was the speaker late for school?', correct: 'Because the speaker used the smartphone until late at night.', wrongs: ['Because the speaker missed the bus.', 'Because the speaker was sick.', 'Because the speaker\'s mother was angry.'], evidence: ['I used my smartphone until late at night'], why: '夜おそくまで使っていたので、朝起きられなかった。' },
+      { ask: '下線部 At first, it was hard. とありますが、何がたいへんだったのですか。', correct: 'メッセージを何度も確認したくなるのを、がまんすること。', wrongs: ['夜10時までに宿題を終わらせること。', 'リビングで家族と話すこと。', '朝早く起きて学校に行くこと。'], evidence: ['I wanted to check my messages many times'], why: '下線部のすぐあとに I wanted to check my messages many times. とある。' },
+      { ask: 'スピーチの内容に合うものはどれですか。', correct: '話し手は、勉強するときスマートフォンをリビングに置いている。', wrongs: ['話し手は、夜10時以降もスマートフォンを使っている。', '話し手は、先月3回学校におくれた。', '話し手の母は、スマートフォンを買ってくれなかった。'], evidence: ['I put it in the living room when I study'], why: 'Second, I put it in the living room when I study.' },
+      { ask: '話し手がいちばん伝えたいことはどれですか。', correct: 'We should use smartphones in a good way.', wrongs: ['Smartphones are bad for students.', 'We should buy a new smartphone.', 'Videos are more fun than music.'], evidence: ['we should use it in a good way'], why: '最後の段落に、伝えたいことがまとめてある。' },
+    ],
+    write: {
+      ask: 'あなたがスマートフォンやインターネットを使うときに気をつけたいことを、英語2文以上で書きなさい。理由も書くこと。',
+      model: ['I want to stop using my phone at nine. I need to sleep well for school.', 'I will not write bad things on the Internet. Many people can read them.'],
+    },
+  },
+  {
+    id: 'nursing',
+    intro: '中学生がクラスで行ったスピーチです。読んで、あとの問いに答えなさい。',
+    paras: [
+      'Good morning. Last summer, I joined a volunteer activity at a nursing home in my town. I want to tell you about it.',
+      'On the first day, I was very nervous. I didn\'t know how to talk to the old people there. I just stood in the corner of the room.',
+      'Then, a woman smiled at me and said, "Can you help me with this puzzle?" We did the puzzle together, and she told me about her life. When she was young, she worked at a school as a music teacher.',
+      'On the last day, she played the piano for me, and we sang a song together. [[She said, "Thank you for coming. You made my summer happy."]] I was really happy to hear that.',
+      'I learned that a small action can make someone happy. I want to visit the nursing home again this winter. Thank you.',
+    ],
+    notes: ['nursing home 老人ホーム', 'nervous 緊張して', 'puzzle パズル'],
+    qs: [
+      { ask: 'Where did the speaker do volunteer work last summer?', correct: 'At a nursing home.', wrongs: ['At a school.', 'At a hospital.', 'At a music shop.'], evidence: ['a volunteer activity at a nursing home'], why: 'I joined a volunteer activity at a nursing home in my town.' },
+      { ask: 'How did the speaker feel on the first day?', correct: 'Very nervous.', wrongs: ['Very happy.', 'Very sleepy.', 'Very angry.'], evidence: ['I was very nervous'], why: 'On the first day, I was very nervous.' },
+      { ask: 'What did the woman do when she was young?', correct: 'She worked as a music teacher.', wrongs: ['She worked at a nursing home.', 'She made puzzles for children.', 'She was a famous singer.'], evidence: ['worked at a school as a music teacher'], why: 'When she was young, she worked at a school as a music teacher.' },
+      { ask: 'スピーチの内容に合うものはどれですか。', correct: '最終日に、女性はピアノをひき、2人でいっしょに歌った。', wrongs: ['話し手は初日から、お年寄りと上手に話せた。', '女性は話し手にピアノのひき方を教えた。', '話し手はもう老人ホームに行くつもりはない。'], evidence: ['she played the piano for me, and we sang a song together'], why: 'On the last day, she played the piano for me, and we sang a song together.' },
+      { ask: 'このスピーチのタイトルとして最も適切なものはどれですか。', correct: 'A Small Action Can Make Someone Happy', wrongs: ['How to Play the Piano', 'My Favorite Puzzle', 'A Trip to a Big City'], evidence: ['a small action can make someone happy'], why: '最後の段落で「学んだこと」を述べている。' },
+    ],
+    write: {
+      ask: 'あなたが参加してみたいボランティア活動と、その理由を英語2文以上で書きなさい。',
+      model: ['I want to clean the park near my house. Many children play there.', 'I want to read picture books to small children. I like reading books.'],
+    },
+  },
+  {
+    id: 'weather',
+    intro: '中学生が英語の授業で行ったスピーチです。読んで、あとの問いに答えなさい。',
+    paras: [
+      'Hello. What do you want to be in the future? My dream is to be a weather forecaster.',
+      'When I was ten, a big typhoon came to my town. The wind was very strong, and the river near my house became dangerous. Because we watched the weather news on TV, my family left our house early and went to a safe place.',
+      '[[The weather news saved us.]] Since then, I have been interested in the weather. I check the sky every morning and write down the clouds and the temperature in my notebook. I have kept it for four years.',
+      'To be a weather forecaster, I have to study science and math hard. It is not easy, but I want to tell people the right information and protect their lives. Thank you.',
+    ],
+    notes: ['weather forecaster 気象予報士', 'typhoon 台風', 'information 情報'],
+    qs: [
+      { ask: 'What is the speaker\'s dream?', correct: 'To be a weather forecaster.', wrongs: ['To be a science teacher.', 'To be a TV news reporter.', 'To be a doctor.'], evidence: ['My dream is to be a weather forecaster'], why: 'My dream is to be a weather forecaster.' },
+      { ask: 'What happened when the speaker was ten?', correct: 'A big typhoon came to the speaker\'s town.', wrongs: ['The speaker moved to a new town.', 'The speaker started to write in a notebook.', 'The speaker\'s house was broken by a fire.'], evidence: ['a big typhoon came to my town'], why: 'When I was ten, a big typhoon came to my town.' },
+      { ask: '下線部 The weather news saved us. とありますが、どういうことですか。', correct: '天気のニュースを見て、家族が早めに安全な場所へ移動できたこと。', wrongs: ['天気のニュースで、台風が来ないとわかったこと。', 'ニュースの人が、家まで助けに来てくれたこと。', 'テレビで、川の水がきれいになったと知ったこと。'], evidence: ['Because we watched the weather news on TV'], why: '下線部の直前の文に、ニュースを見て早めに避難したことが書いてある。' },
+      { ask: 'スピーチの内容に合うものはどれですか。', correct: '話し手は、4年間ノートに雲や気温を書き続けている。', wrongs: ['話し手は、夜にだけ空を見ている。', '話し手は、理科と数学の勉強はしなくてよいと考えている。', '話し手の家の近くには川がない。'], evidence: ['I have kept it for four years'], why: 'I check the sky every morning ... I have kept it for four years.' },
+      { ask: '話し手が気象予報士になってしたいことは何ですか。', correct: '正しい情報を伝えて、人々の命を守ること。', wrongs: ['台風を止める方法を見つけること。', 'テレビで有名になること。', '毎日ちがう町に旅行すること。'], evidence: ['tell people the right information and protect their lives'], why: 'I want to tell people the right information and protect their lives.' },
+    ],
+    write: {
+      ask: 'あなたの将来の夢と、そのために今していること（またはこれからしたいこと）を、英語2文以上で書きなさい。',
+      model: ['I want to be a nurse. I am studying science hard now.', 'My dream is to work in a foreign country. I listen to English songs every day.'],
     },
   },
 ];
