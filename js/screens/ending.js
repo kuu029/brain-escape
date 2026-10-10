@@ -9,6 +9,7 @@ import { ACHIEVEMENTS, achieveCount } from '../game/achieve.js';
 import { UNIT } from '../units/registry.js';
 import { BOSS_CARD } from '../game/content.js';
 import { backdrop, confetti } from '../ui/deco.js';
+import { logGems } from '../game/gemlog.js';
 
 const allBeaten = (subject) => {
   const s = S();
@@ -66,6 +67,7 @@ export function render(el, { kind = 'math', i = 0, replay = false } = {}) {
   if (first) {
     (s.endings ||= {})[kind] = today();
     s.gems += E.gems;
+    logGems('ending', E.gems);
     saveNow();
   }
   sfx('win');

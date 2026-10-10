@@ -1,6 +1,7 @@
 // デイリーミッション（日付で3つ決まる）
 import { S, today, save } from '../core/store.js';
 import { hashStr, makeRng } from '../core/rng.js';
+import { logGems } from './gemlog.js';
 
 const POOL = [
   { id: 'correct10', text: '正解を10回キメる', stat: 'correct', goal: 10, reward: 15 },
@@ -50,6 +51,7 @@ export function claim(i) {
   if (!m || m.claimed || m.progress < m.goal) return 0;
   s.missions.list[i].claimed = true;
   s.gems += m.reward;
+  logGems('mission', m.reward);
   save();
   return m.reward;
 }

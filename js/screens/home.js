@@ -19,6 +19,7 @@ import { slotStatus, SLOT_GEMS, SLOT_MAX } from '../game/bonus.js';
 import { unitNext } from './map.js';
 import { avatarHTML, pickAvatar } from '../ui/avatar.js';
 import { studyColorUrl } from '../game/unlock.js';
+import { backupDue, backupAge, saveBackupFile, snoozeBackup } from '../core/backupfile.js';
 import { weekPlan, planNext, claimPlan, SUBJ_JA, PLAN_GOAL, PLAN_GEMS } from '../game/plan.js';
 import { UNIT } from '../units/registry.js';
 
@@ -125,6 +126,7 @@ export function render(el) {
           h('span', { class: 'em-label', html: `${iconHTML('icon-key', '🗝️', '')} 脱獄進捗` }),
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),
           h('b', { class: 'em-pct' }, `${pct}%`))),
+      backupLine(),
       countdown(),
       eventCard(),
       // ① 迷ったらこれ（計画から1つ）　② 今週の計画　③ 今日の指令　④ 自分でえらぶ（たたんである）
@@ -208,6 +210,18 @@ function hourLine() {
   if (st.got) return h('p', { class: 'hour-line done' }, `⏰ この枠のボーナス ゲット済み（今日 ${st.count}/${SLOT_MAX}）。次は ${st.next}`);
   const min = Math.floor(st.sec / 60);
   return h('p', { class: 'hour-line open' }, `⏰ ${st.label}の間に 10分勉強で 💎+${SLOT_GEMS}（いま ${Math.min(min, 10)}/10分・今日 ${st.count}/${SLOT_MAX}）`);
+}
+
+// 週に1回のバックアップのお知らせ（保存するか「あとで」で、今日は消える）
+function backupLine() {
+  if (!backupDue()) return '';
+  const age = backupAge();
+  const box = h('div', { class: 'bk-line' },
+    h('span', {}, `💾 ${age === null ? 'まだ一度もバックアップしていない' : `${age}日バックアップしていない`}。スマホをかえても記録が消えないように保存しよう`),
+    h('div', { class: 'bk-btns' },
+      btn('保存する', async () => { if (await saveBackupFile()) { toast('バックアップした！'); box.remove(); } }, 'primary small'),
+      btn('あとで', () => { snoozeBackup(); box.remove(); }, 'ghost small')));
+  return box;
 }
 
 // 今週の計画: 教科ごとに1単元。1単元 PLAN_GOAL 問で達成、全部で 💎 ボーナス

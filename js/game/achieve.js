@@ -4,6 +4,7 @@
 import { S, today, saveNow } from '../core/store.js';
 import { UNIT } from '../units/registry.js';
 import { BOSS_CARD } from './content.js';
+import { logGems } from './gemlog.js';
 
 export const TIER = {
   bronze: { name: '銅', gems: 10 },
@@ -51,6 +52,7 @@ export function checkAchievements(s = S()) {
     if (goal > 0 && v >= goal) {
       got[a.id] = today();
       s.gems += TIER[a.tier].gems;
+      logGems('achieve', TIER[a.tier].gems);
       fresh.push(a);
     }
   }

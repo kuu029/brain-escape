@@ -50,6 +50,18 @@ export const LIMIT_MS = { e2j: 8000, j2e: 8000, tile: 18000, input: 25000 };
 export const DECKS = [...EN_DECKS, ...SOC.decks, ...SCI.decks, ...JA.decks];
 export const CARDS = [...EN_CARDS, ...SOC.cards, ...SCI.cards, ...JA.cards];
 export const CARD = Object.fromEntries(CARDS.map((c) => [c.id, c]));
+
+// 新しい暗号を覚えていないと、同じ暗号のくり返しになる → 暗記の💎を半分にして、顔合わせ（新しい暗号）をうながす
+//   最近 STALE_DAYS 日に1枚も新しい暗号を見ていなくて、まだ見ていない暗号が残っているとき
+export const STALE_DAYS = 3;
+export const STALE_MULT = 0.5;
+export function staleInfo(M, subject, now = Date.now()) {
+  const all = CARDS.filter((c) => c.subject === subject);
+  if (!all.some((c) => !M.cards?.[c.id])) return null; // 全部見た
+  const since = now - STALE_DAYS * 86400000;
+  if (all.some((c) => (M.cards?.[c.id]?.seen || 0) >= since)) return null;
+  return { mult: STALE_MULT, days: STALE_DAYS };
+}
 export const DECK = Object.fromEntries(DECKS.map((d) => [d.id, { ...d, cards: CARDS.filter((c) => c.deck === d.id) }]));
 
 // コースの順番でデッキを並べる

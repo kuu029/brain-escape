@@ -5,6 +5,7 @@
 import { S, save, today, cleared, unitState } from '../core/store.js';
 import { UNIT, unitsOf } from '../units/registry.js';
 import { isUnlocked, nextUnit } from './progress.js';
+import { logGems } from './gemlog.js';
 
 export const PLAN_SUBJ = ['math', 'english', 'japanese', 'science', 'social'];
 export const SUBJ_JA = { math: '数学', english: '英語', japanese: '国語', science: '理科', social: '社会' };
@@ -92,6 +93,7 @@ export function claimPlan() {
   if (p.claimed || !p.items.length || p.doneCount < p.items.length) return 0;
   s.plan.claimed = true;
   s.gems += PLAN_GEMS;
+  logGems('plan', PLAN_GEMS);
   save();
   return PLAN_GEMS;
 }

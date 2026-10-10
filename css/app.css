@@ -1713,3 +1713,9 @@ svg.mapdir { width: 100%; max-width: 230px; height: auto; display: block; margin
 .fig.chart .p-fn.dash { stroke-dasharray: 7 4; }
 .fig.chart .p-lab { font-style: normal; font-size: 11px; }
 .screen-battle .qcard.has-fig .fig.chart { height: 190px; max-width: 100%; }
+.bk-line { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 14px; background: #ffd64018; border: 2px solid #ffd64066; font-size: 14px; }
+.bk-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.tile-line.rows, .tile-pool.rows { flex-direction: column; align-items: stretch; }
+.tile-line.rows .tile, .tile-pool.rows .tile { text-align: left; white-space: normal; width: 100%; }
+.tile-line.rows .tile-slot { width: 100%; min-height: 34px; }
+.tile-line.rows .tile-tail { text-align: left; }

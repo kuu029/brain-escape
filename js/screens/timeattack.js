@@ -16,6 +16,7 @@ import { paperCheck, countdown } from '../ui/ready.js';
 import { topBar } from './home.js';
 import { bonusChips } from './result.js';
 import { backdrop, confetti } from '../ui/deco.js';
+import { logGems } from '../game/gemlog.js';
 
 export const TA_N = 10;
 export const TA_PENALTY = 10; // まちがえたら +10秒
@@ -117,6 +118,7 @@ export function render(el, { unit }) {
     const rep = repeatMult(`ta:${unit}`); // 同じ単元のくり返しは💎がへる
     const gems = Math.max(1, Math.round((5 + ok) * rep.mult));
     s.gems += gems;
+    logGems(`ta:${unit}`, gems);
     for (let i = 0; i < ok; i++) tallySession(true);
     const bonus = claimActivity('timeattack');
     closeSession('clear');

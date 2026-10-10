@@ -7,6 +7,7 @@ import { setAllyLevelSource, setGaugeBonus, ALLY_MAX_LV } from './engine.js';
 import { isEvent } from './event.js';
 import { claimActivity, repeatMult } from './bonus.js';
 import { addReward, rollBonus, RGT_DROP } from './reward.js';
+import { logGems } from './gemlog.js';
 
 export function isUnlocked(id) {
   const u = UNIT[id];
@@ -135,6 +136,7 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
   }
   gems += fixed;
   s.gems += gems;
+  logGems(unitId && mode !== 'review' ? `w:${unitId}` : mode, gems);
   out.gems = gems;
   out.bonus = claimActivity('wave');
   saveNow();

@@ -199,6 +199,89 @@ function genProof(rng) {
   };
 }
 
+// 証明を組み立てる（行のタイルを並べる）: 等しい辺・角の3行（順番自由）→ 合同条件 → 結論。まちがった行が1枚まざっている
+const P_ORDER = [
+  {
+    setup: '$AB\\parallel DC$、$AB=DC$（O は対角線の交点）のとき、$\\triangle ABO\\equiv \\triangle CDO$ を証明する。',
+    fig: PROOFS[0].fig, head: '$\\triangle ABO$ と $\\triangle CDO$ で、',
+    eqs: ['$\\angle BAO=\\angle DCO$（平行線の錯角）', '$\\angle ABO=\\angle CDO$（平行線の錯角）', '$AB=CD$（仮定）'],
+    cond: '1組の辺とその両端の角がそれぞれ等しいから、', end: '$\\triangle ABO\\equiv \\triangle CDO$',
+    trap: '$AO=BO$（仮定）', ext: '$AO=CO$',
+  },
+  {
+    setup: '$AB=AC$、$\\angle BAD=\\angle CAD$ のとき、$\\triangle ABD\\equiv \\triangle ACD$ を証明する。',
+    fig: PROOFS[1].fig, head: '$\\triangle ABD$ と $\\triangle ACD$ で、',
+    eqs: ['$AB=AC$（仮定）', '$\\angle BAD=\\angle CAD$（仮定）', '$AD=AD$（共通）'],
+    cond: '2組の辺とその間の角がそれぞれ等しいから、', end: '$\\triangle ABD\\equiv \\triangle ACD$',
+    trap: '$\\angle B=90^\\circ$（仮定）', ext: '$BD=CD$',
+  },
+  {
+    setup: 'AC と BD が O で交わり、$OA=OC$、$OB=OD$ のとき、$\\triangle OAB\\equiv \\triangle OCD$ を証明する。',
+    fig: PROOFS[2].fig, head: '$\\triangle OAB$ と $\\triangle OCD$ で、',
+    eqs: ['$OA=OC$（仮定）', '$OB=OD$（仮定）', '$\\angle AOB=\\angle COD$（対頂角）'],
+    cond: '2組の辺とその間の角がそれぞれ等しいから、', end: '$\\triangle OAB\\equiv \\triangle OCD$',
+    trap: '$\\angle OAB=\\angle OCD$（平行線の錯角）', ext: '$AB=CD$',
+  },
+  {
+    setup: '平行四辺形 ABCD で、対角線 AC をひいたとき、$\\triangle ABC\\equiv \\triangle CDA$ を証明する。',
+    fig: () => { const A = [1, 2.4], B = [0, 0], C = [4, 0], D = [5, 2.4]; return geo({ pts: { A, B, C, D }, segs: [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A'], ['A', 'C']] }); },
+    head: '$\\triangle ABC$ と $\\triangle CDA$ で、',
+    eqs: ['$AB=CD$（平行四辺形の向かい合う辺）', '$BC=DA$（平行四辺形の向かい合う辺）', '$AC=CA$（共通）'],
+    cond: '3組の辺がそれぞれ等しいから、', end: '$\\triangle ABC\\equiv \\triangle CDA$',
+    trap: '$AC=BD$（平行四辺形の対角線）', ext: '$\\angle ABC=\\angle CDA$', angle: true,
+  },
+  {
+    setup: '$AB=AC$ の二等辺三角形で、M が辺 BC の中点のとき、$\\triangle ABM\\equiv \\triangle ACM$ を証明する。',
+    fig: () => { const A = [0, 3], B = [-1.6, 0], C = [1.6, 0], M = [0, 0]; return geo({ pts: { A, B, C, M }, segs: [['A', 'B'], ['A', 'C'], ['B', 'C'], ['A', 'M']], ticks: [['A', 'B'], ['A', 'C'], ['B', 'M', 2], ['M', 'C', 2]] }); },
+    head: '$\\triangle ABM$ と $\\triangle ACM$ で、',
+    eqs: ['$AB=AC$（仮定）', '$BM=CM$（仮定）', '$AM=AM$（共通）'],
+    cond: '3組の辺がそれぞれ等しいから、', end: '$\\triangle ABM\\equiv \\triangle ACM$',
+    trap: '$\\angle BAM=\\angle ABM$（仮定）', ext: '$\\angle BAM=\\angle CAM$', angle: true,
+  },
+  {
+    setup: '$AB\\parallel CD$、AD と BC の交点を O とする。$AO=DO$ のとき、$\\triangle ABO\\equiv \\triangle DCO$ を証明する。',
+    fig: () => { const O = [0, 0], A = [-1.5, 1.5], B = [1, 1.5], C = [-1, -1.5], D = [1.5, -1.5]; return geo({ pts: { A, B, C, D, O }, segs: [['A', 'B'], ['C', 'D'], ['A', 'D'], ['B', 'C']], arrows: [['A', 'B'], ['C', 'D']], ticks: [['A', 'O'], ['O', 'D']] }); },
+    head: '$\\triangle ABO$ と $\\triangle DCO$ で、',
+    eqs: ['$\\angle BAO=\\angle CDO$（平行線の錯角）', '$AO=DO$（仮定）', '$\\angle AOB=\\angle DOC$（対頂角）'],
+    cond: '1組の辺とその両端の角がそれぞれ等しいから、', end: '$\\triangle ABO\\equiv \\triangle DCO$',
+    trap: '$\\angle ABO=\\angle DCO$（対頂角）', ext: '$AB=DC$',
+  },
+  {
+    setup: '正方形 ABCD の辺 BC 上に点 E、辺 CD 上に点 F を、$BE=CF$ となるようにとる。$\\triangle ABE\\equiv \\triangle BCF$ を証明する。',
+    fig: () => { const A = [0, 3], B = [0, 0], C = [3, 0], D = [3, 3], E = [1, 0], F = [3, 1]; return geo({ pts: { A, B, C, D, E, F }, segs: [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A'], ['A', 'E'], ['B', 'F']] }); },
+    head: '$\\triangle ABE$ と $\\triangle BCF$ で、',
+    eqs: ['$AB=BC$（正方形の辺）', '$BE=CF$（仮定）', '$\\angle ABE=\\angle BCF$（正方形の角は $90^\\circ$）'],
+    cond: '2組の辺とその間の角がそれぞれ等しいから、', end: '$\\triangle ABE\\equiv \\triangle BCF$',
+    trap: '$AE=AF$（仮定）', ext: '$AE=BF$',
+  },
+  {
+    setup: '$\\angle XOY$ の二等分線上の点 P から、辺 OX・OY に垂線 PA・PB をひく。$\\triangle OPA\\equiv \\triangle OPB$ を証明する。',
+    fig: () => { const O = [0, 0], P = polar(O, 3, 25), A = [P[0], 0], X = [4, 0], Y = polar(O, 4, 50); const t = P[0] * Math.cos((50 * Math.PI) / 180) + P[1] * Math.sin((50 * Math.PI) / 180); const Bp = polar(O, t, 50); return geo({ pts: { O, P, A, B: Bp, X, Y }, segs: [['O', 'X'], ['O', 'Y'], ['O', 'P'], ['P', 'A'], ['P', 'B']] }); },
+    head: '$\\triangle OPA$ と $\\triangle OPB$ で、',
+    eqs: ['$\\angle PAO=\\angle PBO=90^\\circ$（仮定）', '$\\angle AOP=\\angle BOP$（仮定）', '$OP=OP$（共通）'],
+    cond: '直角三角形の斜辺と1つの鋭角がそれぞれ等しいから、', end: '$\\triangle OPA\\equiv \\triangle OPB$',
+    trap: '$PA=OB$（仮定）', ext: '$PA=PB$',
+  },
+];
+function genOrder(rng) {
+  const pr = rng.pick(P_ORDER);
+  // 半分は「合同から、さらに辺・角が等しいことを示す」ところまで
+  const more = rng.chance(0.5);
+  const tail = more ? [`合同な図形の対応する${pr.angle ? '角' : '辺'}は等しいから、`, pr.ext] : [];
+  const answer = [...pr.eqs, pr.cond, pr.end, ...tail];
+  const tiles = rng.shuffle([...answer, pr.trap]);
+  const setup = more ? pr.setup.replace(/を証明する。$/, `を示し、さらに ${pr.ext} を証明する。`) : pr.setup;
+  return {
+    stem: `${setup}\n証明の行を正しい順にならべよう（等しい辺・角の3行は、どの順でもOK。まちがった行が1枚まざっている）`,
+    fig: pr.fig(),
+    input: { kind: 'order', tiles, answer, prefix: pr.head, suffix: '', extra: 1, rows: true, blocks: [3, ...answer.slice(3).map(() => 1)] },
+    answerText: [pr.head, ...answer].join('\n'),
+    hint: '「等しい辺・角」を3つ（理由つき）→「合同条件」→「結論」の順。仮定に書いていないことは使えない。',
+    steps: [pr.head, ...answer, `まちがいの行: ${pr.trap}（仮定や図からは言えない）`],
+    check: { kind: 'proof', trap: pr.trap },
+  };
+}
+
 export default {
   id: 'congruence',
   stage: 3,
@@ -218,6 +301,7 @@ export default {
     'cg-para': { difficulty: 1, gen: genPara },
     'cg-condition': { difficulty: 2, gen: genCondition },
     'cg-proof': { difficulty: 3, gen: genProof },
+    'cg-order': { difficulty: 3, gen: genOrder },
   },
   lessons: [
     {
@@ -252,7 +336,7 @@ export default {
     {
       id: 'cg-l3',
       title: '合同条件と証明',
-      unlocks: ['cg-condition', 'cg-proof'],
+      unlocks: ['cg-condition', 'cg-proof', 'cg-order'],
       build(rng) {
         const P = twoTriangles(rng);
         const base = { pts: P, segs: [['A', 'B'], ['B', 'C'], ['C', 'A'], ['D', 'E'], ['E', 'F'], ['F', 'D']], polys: [['A', 'B', 'C'], ['D', 'E', 'F']] };

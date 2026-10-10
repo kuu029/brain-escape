@@ -4,6 +4,7 @@ import { S, save, exportText, importText, resetAll, today } from '../core/store.
 import { go } from '../core/router.js';
 import { refreshBgm } from '../core/bgm.js';
 import { topBar } from './home.js';
+import { saveBackupFile, copyBackupText, backupAge } from '../core/backupfile.js';
 import { unlockCode, shortcutUrl } from '../game/unlock.js';
 
 // アプリの版: このスマホに入っている版と、サーバー（GitHub）の最新の版をくらべる
@@ -92,38 +93,6 @@ async function forceUpdate() {
   location.replace(`./?v=${Date.now()}`);
 }
 
-async function saveFile() {
-  const text = exportText();
-  const name = `brain-escape-backup-${today()}.json`;
-  const file = new File([text], name, { type: 'application/json' });
-  // iPhone は共有シート →「"ファイル"に保存」が確実
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: 'ブレイン脱獄 バックアップ' });
-      return;
-    } catch (e) {
-      if (e && e.name === 'AbortError') return;
-    }
-  }
-  const url = URL.createObjectURL(file);
-  const a = h('a', { href: url, download: name });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
-async function copyText() {
-  const text = exportText();
-  try {
-    await navigator.clipboard.writeText(text);
-    toast('コピーした！ メモアプリなどに貼りつけて保存してね', 2600);
-  } catch {
-    const ta = h('textarea', { class: 'backup-text', readonly: true });
-    ta.value = text;
-    await modal({ title: 'この文字を全部コピーして保存', body: h('div', {}, ta, h('p', { class: 'note' }, '長押し →「すべてを選択」→「コピー」')) });
-  }
-}
 
 async function restore(text) {
   const ok = await confirmBox('バックアップから復元する？', 'いまのデータは上書きされるよ。', '復元する', 'やめる', true);
@@ -180,9 +149,10 @@ export function render(el) {
       h('p', { class: 'note' }, '公立高校の一般選抜（学力検査）の日を入れると、ホームに「入試まであと○日」が出るよ。'),
       h('h3', { class: 'sec' }, '💾 バックアップ'),
       h('p', { class: 'note' }, 'データはこのスマホの中だけに保存されている。Safari の履歴・Webサイトデータを消すと消えちゃうので、ときどきバックアップしておこう。'),
+      h('p', { class: `note${backupAge() === null || backupAge() >= 7 ? ' warn-text' : ''}` }, backupAge() === null ? '前回のバックアップ: まだしていない' : `前回のバックアップ: ${backupAge() === 0 ? '今日' : `${backupAge()}日前`}`),
       h('div', { class: 'up-btns' },
-        btn('📄 ファイルに保存', saveFile, 'primary'),
-        btn('📋 文字でコピー', copyText, 'ghost'),
+        btn('📄 ファイルに保存', async () => { if (await saveBackupFile()) go('settings'); }, 'primary'),
+        btn('📋 文字でコピー', async () => { await copyBackupText(); go('settings'); }, 'ghost'),
         btn('📂 ファイルから復元', () => fileIn.click(), 'ghost'),
         btn('📝 文字から復元', pasteBox, 'ghost')),
       fileIn,

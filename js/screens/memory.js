@@ -21,6 +21,7 @@ import { claimActivity, repeatMult } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
 import { canSpeak, speakLines, stopSpeech } from '../ui/speech.js';
+import { logGems } from '../game/gemlog.js';
 
 const POS = { n: '名詞', v: '動詞', adj: '形容詞', adv: '副詞', prep: '前置詞', conj: '接続詞', wh: '疑問詞', pron: '代名詞', int: 'あいさつ等', num: '数', idiom: '熟語' };
 const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science', ja: 'japanese' };
@@ -108,6 +109,7 @@ function topView(el, subject) {
         h('div', { class: 'mt-flow' },
           h('span', { class: T.stage === 'intro' ? 'now' : T.introLeft > 0 ? '' : 'done' }, `① 顔合わせ ${T.day.motivation ? `${T.done}/${T.limit}` : ''}`),
           h('span', { class: T.stage === 'review' ? 'now' : T.stage === 'done' ? 'done' : '' }, `② 復習 ${T.review ? `あと${T.review}` : ''}`)),
+        ME.staleInfo(M, subject) && h('p', { class: 'note warn-text' }, `🆕 ${ME.STALE_DAYS}日間、新しい暗号を覚えていない。いまは暗記の💎が半分（顔合わせで新しい暗号を覚えるともどる）`),
         nextButtons(subject, T, M),
         weak > 0 && btn(`😵 苦手だけ（${weak}枚）`, () => startRush(subject, { weak: true }), 'ghost small')),
       // 暗号ディフェンス（リアルタイムのゲーム）
@@ -192,8 +194,9 @@ function flowView(el, subject, bet = 0) {
   function finish() {
     if (bet) return finishChal();
     studyEnd();
-    const gems = Math.max(1, ok);
+    const gems = Math.max(1, Math.round(ok * repeatMult(`flow:${subject}`).mult));
     S().gems += gems;
+    logGems('flow', gems);
     const bonus = claimActivity('memory');
     closeSession('clear');
     saveNow();
@@ -408,8 +411,11 @@ function rushView(el, subject, opts) {
     const mult = ME.MODES[mode].mult;
     let gems = Math.max(1, Math.round((R.ok * 0.5 + R.news * 0.5) * mult));
     // 同じ教科・同じモードのくり返しは💎がへる（デッキ試験の合格ボーナスはそのまま）
-    R.repeat = repeatMult(`m:${R.test ? 'test' : mode}:${R.subject}`);
-    gems = Math.max(1, Math.round(gems * R.repeat.mult));
+    // 難易度を変えても同じ教科なら同じ回数として数える
+    R.repeat = repeatMult(`m:${R.test ? 'test' : 'rush'}:${R.subject}`);
+    // 最近、新しい暗号を覚えていないと半分
+    R.stale = ME.staleInfo(M, R.subject);
+    gems = Math.max(1, Math.round(gems * R.repeat.mult * (R.stale ? R.stale.mult : 1)));
     const extra = [];
     if (R.test) {
       const pct = Math.round((R.ok / Math.max(R.asked, 1)) * 100);
@@ -425,6 +431,7 @@ function rushView(el, subject, opts) {
       if (addCard(id)) extra.push(id);
     }
     S().gems += gems;
+    logGems(`m:${R.subject}`, gems);
     R.gems = gems;
     R.bonus = claimActivity('memory');
     R.cards = extra;
@@ -453,6 +460,8 @@ function resultView(el, subject, R) {
         h('div', { class: 'mm-total' },
           [['🆕 新しく覚えた', R.news], ['⬆️ レベルアップ', R.ups], ['🔒 定着した', R.solid], ['✍️ 書けるように', R.wr], ['⚡ 最大コンボ', R.maxCombo]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))))),
       h('p', { class: 'note center mm-gems' }, `💎 +${R.gems}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
+      R.repeat?.mult < 1 && h('p', { class: 'note center' }, `🔁 今日この教科 ${R.repeat.n}回目 → 💎×${R.repeat.mult}（明日またもどる）`),
+      R.stale && h('p', { class: 'note center warn-text' }, `🆕 ${R.stale.days}日間 新しい暗号を覚えていないので 💎×${R.stale.mult}。「顔合わせ」で新しい暗号を覚えるともどる`),
       bonusChips(R.bonus),
       R.cards?.length > 0 && h('p', { class: 'note center' }, `🃏 カードゲット: ${R.cards.map((id) => GAME_CARDS.find((c) => c.id === id)?.name || id).join('、')}`),
       R.misses.length > 0 && h('h3', { class: 'sec' }, R.intro ? '😵 まちがえた暗号（顔合わせのあとの復習でまた出るよ）' : '😵 まちがえた暗号（少し時間をおいて、また出るよ）'),

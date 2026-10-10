@@ -19,6 +19,7 @@ import { claimActivity } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
 import { paperCheck, countdown } from '../ui/ready.js';
+import { logGems } from '../game/gemlog.js';
 
 const GRADERS = ['本人', 'お母さん', 'お兄さん'];
 const mmss = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, '0')}`;
@@ -242,6 +243,7 @@ function sheetView(el) {
     Object.assign(rec, { got: G.got, max: G.max, secs: G.secs });
     const gems = 5 + Math.round(G.score100 / 4);
     s.gems += gems;
+    logGems('exam', gems);
     rec.gems = gems;
     rec.bonus = claimActivity('exam');
     (s.exams ||= []).push(rec);

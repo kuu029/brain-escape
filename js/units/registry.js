@@ -69,6 +69,7 @@ import scSpring from './science/sc-spring.js';
 import scSound from './science/sc-sound.js';
 import scLens from './science/sc-lens.js';
 import scIon from './science/sc-ion.js';
+import scWrite from './science/sc-write.js';
 import soJisa from './social/so-jisa.js';
 import soScale from './social/so-scale.js';
 import soClimate from './social/so-climate.js';
@@ -78,6 +79,7 @@ import soChrono from './social/so-chrono.js';
 import soVote from './social/so-vote.js';
 import soMoney from './social/so-money.js';
 import soMap from './social/so-map.js';
+import soWrite from './social/so-write.js';
 
 export const UNITS = [
   signedNumbers,
@@ -152,6 +154,7 @@ export const UNITS = [
   scSound,
   scLens,
   scIon,
+  scWrite,
   // 社会
   soJisa,
   soScale,
@@ -162,6 +165,7 @@ export const UNITS = [
   soVote,
   soMoney,
   soMap,
+  soWrite,
 ];
 for (const u of UNITS) u.subject ||= 'math';
 

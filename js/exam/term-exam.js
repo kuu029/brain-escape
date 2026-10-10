@@ -17,7 +17,7 @@ const PLAN_SCI = {
   full: [['j2e', 10, 3], ['e2j', 5, 2], ['flow', 7, 4], ['calc', 8, 4]],
 };
 const CALC_GENS = { sci: unitsOf('science'), soc: unitsOf('social') };
-for (const k of Object.keys(CALC_GENS)) CALC_GENS[k] = CALC_GENS[k].flatMap((u) => Object.keys(u.generators || {}));
+for (const k of Object.keys(CALC_GENS)) CALC_GENS[k] = CALC_GENS[k].filter((u) => !u.id.endsWith('-write')).flatMap((u) => Object.keys(u.generators || {})); // 記述は計算の大問に入れない
 const TITLE = { j2e: '用語（説明 → 用語）', e2j: '用語の意味（用語 → 説明）', flow: '流れ・つながり（年表・原因と結果など）', calc: '計算（密度・電流・湿度など）', calcSoc: '資料・計算（時差・縮尺・雨温図・選挙など）' };
 const INTRO = { j2e: '次の説明にあてはまる用語を、ア〜エから1つずつ選びなさい。', e2j: '次の用語の説明として正しいものを、ア〜エから1つずつ選びなさい。', flow: '次の問いに答えなさい。', calc: '次の問いに答えなさい。答えは数で入力しなさい。' };
 

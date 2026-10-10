@@ -53,7 +53,7 @@ const CARD_ART = {
   kaban: 'boss-ja-hinshi', makimono: 'boss-ja-kana', chou: 'boss-ja-katsuyou', neko: 'boss-ja-keigo', mushimegane: 'boss-ja-shikibetsu', boomerang: 'boss-ja-kaeriten', kumo: 'boss-ja-kakari',
   tenbin: 'boss-sc-density', beaker: 'boss-sc-conc', kaba: 'boss-sc-pressure', namazu: 'boss-sc-quake', unagi: 'boss-sc-ohm', denkyu: 'boss-sc-power', lamp: 'boss-sc-react', kumori: 'boss-sc-humid', crane: 'boss-sc-work', awa: 'boss-sc-buoy', endou: 'boss-sc-gene', tsuki: 'boss-sc-sky',
   shio: 'boss-sc-solub', bane: 'boss-sc-spring', kane: 'boss-sc-sound', megane: 'boss-sc-lens', denchi: 'boss-sc-ion',
-  sekaitokei: 'boss-so-jisa', chizu: 'boss-so-scale', tenki: 'boss-so-climate', graph: 'boss-so-stat', doki: 'boss-so-century', haniwa: 'boss-so-chrono', touhyou: 'boss-so-vote', saifu: 'boss-so-money', jishaku: 'boss-so-map',
+  sekaitokei: 'boss-so-jisa', chizu: 'boss-so-scale', tenki: 'boss-so-climate', graph: 'boss-so-stat', doki: 'boss-so-century', haniwa: 'boss-so-chrono', touhyou: 'boss-so-vote', saifu: 'boss-so-money', jishaku: 'boss-so-map', enpitsu: 'boss-sc-write', hakushi: 'boss-so-write',
 };
 export function cardSprite(id) {
   const c = CARDS.find((x) => x.id === id);

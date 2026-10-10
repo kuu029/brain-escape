@@ -7,6 +7,13 @@ const normT = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
 function checkText(p, input) {
   const s = String(input ?? '');
   if (!s.trim()) return { ok: false, invalid: true, msg: '答えを入力してね' };
+  // 記述: キーワードのグループが全部入っていて、逆のこと（ng）を書いていなければ正解
+  if (p.input.keys) {
+    const t = normJa(s);
+    if ((p.input.ng || []).some((w) => t.includes(normJa(w)))) return { ok: false, msg: '逆のことを書いていないかな？ 答えの例とくらべてみよう' };
+    const miss = p.input.keys.filter((g) => !g.some((w) => t.includes(normJa(w))));
+    return miss.length ? { ok: false, msg: `「${miss.map((g) => g[0]).join('」「')}」についても書こう` } : { ok: true };
+  }
   const norm = p.input.ja ? normJa : normT;
   return { ok: p.input.accept.some((a) => norm(a) === norm(s)) };
 }
@@ -72,6 +79,19 @@ function checkOrder(p, input) {
   if (!Array.isArray(input) || input.length !== answer.length) return { ok: false, invalid: true, msg: `タイルを ${answer.length} 枚ならべてね` };
   const got = input.map((i) => tiles[i]);
   if (got.join(' ') === answer.join(' ')) return { ok: true };
+  // 証明: blocks = [3, 1, 1] なら、最初の3行（等しい辺・角）はどの順でもよい
+  if (p.input.blocks) {
+    let at = 0;
+    const ok = p.input.blocks.every((n) => {
+      const a = answer.slice(at, at + n), g = got.slice(at, at + n);
+      at += n;
+      return a.length === g.length && a.every((t) => g.includes(t));
+    });
+    if (ok) return { ok: true };
+    const extra = got.filter((t) => !answer.includes(t));
+    if (extra.length) return { ok: false, msg: 'まちがった行が1枚まざっている。仮定や図から本当に言えることか確かめよう。' };
+    return { ok: false, msg: '使う行は合ってる！ 「等しい辺・角」→「合同条件」→「結論」の順にならべよう。' };
+  }
   const extra = got.filter((t) => !answer.includes(t));
   const w = (p.wrong || []).find((x) => x.uses && got.includes(x.uses));
   if (w) return { ok: false, msg: w.msg };

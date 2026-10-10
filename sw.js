@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = 'de085b1484';
+const VERSION = 'ce805083c9';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -240,6 +240,7 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './index.html',
+  './js/core/backupfile.js',
   './js/core/bgm.js',
   './js/core/check.js',
   './js/core/fmt.js',
@@ -268,6 +269,7 @@ const ASSETS = [
   './js/game/engine.js',
   './js/game/event.js',
   './js/game/flowchal.js',
+  './js/game/gemlog.js',
   './js/game/missions.js',
   './js/game/plan.js',
   './js/game/progress.js',
@@ -351,6 +353,7 @@ const ASSETS = [
   './js/units/kit.js',
   './js/units/registry.js',
   './js/units/science/kit-sci.js',
+  './js/units/science/kit-write.js',
   './js/units/science/sc-buoy.js',
   './js/units/science/sc-conc.js',
   './js/units/science/sc-density.js',
@@ -368,6 +371,7 @@ const ASSETS = [
   './js/units/science/sc-sound.js',
   './js/units/science/sc-spring.js',
   './js/units/science/sc-work.js',
+  './js/units/science/sc-write.js',
   './js/units/social/so-century.js',
   './js/units/social/so-chrono.js',
   './js/units/social/so-climate.js',
@@ -377,6 +381,7 @@ const ASSETS = [
   './js/units/social/so-scale.js',
   './js/units/social/so-stat.js',
   './js/units/social/so-vote.js',
+  './js/units/social/so-write.js',
   './js/units/stage1/expressions.js',
   './js/units/stage1/fractions-decimals.js',
   './js/units/stage1/linear-equations.js',

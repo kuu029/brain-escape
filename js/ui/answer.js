@@ -212,9 +212,11 @@ function tilePad(p, onFire, fireLabel = '発射!', auto = true) {
     onpointerdown: (e) => { e.preventDefault(); sfx('tap'); fn(); },
     onclick: (e) => { if (e.detail === 0) fn(); },
   });
-  const line = h('div', { class: `tile-line${spell ? ' spell' : ''}` });
-  const pool = h('div', { class: `tile-pool${spell ? ' spell' : ''}` });
-  const btns = tiles.map((t, i) => h('button', { class: 'tile', type: 'button', ...press(() => pick(i)) }, t));
+  const rows = !!p.input.rows; // 証明: 1枚 = 1行（数式つき）
+  const face = (t) => (rows ? { rich: t } : {});
+  const line = h('div', { class: `tile-line${spell ? ' spell' : ''}${rows ? ' rows' : ''}` });
+  const pool = h('div', { class: `tile-pool${spell ? ' spell' : ''}${rows ? ' rows' : ''}` });
+  const btns = tiles.map((t, i) => h('button', { class: 'tile', type: 'button', ...face(t), ...press(() => pick(i)) }, rows ? '' : t));
   pool.append(...btns);
   function pick(i) {
     if (picked.includes(i)) return;
@@ -245,7 +247,7 @@ function tilePad(p, onFire, fireLabel = '発射!', auto = true) {
       const word = picked.map((i) => tiles[i]).join('');
       line.append(h('span', { class: 'spell-word' }, word || h('span', { class: 'ph' }, '？')));
     } else {
-      if (p.input.prefix) line.append(h('span', { class: 'tile-tail' }, p.input.prefix));
+      if (p.input.prefix) line.append(h('span', { class: 'tile-tail', ...face(p.input.prefix) }, rows ? '' : p.input.prefix));
       picked.forEach((i, k) => line.append(placedTile(i, k)));
       for (let k = picked.length; k < need; k++) line.append(h('span', { class: 'tile-slot' }));
       line.append(h('span', { class: 'tile-tail' }, p.input.suffix || ''));
@@ -254,7 +256,7 @@ function tilePad(p, onFire, fireLabel = '発射!', auto = true) {
   }
   // 置いたタイル: さわってすぐ離す＝もどす ／ 指を動かす＝つかんで好きな位置へ
   function placedTile(i, k) {
-    const b = h('button', { class: 'tile placed', type: 'button', onclick: (e) => { if (e.detail === 0) unpick(k); } }, tiles[i]);
+    const b = h('button', { class: 'tile placed', type: 'button', ...face(tiles[i]), onclick: (e) => { if (e.detail === 0) unpick(k); } }, rows ? '' : tiles[i]);
     b.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       const sx = e.clientX;
@@ -411,7 +413,7 @@ function keyboardPad(p, onFire, fireLabel, auto = true) {
 
 // 文字入力（国語の漢字の読みなど）。ここだけは標準のキーボード（ひらがな）を使う
 function textPad(p, onFire, fireLabel) {
-  const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', lang: 'ja', placeholder: 'ひらがなで入力' });
+  const inp = h('input', { class: 'mr-input', type: 'text', autocomplete: 'off', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'done', lang: 'ja', placeholder: p.input.ph || 'ひらがなで入力' });
   const fire = () => { const v = inp.value; if (!v.trim()) { inp.focus(); return; } inp.blur(); sfx('tap'); onFire(v); };
   inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); fire(); } });
   const pad = { usedHint: false };

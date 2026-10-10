@@ -2,6 +2,7 @@
 //   たくさん正解すると💎がふえる。まちがいが多いと、かけた💎がへる（0〜3問正解なら全部なくなる）
 //   2時間ごとに CHAL_MAX 回まで（0時・2時・4時…で回数がもどる）。とちゅうでやめると、かけた💎はもどらない
 import { S, today } from '../core/store.js';
+import { logGems } from './gemlog.js';
 
 export const CHAL_BETS = [10, 30, 50];
 export const CHAL_MAX = 3;
@@ -38,6 +39,7 @@ export function settleChal(bet, ok) {
   const pay = Math.round(bet * mult);
   const c = state();
   S().gems += pay;
+  logGems('chal', pay - bet);
   c.best = Math.max(c.best || 0, pay - bet);
   if (ok >= 10) c.perfect = true;
   c.log = [{ at: Date.now(), bet, ok, pay }, ...(c.log || [])].slice(0, 20);

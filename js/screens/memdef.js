@@ -18,6 +18,8 @@ import { flyGems } from '../ui/gems.js';
 import { MEM_SUBJECTS } from '../memory/engine.js';
 import * as D from '../memory/defense.js';
 import { isEvent } from '../game/event.js';
+import { logGems } from '../game/gemlog.js';
+import { staleInfo } from '../memory/engine.js';
 
 const SUBJ_LANG = { en: 'english', soc: 'social', sci: 'science', ja: 'japanese' };
 
@@ -252,9 +254,11 @@ export function defenseView(el, subject, started = false) {
     const lr = ((rec.lv ||= {})[level] ||= { best: 0, wins: 0 });
     lr.best = Math.max(lr.best, st.kills);
     if (win) lr.wins++;
-    const rep = repeatMult(`md:${subject}:${level}`); // 同じ教科・同じむずかしさのくり返しは💎がへる
-    const gems = Math.round(D.defGems(st) * (isEvent('gemfever') ? 2 : 1) * rep.mult); // 週末イベント「💎フィーバー」
+    const rep = repeatMult(`md:${subject}`); // 同じ教科のくり返しは💎がへる（むずかしさを変えても同じ回数）
+    const stale = staleInfo(S().memory, subject); // 新しい暗号を覚えていないと半分
+    const gems = Math.round(D.defGems(st) * (isEvent('gemfever') ? 2 : 1) * rep.mult * (stale ? stale.mult : 1)); // 週末イベント「💎フィーバー」
     S().gems += gems;
+    logGems(`md:${subject}`, gems);
     // むずかしい・おに: 勝つとガチャ券
     const tix = win ? LV.ticket : 0;
     if (tix) S().collection.gachaTickets = (S().collection.gachaTickets || 0) + tix;
@@ -265,7 +269,7 @@ export function defenseView(el, subject, started = false) {
     closeSession(win ? 'clear' : 'fail');
     saveNow();
     sfx(win ? 'win' : 'ng');
-    const gemEl = h('p', { class: 'note center' }, `💎 +${gems}`);
+    const gemEl = h('p', { class: 'note center' }, `💎 +${gems}${rep.mult < 1 ? `（今日 ${rep.n}回目 ×${rep.mult}）` : ''}${stale ? `（新しい暗号を${stale.days}日覚えていない ×${stale.mult}）` : ''}`);
     setTimeout(() => {
       el.replaceChildren(h('div', { class: 'center-col' },
         h('div', { class: 'big-em' }, win ? '🏆' : '💥'),
