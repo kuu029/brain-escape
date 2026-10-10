@@ -51,6 +51,19 @@ export const BOSSES = {
   'ja-shikibetsu': { emoji: '🔍', name: 'ムシメガネ・ミワケール' },
   'ja-kaeriten': { emoji: '🪃', name: 'ブーメラン・カエリテン' },
   'ja-kakari': { emoji: '🕷️', name: 'クモ・カカリムスビ' },
+  // 理科棟
+  'sc-density': { emoji: '⚖️', name: 'テンビン・ミツドーノ' },
+  'sc-conc': { emoji: '🫙', name: 'ビーカー・ノウドーン' },
+  'sc-pressure': { emoji: '🦛', name: 'カバ・オシツブース' },
+  'sc-quake': { emoji: '🐟', name: 'ナマズ・ユレール' },
+  'sc-ohm': { emoji: '⚡', name: 'デンキウナギ・オーム' },
+  'sc-power': { emoji: '💡', name: 'デンキュー・ワットン' },
+  'sc-react': { emoji: '🪔', name: 'ランプ・サンカー' },
+  'sc-humid': { emoji: '☁️', name: 'クモリ・シツドーノ' },
+  'sc-work': { emoji: '🏗️', name: 'クレーン・シゴトン' },
+  'sc-buoy': { emoji: '🫧', name: 'アワ・フリョック' },
+  'sc-gene': { emoji: '🫛', name: 'エンドウ・メンデール' },
+  'sc-sky': { emoji: '🌙', name: 'ツキ・ナンチュー' },
   'proportion': { emoji: '🪜', name: 'ハシゴ・ヒレイーノ' },
   'linear-function': { emoji: '🎢', name: 'コースター・カタムキーノ' },
   'quadratic-function': { emoji: '🏀', name: 'バスケ・ホウブツセン' },
@@ -150,6 +163,19 @@ export const CARDS = [
   { id: 'mushimegane', emoji: '🔍', name: 'ムシメガネ・ミワケール', rarity: 3, text: '同じ「られる」でも、受け身か可能かを見ぬく鑑定士。' },
   { id: 'boomerang', emoji: '🪃', name: 'ブーメラン・カエリテン', rarity: 3, text: 'レ点で投げると、1字もどってくる。' },
   { id: 'kumo', emoji: '🕷️', name: 'クモ・カカリムスビ', rarity: 3, text: '「こそ」の糸を張ると、文末が已然形にからめとられる。' },
+  // 理科棟のボス
+  { id: 'tenbin', emoji: '⚖️', name: 'テンビン・ミツドーノ', rarity: 3, text: '同じ大きさでも重さがちがうことを、見ぬいてしまう天びん。' },
+  { id: 'beaker', emoji: '🫙', name: 'ビーカー・ノウドーン', rarity: 3, text: 'とかしたものを、水溶液ぜんぶの重さでわれと言いはるビーカー。' },
+  { id: 'kaba', emoji: '🦛', name: 'カバ・オシツブース', rarity: 3, text: 'かかとで立つと、床がへこむ。面積が小さいほど強い。' },
+  { id: 'namazu', emoji: '🐟', name: 'ナマズ・ユレール', rarity: 3, text: 'カタカタ（P波）のあと、グラグラ（S波）でおどる大ナマズ。' },
+  { id: 'unagi', emoji: '⚡', name: 'デンキウナギ・オーム', rarity: 3, text: '電圧 = 抵抗 × 電流。体の中に三角形の公式がきざまれている。' },
+  { id: 'denkyu', emoji: '💡', name: 'デンキュー・ワットン', rarity: 3, text: '100 V・60 W。つけっぱなしにすると Wh がどんどんふえる。' },
+  { id: 'lamp', emoji: '🪔', name: 'ランプ・サンカー', rarity: 3, text: '銅を4、酸素を1、まぜて5。比をまちがえると火を吹く。' },
+  { id: 'kumori', emoji: '☁️', name: 'クモリ・シツドーノ', rarity: 3, text: '露点まで冷やされると、なみだ（水滴）がこぼれる雲。' },
+  { id: 'crane', emoji: '🏗️', name: 'クレーン・シゴトン', rarity: 3, text: '動滑車で楽をしても、仕事の大きさはごまかせない。' },
+  { id: 'awa', emoji: '🫧', name: 'アワ・フリョック', rarity: 3, text: '下からおす水圧のほうが大きいので、いつもふわふわ浮いている。' },
+  { id: 'endou', emoji: '🫛', name: 'エンドウ・メンデール', rarity: 3, text: '丸としわを 3 : 1 で産み分ける、なぞのさや。' },
+  { id: 'tsuki', emoji: '🌙', name: 'ツキ・ナンチュー', rarity: 3, text: '1時間に 15°、1か月に 30°。いつも西へ動いていく。' },
 ];
 // ボス撃破でもらえるカード
 export const BOSS_CARD = {
@@ -160,6 +186,7 @@ export const BOSS_CARD = {
   'en-words3': 'zou', 'en-passive': 'kujaku', 'en-perfect': 'kame', 'en-participle': 'chameleon', 'en-relative': 'ika', 'en-indirect': 'kitsune', 'en-subjunctive': 'unicorn',
   'proportion': 'hashigo', 'linear-function': 'coaster', 'quadratic-function': 'basket', 'angles': 'hasami', 'congruence': 'puzzle', 'circle-angle': 'mezamashi', 'similarity': 'matryoshka', 'pythagoras': 'tent', 'solids': 'hako', 'probability': 'coin', 'data': 'risu', 'word-mix': 'kujira',
   'ja-hinshi': 'kaban', 'ja-kana': 'makimono', 'ja-katsuyou': 'chou', 'ja-keigo': 'neko', 'ja-shikibetsu': 'mushimegane', 'ja-kaeriten': 'boomerang', 'ja-kakari': 'kumo',
+  'sc-density': 'tenbin', 'sc-conc': 'beaker', 'sc-pressure': 'kaba', 'sc-quake': 'namazu', 'sc-ohm': 'unagi', 'sc-power': 'denkyu', 'sc-react': 'lamp', 'sc-humid': 'kumori', 'sc-work': 'crane', 'sc-buoy': 'awa', 'sc-gene': 'endou', 'sc-sky': 'tsuki',
 };
 // ガチャに出るカード（ボス・称号以外）
 export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2 || c.gacha).map((c) => c.id);

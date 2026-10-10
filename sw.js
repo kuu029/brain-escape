@@ -1,5 +1,5 @@
 // オフライン用 Service Worker。ASSETS は tools/update-sw.mjs で自動生成する（手で書かない）
-const VERSION = '03291bfd54';
+const VERSION = '3853e1dce8';
 const CACHE = `brain-escape-${VERSION}`;
 const ASSETS = [
   './',
@@ -303,6 +303,19 @@ const ASSETS = [
   './js/units/japanese/kit-ja.js',
   './js/units/kit.js',
   './js/units/registry.js',
+  './js/units/science/kit-sci.js',
+  './js/units/science/sc-buoy.js',
+  './js/units/science/sc-conc.js',
+  './js/units/science/sc-density.js',
+  './js/units/science/sc-gene.js',
+  './js/units/science/sc-humid.js',
+  './js/units/science/sc-ohm.js',
+  './js/units/science/sc-power.js',
+  './js/units/science/sc-pressure.js',
+  './js/units/science/sc-quake.js',
+  './js/units/science/sc-react.js',
+  './js/units/science/sc-sky.js',
+  './js/units/science/sc-work.js',
   './js/units/stage1/expressions.js',
   './js/units/stage1/fractions-decimals.js',
   './js/units/stage1/linear-equations.js',
@@ -331,8 +344,16 @@ const ASSETS = [
 
 // cache: 'reload' … ブラウザに残っている古いファイル（HTTP キャッシュ）を使わず、必ずサーバーから取る。
 // これがないと、新しい版のキャッシュに古いファイルが入って、アップロードしても画面が変わらないことがある
+// 1つずつ保存する。サーバーにないファイルが1つでもあると addAll は全部失敗して、新しい版がずっと届かなくなるため。
+// 取れなかったファイルは __missing.json に記録する（設定画面の「アプリの版」で見られる）
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(async (c) => {
+    const missing = [];
+    await Promise.all(ASSETS.map((u) => fetch(new Request(u, { cache: 'reload' }))
+      .then((res) => { if (!res.ok) throw new Error(res.status); return c.put(u, res); })
+      .catch(() => missing.push(u))));
+    await c.put('__missing.json', new Response(JSON.stringify({ version: VERSION, missing: missing.sort() }), { headers: { 'Content-Type': 'application/json' } }));
+  }).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

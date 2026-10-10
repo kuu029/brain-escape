@@ -1588,6 +1588,13 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .fl-ja-1:not(.has-img) { background: radial-gradient(40% 18% at 85% 30%, #ffcf6b2a, transparent 70%), repeating-linear-gradient(90deg, transparent 0 40px, #3b2414 40px 44px), linear-gradient(#3b2414, #241408); }
 .fl-ja-2:not(.has-img) { background: radial-gradient(40% 18% at 15% 35%, #ff8a5c30, transparent 70%), repeating-linear-gradient(0deg, transparent 0 48px, #4a1f12 48px 54px), linear-gradient(#5a2414, #2a120a); }
 .fl-ja-3:not(.has-img) { background: radial-gradient(70% 25% at 50% 0%, #ffd64055, transparent 70%), radial-gradient(1px 1px at 30% 40%, #fff, transparent), radial-gradient(1px 1px at 70% 55%, #fff, transparent), linear-gradient(#2a1748, #1b1236); }
+/* 理科棟 */
+.game-card.science:not(.has-img) { background: radial-gradient(60% 90% at 90% 50%, #6bffd655, transparent 70%), repeating-linear-gradient(0deg, transparent 0 22px, #ffffff0d 22px 24px), linear-gradient(135deg, #0f5a5a, #2a3b8a); }
+.game-card.science { border-color: #6bffd6; box-shadow: 0 8px 30px rgba(15, 90, 90, .35); cursor: pointer; }
+.game-card.science .gc-shine { animation-delay: 6s; }
+.fl-sci-1:not(.has-img) { background: radial-gradient(40% 18% at 85% 30%, #6bffd62a, transparent 70%), repeating-linear-gradient(90deg, transparent 0 40px, #0f3a3a 40px 44px), linear-gradient(#123c3c, #0a2222); }
+.fl-sci-2:not(.has-img) { background: radial-gradient(40% 18% at 15% 35%, #ffe06b30, transparent 70%), repeating-linear-gradient(0deg, transparent 0 48px, #1a2f5a 48px 54px), linear-gradient(#1b3366, #0e1a38); }
+.fl-sci-3:not(.has-img) { background: radial-gradient(70% 25% at 50% 0%, #9ad0ff55, transparent 70%), radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 60% 45%, #fff, transparent), radial-gradient(1px 1px at 85% 20%, #fff, transparent), linear-gradient(#101a40, #070b22); }
 /* 漢文（返り点） */
 .kanbun { display: flex; justify-content: center; gap: 6px; padding: 8px 0; }
 .kb-c { position: relative; display: inline-block; width: 44px; height: 48px; line-height: 48px; text-align: center; font-size: 30px; font-family: serif; background: #ffffff10; border-radius: 8px; }

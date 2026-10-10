@@ -2,7 +2,44 @@
 import { h, btn, modal, toast, confirmBox } from '../core/ui.js';
 import { S, save, exportText, importText, resetAll, today } from '../core/store.js';
 import { go } from '../core/router.js';
+import { refreshBgm } from '../core/bgm.js';
 import { topBar } from './home.js';
+
+// アプリの版: このスマホに入っている版と、サーバー（GitHub）の最新の版をくらべる
+function versionBox() {
+  const box = h('div', { class: 'ver-box' }, h('p', { class: 'note' }, '確認中…'));
+  (async () => {
+    let local = null;
+    let missing = [];
+    let server = null;
+    try {
+      const keys = (await caches.keys()).filter((k) => k.startsWith('brain-escape-'));
+      local = keys.map((k) => k.replace('brain-escape-', '')).join(', ') || null;
+      const r = await caches.match('__missing.json');
+      if (r) missing = (await r.json()).missing || [];
+    } catch { /* キャッシュが使えない */ }
+    try {
+      const t = await (await fetch(`./sw.js?t=${Date.now()}`, { cache: 'no-store' })).text();
+      server = (t.match(/const VERSION = '([^']+)'/) || [])[1] || null;
+    } catch { /* オフライン */ }
+    const same = local && server && local.split(', ').includes(server);
+    box.replaceChildren(...[
+      h('p', { class: 'note' }, `このスマホの版: ${local || '（なし）'}　／　サーバーの最新: ${server || '（オフラインで確認できない）'}`),
+      server && h('p', { class: `note ${same ? '' : 'warn-text'}` }, same ? '✅ 最新の版です。' : '⚠️ 新しい版があります。下の「最新版にする」を押してね。'),
+      missing.length > 0 && h('p', { class: 'note warn-text' }, `⚠️ サーバーに見つからないファイルがあります（アップロードもれ・フォルダちがいかも）: ${missing.map((u) => u.replace(/^\.\//, '')).join('、')}`),
+    ].filter(Boolean));
+  })();
+  return box;
+}
+// 最新版にする: キャッシュとオフライン用の仕組みを消して、サーバーから読みこみ直す（勉強の記録は消えない）
+async function forceUpdate() {
+  if (!(await confirmBox('最新版にする', 'アプリのファイルをサーバーから読みこみ直します。勉強の記録・💎・コレクションは消えません。', '読みこみ直す', 'やめる'))) return;
+  try {
+    for (const r of await navigator.serviceWorker?.getRegistrations?.() || []) await r.unregister();
+    for (const k of await caches.keys()) await caches.delete(k);
+  } catch { /* そのまま読みこみ直す */ }
+  location.replace(`./?v=${Date.now()}`);
+}
 
 async function saveFile() {
   const text = exportText();
@@ -77,6 +114,9 @@ export function render(el) {
   el.append(topBar(() => go('home')),
     h('div', { class: 'settings' },
       h('section', { class: 'set-row' }, h('span', {}, '効果音'), sound),
+      h('section', { class: 'set-row' }, h('span', {}, 'BGM'),
+        h('button', { class: `toggle ${s.settings.bgm !== false ? 'on' : ''}`, type: 'button', role: 'switch', 'aria-checked': String(s.settings.bgm !== false), onclick: () => { s.settings.bgm = s.settings.bgm === false; save(); refreshBgm(); go('settings'); } }, s.settings.bgm !== false ? '🎵 ON' : '🔇 OFF')),
+      h('p', { class: 'note' }, 'BGMは効果音がONのときだけ鳴る。模試・タイムアタック・暗記中は、集中できるように鳴らないよ。'),
       h('section', { class: 'set-row' }, h('span', {}, '盤面の演出スピード'),
         h('button', { class: `toggle ${s.settings.fxFast ? 'on' : ''}`, type: 'button', onclick: () => { s.settings.fxFast = !s.settings.fxFast; save(); go('settings'); } }, s.settings.fxFast ? '⚡ はやい' : '🐢 ふつう')),
       h('section', { class: 'set-row' }, h('span', {}, `ニックネーム: ${s.nickname}`), btn('変更', rename, 'small')),
@@ -95,6 +135,10 @@ export function render(el) {
         btn('📂 ファイルから復元', () => fileIn.click(), 'ghost'),
         btn('📝 文字から復元', pasteBox, 'ghost')),
       fileIn,
+      h('h3', { class: 'sec' }, '📲 アプリの版'),
+      h('p', { class: 'note' }, 'アップロードしたのに画面が変わらないときは、ここで確認して「最新版にする」を押す。'),
+      versionBox(),
+      h('div', { class: 'up-btns' }, btn('🔄 最新版にする', forceUpdate, 'primary')),
       h('h3', { class: 'sec' }, 'そのほか'),
       h('div', { class: 'up-btns' },
         btn('🔦 看守チェック（診断）をやり直す', () => go('diagnosis', { phase: 'intro' }), 'ghost'),

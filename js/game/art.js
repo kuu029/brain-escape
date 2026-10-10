@@ -51,6 +51,7 @@ const CARD_ART = {
   zou: 'boss-en-words3', kujaku: 'boss-en-passive', kame: 'boss-en-perfect', chameleon: 'boss-en-participle', ika: 'boss-en-relative', kitsune: 'boss-en-indirect', unicorn: 'boss-en-subjunctive',
   hashigo: 'boss-proportion', coaster: 'boss-linear-function', basket: 'boss-quadratic-function', hasami: 'boss-angles', puzzle: 'boss-congruence', mezamashi: 'boss-circle-angle', matryoshka: 'boss-similarity', tent: 'boss-pythagoras', hako: 'boss-solids', coin: 'boss-probability', risu: 'boss-data', kujira: 'boss-word-mix',
   kaban: 'boss-ja-hinshi', makimono: 'boss-ja-kana', chou: 'boss-ja-katsuyou', neko: 'boss-ja-keigo', mushimegane: 'boss-ja-shikibetsu', boomerang: 'boss-ja-kaeriten', kumo: 'boss-ja-kakari',
+  tenbin: 'boss-sc-density', beaker: 'boss-sc-conc', kaba: 'boss-sc-pressure', namazu: 'boss-sc-quake', unagi: 'boss-sc-ohm', denkyu: 'boss-sc-power', lamp: 'boss-sc-react', kumori: 'boss-sc-humid', crane: 'boss-sc-work', awa: 'boss-sc-buoy', endou: 'boss-sc-gene', tsuki: 'boss-sc-sky',
 };
 export function cardSprite(id) {
   const c = CARDS.find((x) => x.id === id);
