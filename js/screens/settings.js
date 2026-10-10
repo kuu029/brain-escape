@@ -4,6 +4,7 @@ import { S, save, exportText, importText, resetAll, today } from '../core/store.
 import { go } from '../core/router.js';
 import { refreshBgm } from '../core/bgm.js';
 import { topBar } from './home.js';
+import { unlockCode, shortcutUrl } from '../game/unlock.js';
 
 // アプリの版: このスマホに入っている版と、サーバー（GitHub）の最新の版をくらべる
 function versionBox() {
@@ -48,10 +49,27 @@ function unlockBox(s) {
       save();
       toast('合言葉を保存した');
       paint();
-    }, 'ghost'));
+    }, 'ghost'),
+    s.settings.unlockSecret && btn('🧪 テスト用コードを出す（1分）', () => testCode(s), 'ghost'));
   };
   paint();
   return box;
+}
+
+// ショートカットのテスト用: 合言葉を入れた人だけ、券を使わずに1分のコードを出せる
+async function testCode(s) {
+  const inp = h('input', { class: 'mr-input', type: 'password', autocomplete: 'off', placeholder: '合言葉' });
+  const ok = await modal({ title: '🧪 テスト用コード', body: h('div', { class: 'modal-body' }, h('p', { class: 'note' }, '券を使わずに、1分だけ解除するコードを出します。合言葉を入れてください。'), inp), buttons: [{ label: 'やめる', value: false }, { label: 'コードを出す', value: true, cls: 'primary' }] });
+  if (!ok) return;
+  if (inp.value.trim() !== s.settings.unlockSecret) return toast('合言葉がちがう', 2000);
+  const code = await unlockCode(s.settings.unlockSecret, new Date(), 1);
+  try { await navigator.clipboard.writeText(code); toast('コードをコピーした'); } catch { /* コピーできなくても表示はする */ }
+  const go2 = await modal({
+    title: '🧪 テスト用コード',
+    body: h('div', { class: 'modal-body center rw-show' }, h('div', { class: 'rw-code' }, code), h('small', { class: 'note' }, '1分だけ解除するコード（券はへらない）')),
+    buttons: [{ label: 'とじる', value: false }, { label: '▶ ショートカットで解除', value: true, cls: 'primary' }],
+  });
+  if (go2) location.href = shortcutUrl(code);
 }
 
 // 最新版にする: キャッシュとオフライン用の仕組みを消して、サーバーから読みこみ直す（勉強の記録は消えない）
