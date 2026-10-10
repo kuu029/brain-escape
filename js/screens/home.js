@@ -22,6 +22,8 @@ import { studyColorUrl } from '../game/unlock.js';
 import { backupDue, backupAge, saveBackupFile, snoozeBackup } from '../core/backupfile.js';
 import { weekPlan, planNext, claimPlan, SUBJ_JA, PLAN_GOAL, PLAN_GEMS } from '../game/plan.js';
 import { UNIT } from '../units/registry.js';
+import { weakPool } from '../game/weak.js';
+import { isNight, NIGHT } from '../game/night.js';
 
 export function topBar(back = null) {
   const s = S();
@@ -121,11 +123,12 @@ export function render(el) {
           : h('div', { class: 'hlogo' }, h('span', { class: 'hlogo-en' }, 'BRAIN ESCAPE'), h('span', { class: 'hlogo-row' }, h('span', { class: 'hlogo-a' }, 'ブレイン'), h('span', { class: 'hlogo-b' }, '脱獄'))),
         h('p', { class: 'hello' }, `よう、${s.nickname}。今日も脱獄の時間だ。`),
         // ごほうびの合言葉を設定している（＝ショートカットを入れている）ときだけ: 勉強中はカラーにできる
-        s.settings.unlockSecret && btn('🎨 カラーにする', () => { location.href = studyColorUrl(); }, 'small ghost hm-color'),
+        s.settings.unlockSecret && !isNight() && btn('🎨 カラーにする', () => { location.href = studyColorUrl(); }, 'small ghost hm-color'),
         h('div', { class: 'escape-meter' },
           h('span', { class: 'em-label', html: `${iconHTML('icon-key', '🗝️', '')} 脱獄進捗` }),
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),
           h('b', { class: 'em-pct' }, `${pct}%`))),
+      isNight() && h('div', { class: 'bk-line night' }, h('span', {}, `🌙 ${NIGHT.from}時をすぎた。ウェーブ・暗記・模試・ガチャは${NIGHT.to}時までお休み。今日はもう寝よう！`)),
       backupLine(),
       countdown(),
       eventCard(),
@@ -187,6 +190,9 @@ function todayPick() {
     const p = weekPlan();
     return { em: u.emoji, art: spriteHTML(`boss-${u.id}`, BOSSES[u.id]?.emoji || u.emoji, ''), label: pc.label.replace(/^\S+\s/, ''), sub: `今週の計画 ${p.doneCount}/${p.items.length}｜${SUBJ_JA[u.subject]}｜${u.title}・${pn.why}`, to: pc.to, html: true };
   }
+  // 今週の計画が全部おわったら、苦手ミックス
+  const wk = weakPool();
+  if (wk.ready) return { em: '🎯', art: '🎯', label: '苦手ミックス', sub: `まちがえた型 ${wk.kinds}種類をまとめて・約4分`, to: ['battle', { mode: 'weak' }] };
   for (const subj of ['math', 'english', 'japanese', 'science', 'social']) {
     const u = nextUnit(subj);
     const cta = u && unitNext(u.id).cta;
@@ -253,7 +259,9 @@ function allModes() {
   let open = false;
   try { open = localStorage.getItem(MODES_KEY) === '1'; } catch { /* 使えなくてもよい */ }
   const s = S();
+  const wk = weakPool();
   const rows = [
+    wk.ready && modeRow('weak', '🎯', '苦手ミックス', `まちがえた型 ${wk.kinds}種類（${wk.subjects.map((x) => SUBJ_JA[x]).join('・')}）`, null, '', () => go('battle', { mode: 'weak' })),
     ...[['math', '数学棟', () => go('map')], ['english', '英語棟', () => go('map', { subject: 'english' })], ['japanese', '国語棟', () => go('map', { subject: 'japanese' })], ['science', '理科棟', () => go('map', { subject: 'science' })], ['social', '社会棟', () => go('map', { subject: 'social' })]].map(([subj, title, fn]) => {
       const list = unitsOf(subj).filter((u) => !u.comingSoon);
       const done = list.filter((u) => cleared(u.id)).length;

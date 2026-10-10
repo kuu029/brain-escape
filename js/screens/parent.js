@@ -97,7 +97,7 @@ function gemLabel(key) {
   const [k, v] = key.split(':');
   const u = (id) => UNIT[id]?.title || id;
   return { w: () => `ウェーブ｜${u(v)}`, m: () => `暗号ラッシュ｜${MEM_JA[v] || v}`, md: () => `暗号ディフェンス｜${MEM_JA[v] || v}`, ta: () => `タイムアタック｜${u(v)}` }[k]?.()
-    || { review: 'リベンジウェーブ', diagnosis: '看守チェック', mission: '今日の指令', achieve: '実績', bonus: '2時間ボーナス・はじめての模試', plan: '今週の計画', exam: '模試', chal: '並べ替えチャレンジ（差し引き）', flow: '流れでつなげる', ending: 'エンディング' }[key] || key;
+    || { review: 'リベンジウェーブ', weak: '苦手ミックス', diagnosis: '看守チェック', mission: '今日の指令', achieve: '実績', bonus: '2時間ボーナス・はじめての模試', plan: '今週の計画', exam: '模試', chal: '並べ替えチャレンジ（差し引き）', flow: '流れでつなげる', ending: 'エンディング' }[key] || key;
 }
 function gemBox() {
   const s = S();

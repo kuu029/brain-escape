@@ -1719,3 +1719,22 @@ svg.mapdir { width: 100%; max-width: 230px; height: auto; display: block; margin
 .tile-line.rows .tile, .tile-pool.rows .tile { text-align: left; white-space: normal; width: 100%; }
 .tile-line.rows .tile-slot { width: 100%; min-height: 34px; }
 .tile-line.rows .tile-tail { text-align: left; }
+.bk-line.night { background: #5a7dff22; border-color: #8aa0ff88; }
+.night-moon { font-size: 54px; line-height: 1.2; }
+
+/* マップ: 次はこれ・リスト表示 */
+.mh-next { display: flex; width: 100%; margin-top: 6px; text-align: left; }
+.mh-next-in { display: flex; align-items: baseline; gap: 8px; }
+.mh-next-in small { font-size: 12px; opacity: .85; }
+.map-list { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px 96px; }
+.ml-floor { border-radius: 16px; border: 2px solid var(--line); background: #ffffff0a; overflow: hidden; }
+.ml-floor summary { display: flex; align-items: center; gap: 8px; min-height: 50px; padding: 8px 12px; cursor: pointer; list-style: none; }
+.ml-floor summary::-webkit-details-marker { display: none; }
+.ml-floor summary b { flex: 1; font-size: 15px; }
+.ml-floor summary small { color: var(--dim); font-size: 12px; }
+.ml-floor[open] summary { border-bottom: 1px solid var(--line); }
+.ml-floor .fs-n { flex: none; padding: 2px 8px; border-radius: 8px; background: #ffd640; color: #2a1d00; font-weight: 900; font-size: 13px; }
+.ml-row { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 52px; padding: 6px 12px; border: 0; border-top: 1px solid #ffffff10; background: transparent; color: var(--text); text-align: left; }
+.ml-row.st-locked { opacity: .55; }
+.ml-row.st-next { background: #ffd64018; }
+.ml-stars { flex: none; color: #ffd640; font-size: 13px; }

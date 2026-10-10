@@ -18,8 +18,9 @@ import { sfx } from '../core/sound.js';
 import { bump } from '../game/missions.js';
 import { go } from '../core/router.js';
 import { finishWave, pickReviews, towerSkin, party, tickets, useTicket, equippedTool, useConsumable } from '../game/progress.js';
+import { weakPool } from '../game/weak.js';
 
-const MODE_LABEL = { practice: '練習ウェーブ', boss: 'ボスウェーブ', review: 'リベンジウェーブ', diagnosis: '看守チェック' };
+const MODE_LABEL = { practice: '練習ウェーブ', boss: 'ボスウェーブ', review: 'リベンジウェーブ', diagnosis: '看守チェック', weak: '苦手ミックスウェーブ' };
 // 放置の見張り: この時間さわらないと「寝てない？」と聞き、さらに IDLE_GRACE 秒こたえがなければウェーブを抜ける
 const IDLE_WARN = 3 * 60 * 1000;
 const IDLE_GRACE = 60;
@@ -49,6 +50,10 @@ export function render(el, params) {
     ];
     const units = [...new Set(s.reviewQueue.map((r) => r.unit))].filter((id) => UNIT[id]?.generators && UNIT[id].subject === subject);
     picker = makePicker(units.flatMap((id) => practicePool(id, unitState(id).lessons)));
+  } else if (mode === 'weak') {
+    // 苦手ミックス: 教科をまたいで、まちがえた型・正答率の低い単元から
+    schedule = practiceSchedule([]);
+    picker = makePicker(weakPool().pool);
   } else {
     schedule = practiceSchedule(pickReviews(unitId, 2));
     picker = makePicker(practicePool(unitId, unitState(unitId).lessons));

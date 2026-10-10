@@ -15,6 +15,7 @@ import { isEvent } from '../game/event.js';
 import { chalTable } from './memory.js';
 import { unlockCode, shortcutUrl, SHORTCUT_NAME } from '../game/unlock.js';
 import { REWARD, EXCHANGE, RGACHA_RATES, exchangeCost, rgachaCost, priceFactor, rewardState, rewardTickets, rgachaTickets, exchangeReward, rewardGacha, useReward, GACHA_BONUS, BONUS_NAME, CONVERT, convertReward } from '../game/reward.js';
+import { nightStop } from '../game/night.js';
 
 const RARE = { 1: 'ノーマル', 2: 'レア', 3: 'スーパーレア', 4: 'レジェンド' };
 
@@ -41,6 +42,7 @@ function itemView0(it) {
 
 // 並べ替えチャレンジ: 教科と、かける💎をえらんで始める
 async function chalStart(s) {
+  if (nightStop()) return;
   if (chalLeft() <= 0) return toast(`チャレンジは${CHAL_MAX}回やったよ。${chalNextHour()}時にまたできる！`, 2200);
   let subj = 'soc';
   let bet = CHAL_BETS.find((b) => s.gems >= b) ? CHAL_BETS.filter((b) => s.gems >= b)[0] : CHAL_BETS[0];
@@ -70,6 +72,7 @@ function rewardTab(s) {
   const log = rewardState().log;
   const fmt = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const use = async (id) => {
+    if (nightStop()) return;
     const r = REWARD[id];
     if (!(await confirmBox(`${r.name}を使う？`, S().settings.unlockSecret ? '解除コードが出るよ。すぐにショートカットで解除してね（時間は今から数える）。使うと1枚へるよ。' : 'おうちの人に、この画面を見せてね。使うと1枚へるよ。', '使う！', 'やめる'))) return;
     const rec = useReward(id);
@@ -103,6 +106,7 @@ function rewardTab(s) {
     go('collection', { tab: 'reward' });
   };
   const pullR = async (ticket = false) => {
+    if (nightStop()) return;
     const res = rewardGacha(Math.random, { ticket });
     if (!res) return toast(ticket ? '🎫 ごほうびガチャ券がない' : `💎が足りない（あと ${rgachaCost() - s.gems}）`);
     await gachaStage([res]);
@@ -259,6 +263,7 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
     const type = GACHA_TYPES[gtype] ? gtype : 'normal';
     const T = GACHA_TYPES[type];
     const pull = async (n, ticket = false) => {
+      if (nightStop()) return;
       const res = gacha(n, { ticket, type });
       if (!res) return toast(ticket ? '🎟 ガチャ券が足りない' : `💎が足りない（あと ${gachaCost(n, type) - s.gems}）`);
       await gachaStage(res);

@@ -22,6 +22,7 @@ import solids from './stage3/solids.js';
 import probability from './stage3/probability.js';
 import data from './stage3/data.js';
 import wordMix from './stage3/word-mix.js';
+import construct from './stage3/construct.js';
 import enWords1 from './english/en-words1.js';
 import enBe from './english/en-be.js';
 import en3sg from './english/en-3sg.js';
@@ -103,6 +104,7 @@ export const UNITS = [
   solids,
   probability,
   data,
+  construct,
   wordMix,
   // 英語
   enWords1,

@@ -20,6 +20,7 @@ import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
 import { paperCheck, countdown } from '../ui/ready.js';
 import { logGems } from '../game/gemlog.js';
+import { planFromExam } from '../game/plan.js';
 
 const GRADERS = ['本人', 'お母さん', 'お兄さん'];
 const mmss = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, '0')}`;
@@ -240,7 +241,8 @@ function sheetView(el) {
       if (q.p.generatorId) recordAnswer({ unit: q.p.unit, generatorId: q.p.generatorId, seed: q.p.seed, correct: g.ok, firstTry: true });
       else tallySession(g.ok);
     }
-    Object.assign(rec, { got: G.got, max: G.max, secs: G.secs });
+    Object.assign(rec, { got: G.got, max: G.max, secs: G.secs, weak: weakUnits(G.items) });
+    rec.planned = planFromExam(rec.weak).map((w) => w.unit); // 点を落とした単元を今週の計画へ
     const gems = 5 + Math.round(G.score100 / 4);
     s.gems += gems;
     logGems('exam', gems);
@@ -272,7 +274,7 @@ function resultView(el, id, fresh = false) {
 
   function paintScore() {
     const G = gradeExam(ex, rec);
-    Object.assign(rec, { got: G.got, max: G.max, secs: G.secs });
+    Object.assign(rec, { got: G.got, max: G.max, secs: G.secs, weak: weakUnits(G.items) });
     save();
     const waiting = paperQs.filter((q) => !rec.marks[q.id]).length;
     scoreBox.replaceChildren(
@@ -336,6 +338,7 @@ function resultView(el, id, fresh = false) {
       fresh && bonusChips(rec.bonus),
       paperBox,
       weak.length > 0 && h('h3', { class: 'sec' }, '🎯 点を落としたところ（ここを復習）'),
+      fresh && rec.planned?.length > 0 && h('p', { class: 'note' }, `📅 「${rec.planned.map((id) => UNIT[id]?.title || id).join('」「')}」を今週の計画に入れたよ。ホームの「今週の計画」から練習できる`),
       weak.length > 0 && h('div', { class: 'ex-weak' }, weak.map(({ unit, pts }) => btn(h('span', {}, h('b', {}, UNIT[unit]?.title || unit), h('small', {}, ` −${pts}点`)), () => go('map', { focus: unit, subject: UNIT[unit]?.subject || 'math' }), 'ghost small'))),
       h('h3', { class: 'sec' }, '🔍 見直し（タップで解説）'),
       review,

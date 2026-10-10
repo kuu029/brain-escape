@@ -130,8 +130,9 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
     }
   }
   // 同じ単元のウェーブを同じ日に何回もくり返すと💎がへる（リベンジ・診断はのぞく）
-  if (unitId && mode !== 'review' && mode !== 'diagnosis') {
-    out.repeat = repeatMult(`w:${unitId}`);
+  const repKey = mode === 'weak' ? 'w:weak' : unitId && mode !== 'review' && mode !== 'diagnosis' ? `w:${unitId}` : null;
+  if (repKey) {
+    out.repeat = repeatMult(repKey);
     gems = Math.round(gems * out.repeat.mult);
   }
   gems += fixed;

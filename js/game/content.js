@@ -94,6 +94,7 @@ export const BOSSES = {
   'probability': { emoji: '🪙', name: 'コイン・ウラオモテ' },
   'data': { emoji: '🐿️', name: 'リス・トーケイ' },
   'word-mix': { emoji: '🐳', name: 'クジラ・ブンショーダイ' },
+  'construct': { emoji: '📐', name: 'コンパス・サクズー' },
 };
 
 // コレクション用カード
@@ -157,6 +158,7 @@ export const CARDS = [
   { id: 'coin', emoji: '🪙', name: 'コイン・ウラオモテ', rarity: 3, text: '表が出るか裏が出るかは、本人にもわからない。' },
   { id: 'risu', emoji: '🐿️', name: 'リス・トーケイ', rarity: 3, text: 'どんぐりを集めて、箱ひげ図にしている。' },
   { id: 'kujira', emoji: '🐳', name: 'クジラ・ブンショーダイ', rarity: 3, text: '自由の海の門番。問題文がとにかく長い。' },
+  { id: 'compass', emoji: '📐', name: 'コンパス・サクズー', rarity: 3, text: '分度器を見るとおこる。「測るな、かけ」が口ぐせ。' },
   { id: 'wani', emoji: '🐊', name: 'ワニ・ツナギーノ', rarity: 3, text: '2つの文を口でくわえてつなぐ。because が好物。' },
   // ガチャの高レアなかま（★3・★4）。強いかわりに、呼ぶのに正解が多くいる
   { id: 'kaminari', emoji: '🌩️', name: 'カミナリ・ドンガラーノ', rarity: 3, gacha: true, text: '雷雲に乗った看守。おへそを取るのが趣味。' },
@@ -220,7 +222,7 @@ export const BOSS_CARD = {
   'en-words1': 'inko', 'en-be': 'hachi', 'en-3sg': 'hebi', 'en-plural': 'hitsuji', 'en-prog': 'hamster', 'en-wh': 'fukurou', 'en-past': 'pastosaurus',
   'en-words2': 'tako', 'en-future': 'yogen', 'en-pastprog': 'namakemono', 'en-modal': 'washi', 'en-there': 'harinezumi', 'en-inf': 'kangaroo', 'en-compare': 'kirin', 'en-conj': 'wani',
   'en-words3': 'zou', 'en-passive': 'kujaku', 'en-perfect': 'kame', 'en-participle': 'chameleon', 'en-relative': 'ika', 'en-indirect': 'kitsune', 'en-subjunctive': 'unicorn', 'en-listen': 'koumori',
-  'proportion': 'hashigo', 'linear-function': 'coaster', 'quadratic-function': 'basket', 'angles': 'hasami', 'congruence': 'puzzle', 'circle-angle': 'mezamashi', 'similarity': 'matryoshka', 'pythagoras': 'tent', 'solids': 'hako', 'probability': 'coin', 'data': 'risu', 'word-mix': 'kujira',
+  'proportion': 'hashigo', 'linear-function': 'coaster', 'quadratic-function': 'basket', 'angles': 'hasami', 'congruence': 'puzzle', 'circle-angle': 'mezamashi', 'similarity': 'matryoshka', 'pythagoras': 'tent', 'solids': 'hako', 'probability': 'coin', 'data': 'risu', 'word-mix': 'kujira', 'construct': 'compass',
   'ja-hinshi': 'kaban', 'ja-kana': 'makimono', 'ja-katsuyou': 'chou', 'ja-keigo': 'neko', 'ja-shikibetsu': 'mushimegane', 'ja-kaeriten': 'boomerang', 'ja-kakari': 'kumo',
   'sc-density': 'tenbin', 'sc-conc': 'beaker', 'sc-pressure': 'kaba', 'sc-quake': 'namazu', 'sc-ohm': 'unagi', 'sc-power': 'denkyu', 'sc-react': 'lamp', 'sc-humid': 'kumori', 'sc-work': 'crane', 'sc-buoy': 'awa', 'sc-gene': 'endou', 'sc-sky': 'tsuki',
   'sc-solub': 'shio', 'sc-spring': 'bane', 'sc-sound': 'kane', 'sc-lens': 'megane', 'sc-ion': 'denchi', 'sc-write': 'enpitsu',

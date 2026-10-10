@@ -30,6 +30,12 @@ export function render(el, { focus = null, subject = null } = {}) {
   const stages = SUBJECTS[subj].stages;
   const all = stages.flatMap((stg) => unitsOf(subj).filter((u) => u.stage === stg.n)); // 下から上の順
   const nextId = nextUnit(subj)?.id;
+  const head = mapHead(el, s, subj, all, nextId);
+  // リスト表示: 階ごとに1行ずつ。終わった階・まだ開いていない階はたたむ
+  if (mapView() === 'list') {
+    el.append(head, listView(subj, stages, all, nextId));
+    return;
+  }
 
   // 上の階から順に、座標を決める（y は塔の上からの px）
   let y = GOAL_H;
@@ -101,22 +107,62 @@ export function render(el, { focus = null, subject = null } = {}) {
   }
   tower.append(h('div', { class: 'tower-start' }, '🚪 ここからスタート'));
 
-  const rq = s.reviewQueue.filter((r) => (UNIT[r.unit]?.subject || 'math') === subj).length;
-  const done = all.filter((u) => !u.comingSoon && cleared(u.id)).length;
-  const total = all.filter((u) => !u.comingSoon).length;
-  el.append(
-    h('div', { class: 'map-head' },
-      topBar(() => go('home')),
-      h('div', { class: 'mh-row' },
-        h('h2', {}, SUBJECTS[subj].map.replace(/^🗺️\s*/, '')),
-        h('span', { class: 'mh-prog' }, `突破 ${done}/${total}`),
-        btn('🔦', () => go('diagnosis', { phase: 'intro', subject: subj }), 'ghost small mh-diag')),
-      rq > 0 && btn(`👻 リベンジウェーブ（${rq}体待ち）`, () => go('battle', { mode: 'review', subject: subj }), 'warn small')),
-    tower,
-  );
+  el.append(head, tower);
   // 次に挑むマス（または指定のマス）が画面の真ん中に来るように
   const target = focus || nextId || all.filter((u) => cleared(u.id)).pop()?.id || all[0].id;
   setTimeout(() => el.querySelector(`[data-unit="${target}"]`)?.scrollIntoView({ block: 'center' }), 30);
+}
+
+// 表示のしかた（塔 / リスト）。この端末だけの好み
+const VIEW_KEY = 'be-map-view';
+function mapView() { try { return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'tower'; } catch { return 'tower'; } }
+function setMapView(v) { try { localStorage.setItem(VIEW_KEY, v); } catch { /* 使えなくてもよい */ } }
+
+// 上の帯: タイトル・突破数・表示の切りかえ ＋「次はこれ」（タップでその単元を開く）
+function mapHead(el, s, subj, all, nextId) {
+  const rq = s.reviewQueue.filter((r) => (UNIT[r.unit]?.subject || 'math') === subj).length;
+  const done = all.filter((u) => !u.comingSoon && cleared(u.id)).length;
+  const total = all.filter((u) => !u.comingSoon).length;
+  const view = mapView();
+  const nx = nextId && UNIT[nextId];
+  return h('div', { class: 'map-head' },
+    topBar(() => go('home')),
+    h('div', { class: 'mh-row' },
+      h('h2', {}, SUBJECTS[subj].map.replace(/^🗺️\s*/, '')),
+      h('span', { class: 'mh-prog' }, `突破 ${done}/${total}`),
+      btn(view === 'list' ? '🗼' : '📋', () => { setMapView(view === 'list' ? 'tower' : 'list'); go('map', { subject: subj }); }, 'ghost small mh-view'),
+      btn('🔦', () => go('diagnosis', { phase: 'intro', subject: subj }), 'ghost small mh-diag')),
+    nx && btn(h('span', { class: 'mh-next-in' }, h('small', {}, '👉 次はこれ'), h('b', { html: nx.title })), () => {
+      sfx('tap');
+      el.querySelector(`[data-unit="${nextId}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      openUnit(nextId);
+    }, 'primary small mh-next'),
+    rq > 0 && btn(`👻 リベンジウェーブ（${rq}体待ち）`, () => go('battle', { mode: 'review', subject: subj }), 'warn small'));
+}
+
+// リスト表示: 1階から順に。いまの階だけ開いて、全部終わった階・まだ開いていない階はたたむ
+function listView(subj, stages, all, nextId) {
+  const nextStage = nextId ? UNIT[nextId].stage : null;
+  return h('div', { class: 'map-list' }, stages.map((stg) => {
+    const us = all.filter((u) => u.stage === stg.n && !u.comingSoon);
+    if (!us.length) return '';
+    const doneN = us.filter((u) => cleared(u.id)).length;
+    const anyOpen = us.some((u) => isUnlocked(u.id));
+    const open = stg.n === nextStage || (!nextStage && anyOpen && doneN < us.length);
+    const sum = doneN === us.length ? '✔ 全部突破' : !anyOpen ? '🔒 まだ開いていない' : `突破 ${doneN}/${us.length}`;
+    const det = h('details', { class: 'ml-floor' },
+      h('summary', {}, h('span', { class: 'fs-n' }, `${stg.n}F`), h('b', {}, stg.title.replace(/^第\d段階\s*/, '')), h('small', {}, sum)),
+      us.map((u) => {
+        const st = cleared(u.id) ? 'cleared' : u.id === nextId ? 'next' : isUnlocked(u.id) ? 'open' : 'locked';
+        const ms = mastery(u.id);
+        return h('button', { class: `ml-row st-${st}`, type: 'button', 'data-unit': u.id, onclick: () => { sfx('tap'); openUnit(u.id); } },
+          h('span', { class: 'mr-art', html: spriteHTML(`boss-${u.id}`, BOSSES[u.id]?.emoji || u.emoji, '') }),
+          h('span', { class: 'mr-body' }, h('b', { html: u.title }), h('small', {}, st === 'locked' ? `🔒 先に「${missingPrereqs(u.id).map((x) => UNIT[x].title).join('」「')}」` : st === 'next' ? '👉 次はこれ' : MASTERY_LABEL[ms])),
+          h('span', { class: 'ml-stars' }, st === 'cleared' ? '✔' : '★★★'.slice(0, STARS[ms]) + '☆☆☆'.slice(0, 3 - STARS[ms])));
+      }));
+    if (open) det.open = true;
+    return det;
+  }));
 }
 
 // 次にやること: 訓練を全部 → 練習1回 → ボス → （あとは練習で定着）。単元シートと結果画面で同じものを光らせる

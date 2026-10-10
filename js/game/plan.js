@@ -51,9 +51,20 @@ export function weekAsked(id, wk = weekStart(), log = S().log) {
   return n;
 }
 
+// 最近（14日）の模試で点を落とした単元: { unit: 失点 }
+export function examLost(now = new Date(), days = 14) {
+  const since = today(new Date(now.getTime() - days * dayMs));
+  const lost = {};
+  for (const r of S().exams || []) if (r.date >= since) for (const w of r.weak || []) if (UNIT[w.unit]) lost[w.unit] = (lost[w.unit] || 0) + w.pts;
+  return lost;
+}
+
 // 教科ごとの候補（優先順に並べる）
 function pickFor(subj, phase, now) {
   const units = unitsOf(subj).filter((u) => !u.comingSoon && isUnlocked(u.id));
+  const lost = examLost(now);
+  const exam = units.filter((u) => lost[u.id]).sort((a, b) => lost[b.id] - lost[a.id])
+    .map((u) => ({ unit: u.id, kind: 'exam', why: `模試でまちがえた（−${lost[u.id]}点）` }));
   const weak = units.map((u) => [u, accOf(u.id)]).filter(([, a]) => a !== null && a < WEAK).sort((a, b) => a[1] - b[1])
     .map(([u, a]) => ({ unit: u.id, kind: 'weak', why: `苦手（正答率${Math.round(a * 100)}%）` }));
   const nx = nextUnit(subj);
@@ -62,7 +73,7 @@ function pickFor(subj, phase, now) {
     .map(([u, d]) => [u, d ? daysBetween(d, today(now)) : 999]).filter(([, n]) => n >= STALE_DAYS).sort((a, b) => b[1] - a[1])
     .map(([u, n]) => ({ unit: u.id, kind: 'stale', why: n >= 999 ? '復習の時期' : `復習の時期（${n}日ぶり）` }));
   const order = phase.id === 'final' ? [weak, stale, next] : phase.id === 'fix' ? [weak, next, stale] : [next, weak, stale];
-  return order.flat()[0] || null;
+  return [exam, ...order].flat()[0] || null;
 }
 
 export function buildPlan(now = new Date()) {
@@ -84,6 +95,26 @@ export function weekPlan(now = new Date()) {
     return { ...x, n, done: n >= PLAN_GOAL };
   });
   return { ...s.plan, phaseInfo: phaseOf(s.settings.examDate, now), items, doneCount: items.filter((x) => x.done).length };
+}
+
+// 模試を出したら、点を落とした単元を今週の計画に入れる（その教科の、まだ終わっていない単元と入れかえる）
+//   戻り値: 計画に入った単元 [{ unit, pts }]
+export function planFromExam(weak = []) {
+  const s = S();
+  weekPlan();
+  const out = [];
+  for (const w of weak) {
+    const u = UNIT[w.unit];
+    if (!u || out.length >= 2 || !isUnlocked(w.unit)) continue;
+    const it = s.plan.items.find((x) => x.subject === u.subject);
+    if (it && (it.unit === w.unit || it.kind === 'exam' || weekAsked(it.unit, s.plan.week) >= PLAN_GOAL)) continue;
+    const item = { unit: w.unit, kind: 'exam', why: `模試でまちがえた（−${w.pts}点）`, subject: u.subject };
+    if (it) Object.assign(it, item);
+    else s.plan.items.push(item);
+    out.push(w);
+  }
+  if (out.length) save();
+  return out;
 }
 
 // 全部達成のボーナス（週に1回）
