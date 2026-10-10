@@ -14,6 +14,8 @@ export function mount(el) {
 // 新しい版が届いていたら、ホームに戻ったときに読みこみ直す（バトルや模試のとちゅうでは読みこみ直さない）
 let updateReady = false;
 export const markUpdateReady = () => { updateReady = true; };
+let onGo = null; // 画面が変わったときに呼ぶ（BGM の切りかえ）
+export const setOnGo = (fn) => { onGo = fn; };
 export function go(name, params = {}) {
   if (updateReady && name === 'home') { location.reload(); return; }
   current?.mod.leave?.();
@@ -23,6 +25,7 @@ export function go(name, params = {}) {
   el.className = `screen screen-${name}`;
   root.append(el);
   current = { name, mod: screens[name] };
+  try { onGo?.(name, params); } catch { /* 音が鳴らなくても画面は出す */ }
   screens[name].render(el, params);
   root.scrollTop = 0;
   window.scrollTo(0, 0);

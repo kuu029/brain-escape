@@ -3,7 +3,8 @@ import { S, unitState, cleared, save, saveNow, today, dayDiff } from '../core/st
 import { UNIT, GEN, SUBJECTS, unitsOf } from '../units/registry.js';
 import { BOSS_CARD, BOSS_CARD_IDS, GACHA_CARDS, SKINS, CARDS, GACHA_RATES, TOWER_TYPES, SKIN_ITEMS, SKIN_MAX_STAR, skinExchangeCost, skinStarCost } from './content.js';
 import { bump } from './missions.js';
-import { setAllyLevelSource, ALLY_MAX_LV } from './engine.js';
+import { setAllyLevelSource, setGaugeBonus, ALLY_MAX_LV } from './engine.js';
+import { isEvent } from './event.js';
 import { claimActivity } from './bonus.js';
 
 export function isUnlocked(id) {
@@ -104,7 +105,7 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
       const first = !us.bossCleared;
       us.bossCleared = true;
       s.stats.bosses++;
-      gems += first ? 40 : 15;
+      gems += (first ? 40 : 15) * (isEvent('bossrush') ? 3 : 1); // 週末イベント「ボスラッシュ」は3倍
       if (BOSS_CARD[unitId] && addCard(BOSS_CARD[unitId])) out.cards.push(BOSS_CARD[unitId]);
       out.opened = Object.keys(UNIT).filter((id) => isUnlocked(id) && !before.includes(id));
       // 脱獄王: 数学の全ボス撃破
@@ -112,8 +113,8 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
       if (mathBoss.every((c) => s.collection.cards[c]) && addCard('crown')) out.cards.push('crown');
     } else {
       // 練習・リベンジのウェーブも、勝てば少し💎（解くのがゆっくりでも、ちゃんとたまるように）
-      if (mode !== 'diagnosis') gems += WAVE_GEMS;
-      if (unitId && BOSS_CARD[unitId] && unitState(unitId).bossCleared && Math.random() < BOSS_DROP) {
+      if (mode !== 'diagnosis') gems += WAVE_GEMS * (isEvent('gemfever') ? 2 : 1); // 「💎フィーバー」は2倍
+      if (unitId && BOSS_CARD[unitId] && unitState(unitId).bossCleared && Math.random() < BOSS_DROP * (isEvent('bossrush') ? 3 : 1)) {
         // レアドロップ: ボスを倒したことのある単元の練習で、まれにボスカード（召喚チケット +1）
         addCard(BOSS_CARD[unitId]);
         out.drops.push(`card:${BOSS_CARD[unitId]}`);
@@ -143,7 +144,9 @@ export const GACHA_TYPES = {
   skin: { name: 'スキン特化', emoji: '🎨', cost: { 1: 50, 10: 450 }, rates: [{ rarity: 3, weight: 72, shards: 5 }, { rarity: 4, weight: 28, shards: 10 }], cards: false, skins: true, desc: '★3・★4 のタワースキンだけ！' },
   ally: { name: 'なかま特化', emoji: '🤝', cost: { 1: 70, 10: 630 }, rates: [{ rarity: 2, weight: 52, shards: 2 }, { rarity: 3, weight: 36, shards: 5 }, { rarity: 4, weight: 12, shards: 10 }], cards: true, skins: false, desc: '★2〜★4 のなかまだけ！ 高レアが出やすい' },
 };
-export const gachaCost = (n, type = 'normal') => GACHA_TYPES[type].cost[n] ?? (n === 10 ? GACHA10_COST : n === 5 ? GACHA5_COST : GACHA_COST * n);
+const baseCost = (n, type) => GACHA_TYPES[type].cost[n] ?? (n === 10 ? GACHA10_COST : n === 5 ? GACHA5_COST : GACHA_COST * n);
+// 週末イベント「ガチャ祭り」は2割引き
+export const gachaCost = (n, type = 'normal') => (isEvent('gachafes') ? Math.round(baseCost(n, type) * 0.8) : baseCost(n, type));
 // ---------- なかまの育成 ----------
 // collection.allyLv = { id: レベル }。🧩かけらでレベルアップ（Lv1→5）
 export const ALLY_UP_COST = [0, 5, 10, 18, 30]; // いまの Lv → 次へ（Lv1→2 は 5 かけら）
@@ -159,6 +162,7 @@ export function levelUpAlly(id) {
   return true;
 }
 setAllyLevelSource((id) => (S() ? allyLv(id) : 1));
+setGaugeBonus(() => (isEvent('allyfes') ? 1 : 0)); // 週末イベント「なかま祭り」
 
 // 天井: その種類で★4 が出ないまま、この回数目になったら★4 確定（★4 が出たら数えなおし）
 export const PITY = { normal: 50, skin: 10, ally: 30 };

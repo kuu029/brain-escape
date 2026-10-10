@@ -112,3 +112,6 @@ export function sfx(name, arg) {
     // 音が鳴らなくてもゲームは続ける
   }
 }
+// BGM（bgm.js）も同じ AudioContext を使う
+export const audioCtx = () => { try { return ac(); } catch { return null; } };
+export const noiseBuffer = () => noiseBuf;
