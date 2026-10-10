@@ -51,6 +51,18 @@ import jaKeigo from './japanese/ja-keigo.js';
 import jaShikibetsu from './japanese/ja-shikibetsu.js';
 import jaKaeriten from './japanese/ja-kaeriten.js';
 import jaKakari from './japanese/ja-kakari.js';
+import scDensity from './science/sc-density.js';
+import scConc from './science/sc-conc.js';
+import scPressure from './science/sc-pressure.js';
+import scQuake from './science/sc-quake.js';
+import scOhm from './science/sc-ohm.js';
+import scPower from './science/sc-power.js';
+import scReact from './science/sc-react.js';
+import scHumid from './science/sc-humid.js';
+import scWork from './science/sc-work.js';
+import scBuoy from './science/sc-buoy.js';
+import scGene from './science/sc-gene.js';
+import scSky from './science/sc-sky.js';
 
 export const UNITS = [
   signedNumbers,
@@ -106,6 +118,19 @@ export const UNITS = [
   jaShikibetsu,
   jaKaeriten,
   jaKakari,
+  // 理科
+  scDensity,
+  scConc,
+  scPressure,
+  scQuake,
+  scOhm,
+  scPower,
+  scReact,
+  scHumid,
+  scWork,
+  scBuoy,
+  scGene,
+  scSky,
 ];
 for (const u of UNITS) u.subject ||= 'math';
 
@@ -135,6 +160,14 @@ export const SUBJECTS = {
       { n: 1, title: '第1段階　ことばの基本（国語棟1F）' },
       { n: 2, title: '第2段階　文法（国語棟2F）' },
       { n: 3, title: '第3段階　古文・漢文（天守閣）' },
+    ],
+  },
+  science: {
+    title: 'ブレイン脱獄 理科棟', sub: '理科', map: '🗺️ 理科棟 マップ',
+    stages: [
+      { n: 1, title: '第1段階　中1（実験棟1F）' },
+      { n: 2, title: '第2段階　中2（実験棟2F）' },
+      { n: 3, title: '第3段階　中3（屋上の天文台）' },
     ],
   },
 };
