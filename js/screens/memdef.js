@@ -59,7 +59,7 @@ export function defenseView(el, subject, started = false) {
   const hud = h('span', { class: 'mr-prog' });
   // 門（砦）と大砲: 画像があれば画像、なければ CSS の石の門
   const fort = h('div', { class: `md-fort${hasArt('def-gate') ? ' has-img' : ''}`, html: `${spriteHTML('def-gate', '', '門', 'md-gate-img')}<span class="md-cannon">${towerSprite('beam', 2, towerSkin('beam').id)}</span>` });
-  const field = h('div', { class: 'md-field' }, ...[0, 1, 2].map((l) => h('div', { class: 'md-row', style: { top: `${l * 33.33}%` } })), fort);
+  const field = h('div', { class: 'md-field' }, ...[0, 1, 2].map((l) => h('div', { class: 'md-lane', style: { top: `${l * 33.33}%` } })), fort);
   const bg = bgUrl('bg-defense');
   if (bg) field.style.backgroundImage = `linear-gradient(#0b071666, #0b071699), url(${bg})`;
   const allyBar = h('div', { class: 'md-allies' });

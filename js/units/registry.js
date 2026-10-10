@@ -63,6 +63,14 @@ import scWork from './science/sc-work.js';
 import scBuoy from './science/sc-buoy.js';
 import scGene from './science/sc-gene.js';
 import scSky from './science/sc-sky.js';
+import soJisa from './social/so-jisa.js';
+import soScale from './social/so-scale.js';
+import soClimate from './social/so-climate.js';
+import soStat from './social/so-stat.js';
+import soCentury from './social/so-century.js';
+import soChrono from './social/so-chrono.js';
+import soVote from './social/so-vote.js';
+import soMoney from './social/so-money.js';
 
 export const UNITS = [
   signedNumbers,
@@ -131,6 +139,15 @@ export const UNITS = [
   scBuoy,
   scGene,
   scSky,
+  // 社会
+  soJisa,
+  soScale,
+  soClimate,
+  soStat,
+  soCentury,
+  soChrono,
+  soVote,
+  soMoney,
 ];
 for (const u of UNITS) u.subject ||= 'math';
 
@@ -168,6 +185,14 @@ export const SUBJECTS = {
       { n: 1, title: '第1段階　中1（実験棟1F）' },
       { n: 2, title: '第2段階　中2（実験棟2F）' },
       { n: 3, title: '第3段階　中3（屋上の天文台）' },
+    ],
+  },
+  social: {
+    title: 'ブレイン脱獄 社会棟', sub: '社会', map: '🗺️ 社会棟 マップ',
+    stages: [
+      { n: 1, title: '第1段階　地理（資料館1F）' },
+      { n: 2, title: '第2段階　歴史（資料館2F）' },
+      { n: 3, title: '第3段階　公民（議事堂）' },
     ],
   },
 };

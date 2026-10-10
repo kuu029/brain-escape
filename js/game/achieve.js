@@ -26,6 +26,7 @@ export const ACHIEVEMENTS = [
   { id: 'english', emoji: '🪶', tier: 'gold', name: '英語棟 制覇', desc: '英語のボスを全部たおす', check: (s) => { const l = bossUnits('english'); return { v: beaten(s, l), goal: l.length }; } },
   { id: 'japanese', emoji: '🖌️', tier: 'gold', name: '国語棟 制覇', desc: '国語のボスを全部たおす', check: (s) => { const l = bossUnits('japanese'); return { v: beaten(s, l), goal: l.length }; } },
   { id: 'science', emoji: '🔬', tier: 'gold', name: '理科棟 制覇', desc: '理科のボスを全部たおす', check: (s) => { const l = bossUnits('science'); return { v: beaten(s, l), goal: l.length }; } },
+  { id: 'social', emoji: '🗺️', tier: 'gold', name: '社会棟 制覇', desc: '社会のボスを全部たおす', check: (s) => { const l = bossUnits('social'); return { v: beaten(s, l), goal: l.length }; } },
   { id: 'combo', emoji: '⚡', tier: 'silver', name: 'コンボマスター', desc: 'ウェーブで30コンボ', check: (s) => ({ v: s.stats.bestCombo || 0, goal: 30 }) },
   { id: 'correct', emoji: '💮', tier: 'gold', name: '正解 1000回', desc: '問題に通算1000回正解する', check: (s) => ({ v: s.stats.correct || 0, goal: 1000 }) },
   { id: 'streak7', emoji: '🔥', tier: 'bronze', name: '1週間つづけた', desc: '7日連続で開く', check: (s) => ({ v: s.streak.best || 0, goal: 7 }) },

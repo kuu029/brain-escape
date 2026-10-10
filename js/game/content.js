@@ -51,6 +51,15 @@ export const BOSSES = {
   'ja-shikibetsu': { emoji: '🔍', name: 'ムシメガネ・ミワケール' },
   'ja-kaeriten': { emoji: '🪃', name: 'ブーメラン・カエリテン' },
   'ja-kakari': { emoji: '🕷️', name: 'クモ・カカリムスビ' },
+  // 社会棟
+  'so-jisa': { emoji: '🕰️', name: 'セカイドケイ・ジサボケ' },
+  'so-scale': { emoji: '🗺️', name: 'チズ・シュクシャーク' },
+  'so-climate': { emoji: '🌦️', name: 'テンキ・ウオンズ' },
+  'so-stat': { emoji: '📊', name: 'グラフ・トーケイ' },
+  'so-century': { emoji: '🏺', name: 'ドキ・セイキーノ' },
+  'so-chrono': { emoji: '🗿', name: 'ハニワ・ナラベール' },
+  'so-vote': { emoji: '🗳️', name: 'トウヒョウ・ドントン' },
+  'so-money': { emoji: '💴', name: 'サイフ・エンダカーノ' },
   // 理科棟
   'sc-density': { emoji: '⚖️', name: 'テンビン・ミツドーノ' },
   'sc-conc': { emoji: '🫙', name: 'ビーカー・ノウドーン' },
@@ -163,6 +172,15 @@ export const CARDS = [
   { id: 'mushimegane', emoji: '🔍', name: 'ムシメガネ・ミワケール', rarity: 3, text: '同じ「られる」でも、受け身か可能かを見ぬく鑑定士。' },
   { id: 'boomerang', emoji: '🪃', name: 'ブーメラン・カエリテン', rarity: 3, text: 'レ点で投げると、1字もどってくる。' },
   { id: 'kumo', emoji: '🕷️', name: 'クモ・カカリムスビ', rarity: 3, text: '「こそ」の糸を張ると、文末が已然形にからめとられる。' },
+  // 社会棟のボス
+  { id: 'sekaitokei', emoji: '🕰️', name: 'セカイドケイ・ジサボケ', rarity: 3, text: '東へ行くと進み、西へ行くとおくれる。いつも時差ボケでねむそう。' },
+  { id: 'chizu', emoji: '🗺️', name: 'チズ・シュクシャーク', rarity: 3, text: '自分をくるくる丸めると、2万5千分の1サイズになる地図。' },
+  { id: 'tenki', emoji: '🌦️', name: 'テンキ・ウオンズ', rarity: 3, text: 'おなかの棒グラフは雨、頭の折れ線は気温。一年分の天気を背負っている。' },
+  { id: 'graph', emoji: '📊', name: 'グラフ・トーケイ', rarity: 3, text: '「全国」でわるのをわすれると、棒がのびて怒りだす。' },
+  { id: 'doki', emoji: '🏺', name: 'ドキ・セイキーノ', rarity: 3, text: '1600年は16世紀だと、何度でも言い聞かせてくる土器。' },
+  { id: 'haniwa', emoji: '🗿', name: 'ハニワ・ナラベール', rarity: 3, text: 'できごとを古い順にならべないと、通してくれない。' },
+  { id: 'touhyou', emoji: '🗳️', name: 'トウヒョウ・ドントン', rarity: 3, text: '票を 1, 2, 3 でわって、商の大きい順に議席をくばる投票箱。' },
+  { id: 'saifu', emoji: '💴', name: 'サイフ・エンダカーノ', rarity: 3, text: '1ドル = 80円になると、ふくらんでいばり出すサイフ。' },
   // 理科棟のボス
   { id: 'tenbin', emoji: '⚖️', name: 'テンビン・ミツドーノ', rarity: 3, text: '同じ大きさでも重さがちがうことを、見ぬいてしまう天びん。' },
   { id: 'beaker', emoji: '🫙', name: 'ビーカー・ノウドーン', rarity: 3, text: 'とかしたものを、水溶液ぜんぶの重さでわれと言いはるビーカー。' },
@@ -187,6 +205,7 @@ export const BOSS_CARD = {
   'proportion': 'hashigo', 'linear-function': 'coaster', 'quadratic-function': 'basket', 'angles': 'hasami', 'congruence': 'puzzle', 'circle-angle': 'mezamashi', 'similarity': 'matryoshka', 'pythagoras': 'tent', 'solids': 'hako', 'probability': 'coin', 'data': 'risu', 'word-mix': 'kujira',
   'ja-hinshi': 'kaban', 'ja-kana': 'makimono', 'ja-katsuyou': 'chou', 'ja-keigo': 'neko', 'ja-shikibetsu': 'mushimegane', 'ja-kaeriten': 'boomerang', 'ja-kakari': 'kumo',
   'sc-density': 'tenbin', 'sc-conc': 'beaker', 'sc-pressure': 'kaba', 'sc-quake': 'namazu', 'sc-ohm': 'unagi', 'sc-power': 'denkyu', 'sc-react': 'lamp', 'sc-humid': 'kumori', 'sc-work': 'crane', 'sc-buoy': 'awa', 'sc-gene': 'endou', 'sc-sky': 'tsuki',
+  'so-jisa': 'sekaitokei', 'so-scale': 'chizu', 'so-climate': 'tenki', 'so-stat': 'graph', 'so-century': 'doki', 'so-chrono': 'haniwa', 'so-vote': 'touhyou', 'so-money': 'saifu',
 };
 // ガチャに出るカード（ボス・称号以外）
 export const GACHA_CARDS = CARDS.filter((c) => c.rarity <= 2 || c.gacha).map((c) => c.id);

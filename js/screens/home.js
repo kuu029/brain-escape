@@ -133,6 +133,7 @@ export function render(el) {
       gameCard('english', '英語棟', '英語', () => go('map', { subject: 'english' })),
       gameCard('japanese', '国語棟', '国語', () => go('map', { subject: 'japanese' })),
       gameCard('science', '理科棟', '理科', () => go('map', { subject: 'science' })),
+      gameCard('social', '社会棟', '社会', () => go('map', { subject: 'social' })),
       memoryCard(),
       examCard(),
     ),
@@ -176,10 +177,10 @@ function todayPick() {
     const [sj, n] = dues[0];
     return { em: '🔐', art: cardSprite(MEM_FACE[sj]), label: `暗号の復習 ${Math.min(n, 20)}枚`, sub: `${{ en: '英単語', soc: '社会', sci: '理科', ja: '国語' }[sj]}・約3分`, to: ['memory', { subject: sj }] };
   }
-  for (const subj of ['math', 'english', 'japanese', 'science']) {
+  for (const subj of ['math', 'english', 'japanese', 'science', 'social']) {
     const u = nextUnit(subj);
     const cta = u && unitNext(u.id).cta;
-    if (cta) return { em: u.emoji, art: spriteHTML(`boss-${u.id}`, BOSSES[u.id]?.emoji || u.emoji, ''), label: cta.label.replace(/^\S+\s/, ''), sub: `${{ math: '数学', english: '英語', japanese: '国語', science: '理科' }[subj]}｜${u.title}・約3分`, to: cta.to, html: true };
+    if (cta) return { em: u.emoji, art: spriteHTML(`boss-${u.id}`, BOSSES[u.id]?.emoji || u.emoji, ''), label: cta.label.replace(/^\S+\s/, ''), sub: `${{ math: '数学', english: '英語', japanese: '国語', science: '理科', social: '社会' }[subj]}｜${u.title}・約3分`, to: cta.to, html: true };
   }
   return { em: '🔐', art: cardSprite('golem'), label: '新しい暗号を覚える', sub: '暗号室・約3分', to: ['memory', {}] };
 }
@@ -242,7 +243,7 @@ function gameCard(subj, title, sub, onPlay) {
   const done = list.filter((u) => cleared(u.id)).length;
   const next = nextUnit(subj);
   const boss = next && BOSSES[next.id];
-  const banner = bgUrl(`banner-${{ math: 'math', english: 'en', japanese: 'ja', science: 'sci' }[subj]}`);
+  const banner = bgUrl(`banner-${{ math: 'math', english: 'en', japanese: 'ja', science: 'sci', social: 'soc' }[subj]}`);
   return h('button', {
     class: `game-card ${subj}${banner ? ' has-img' : ''}`, type: 'button',
     style: banner ? { backgroundImage: `linear-gradient(90deg, #0b0716e6 30%, #0b071640), url(${banner})` } : {},

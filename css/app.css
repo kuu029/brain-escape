@@ -1433,8 +1433,8 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
   repeating-linear-gradient(90deg, #ffffff07 0 22px, transparent 22px 44px),
   linear-gradient(#2a1f45, #1a1230); background-size: cover; background-position: center; }
 .md-field.shake { animation: shake .35s; }
-.md-row { position: absolute; left: 0; right: 0; height: 33.33%; border-bottom: 2px dashed #ffffff14; background: linear-gradient(90deg, transparent, #ffffff05); }
-.md-row:last-of-type { border-bottom: 0; }
+.md-lane { position: absolute; left: 0; right: 0; height: 33.33%; border-bottom: 2px dashed #ffffff14; background: linear-gradient(90deg, transparent, #ffffff05); }
+.md-lane:last-of-type { border-bottom: 0; }
 /* 門（砦）: 画像がなければ石の門を CSS で */
 .md-fort { position: absolute; left: 0; top: 0; bottom: 0; width: 52px; z-index: 3; display: grid; place-items: center;
   background: repeating-linear-gradient(0deg, #6b5a8a 0 13px, #4b3d66 13px 15px), #5a4a78; border-right: 4px solid #2a1f40; box-shadow: inset -6px 0 10px #0006, 4px 0 12px #0008; }
@@ -1621,6 +1621,16 @@ button.tool-row { width: 100%; text-align: left; color: inherit; font: inherit; 
 .fl-ja-1:not(.has-img) { background: radial-gradient(40% 18% at 85% 30%, #ffcf6b2a, transparent 70%), repeating-linear-gradient(90deg, transparent 0 40px, #3b2414 40px 44px), linear-gradient(#3b2414, #241408); }
 .fl-ja-2:not(.has-img) { background: radial-gradient(40% 18% at 15% 35%, #ff8a5c30, transparent 70%), repeating-linear-gradient(0deg, transparent 0 48px, #4a1f12 48px 54px), linear-gradient(#5a2414, #2a120a); }
 .fl-ja-3:not(.has-img) { background: radial-gradient(70% 25% at 50% 0%, #ffd64055, transparent 70%), radial-gradient(1px 1px at 30% 40%, #fff, transparent), radial-gradient(1px 1px at 70% 55%, #fff, transparent), linear-gradient(#2a1748, #1b1236); }
+/* 社会棟 */
+.game-card.social:not(.has-img) { background: radial-gradient(60% 90% at 90% 50%, #ffb86b55, transparent 70%), repeating-linear-gradient(90deg, transparent 0 30px, #0000001a 30px 33px), linear-gradient(135deg, #6a4a1c, #1f4a6a); }
+.game-card.social { border-color: #ffb86b; box-shadow: 0 8px 30px rgba(106, 74, 28, .35); cursor: pointer; }
+.game-card.social .gc-shine { animation-delay: 8s; }
+.fl-soc-1:not(.has-img) { background: radial-gradient(40% 18% at 85% 30%, #6bd6ff2a, transparent 70%), repeating-linear-gradient(90deg, transparent 0 40px, #1c3a4a 40px 44px), linear-gradient(#1c3a4a, #0f2230); }
+.fl-soc-2:not(.has-img) { background: radial-gradient(40% 18% at 15% 35%, #ffcf6b30, transparent 70%), repeating-linear-gradient(0deg, transparent 0 48px, #4a3214 48px 54px), linear-gradient(#5a3a18, #2a1a0a); }
+.fl-soc-3:not(.has-img) { background: radial-gradient(70% 25% at 50% 0%, #ffe9a855, transparent 70%), repeating-linear-gradient(90deg, transparent 0 28px, #ffffff0d 28px 34px), linear-gradient(#3a2a4a, #1a1226); }
+.climate-box { width: 100%; }
+svg.climate { width: 100%; max-width: 320px; height: auto; display: block; margin: 0 auto; }
+.screen-battle svg.climate { max-width: 260px; }
 /* 理科棟 */
 .game-card.science:not(.has-img) { background: radial-gradient(60% 90% at 90% 50%, #6bffd655, transparent 70%), repeating-linear-gradient(0deg, transparent 0 22px, #ffffff0d 22px 24px), linear-gradient(135deg, #0f5a5a, #2a3b8a); }
 .game-card.science { border-color: #6bffd6; box-shadow: 0 8px 30px rgba(15, 90, 90, .35); cursor: pointer; }
