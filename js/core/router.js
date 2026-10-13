@@ -35,7 +35,7 @@ export function go(name, params = {}) {
   const el = document.createElement('div');
   el.className = `screen screen-${name}`;
   root.append(el);
-  current = { name, mod: screens[name] };
+  current = { name, mod: screens[name], params };
   try { onGo?.(name, params); } catch { /* 音が鳴らなくても画面は出す */ }
   rendering = true;
   try { screens[name].render(el, params); } finally { rendering = false; }
@@ -43,3 +43,4 @@ export function go(name, params = {}) {
   window.scrollTo(0, 0);
 }
 export const currentScreen = () => current?.name;
+export const currentParams = () => current?.params || {};

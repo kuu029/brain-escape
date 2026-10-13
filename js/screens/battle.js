@@ -2,6 +2,7 @@
 // 答えたらエンジンの状態はすぐ確定。盤面の演出は裏で再生し、正解ならすぐ次の問題を出す（待たせない）
 import { h, btn, waitBtn, modal, toast, floatText, sleep, confirmBox } from '../core/ui.js';
 import { fbShow, fbSteps, fbClose } from '../game/readlog.js';
+import { fbBtn } from '../ui/feedback.js';
 import * as E from '../game/engine.js';
 import { practiceSchedule, bossSchedule, diagnosisSchedule, makePicker, practicePool, bossPoolOf } from '../game/waves.js';
 import { makeProblem, UNIT } from '../units/registry.js';
@@ -463,12 +464,13 @@ export function render(el, params) {
       box.append(stepsBox,
         h('div', { class: 'fb-btns' },
           btn('解き方を見る', (e) => { fbSteps(); stepsBox.classList.toggle('hidden'); e.target.remove(); stepsBox.append(askBtn(p, 'ウェーブ')); }, 'ghost small'),
-          btn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small')));
+          btn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small'),
+          fbBtn()));
       box.append(h('p', { class: 'fb-sub' }, 'このまま下で答えを入れ直してもOK'));
     } else {
       // 2回まちがえたら、解き方と答えを見せて次へ（この問題はあとでリベンジおばけになる）
       box.append(h('div', { class: 'fb-sub' }, '解き方はこう👇 この問題はあとで「リベンジおばけ」になって戻ってくるよ。'), stepsView(p), answerLine(p), askBtn(p, 'ウェーブ'),
-        h('div', { class: 'fb-btns' }, waitBtn('わかった！ 次へ', () => nextProblem(), 'primary small', Math.min(8000, 3000 + (p.steps || []).length * 800))));
+        h('div', { class: 'fb-btns' }, fbBtn(), waitBtn('わかった！ 次へ', () => nextProblem(), 'primary small', Math.min(8000, 3000 + (p.steps || []).length * 800))));
       // ↑ 2回まちがえたら、解き方を読むまで押せない（長い解き方ほど少し長く。3〜8秒）
       cur.pad.el.classList.add('done');
     }

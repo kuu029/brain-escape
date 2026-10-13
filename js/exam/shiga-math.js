@@ -1,12 +1,13 @@
 // 入試本番モード: 滋賀県 公立高校入試（数学）の形をまねた模試
 //   50分・100点・大問4つ（約21問）
-//   ① 基本の小問集合 ② 平面図形（角度・作図・合同の証明・相似） ③ 関数と図形 ④ 三平方の定理と空間図形
+//   ① 基本の小問集合 ② 平面図形（角度・作図・合同の証明・相似） ③ 関数と図形／関数の利用／規則性 ④ 三平方の定理と空間図形
 // 証明と作図は「アプリで穴うめ／並べかえ」か「紙に書いて自己採点」を選べる（q.paper に模範解答と採点の観点）
 import { makeProblem, GEN } from '../units/registry.js';
 import { makeRng } from '../core/rng.js';
 import { m, numAns, choice } from '../units/kit.js';
 import { rootChoice, rootTex, invTex, lineTex, F, tnum, near } from '../units/stage3/kit3.js';
 import { geo, plane, solid, angleAt, dist, polyArea, meet, polar, lerp } from '../units/stage3/fig.js';
+import { secPlan, secPattern } from './shiga-math2.js';
 
 // ---------- 証明・作図で使うことば ----------
 const R = {
@@ -364,7 +365,8 @@ function sec4Pyramid(rng) {
 // kind: 'full'（50分・大問4つ）| 'mini'（15分・小問5つ＋大問1つ）
 export function buildShigaMath(kind, seed) {
   const rng = makeRng(seed);
-  const s3 = rng.chance(0.6) ? sec3Para : sec3Inv;
+  // 大問③: 関数と図形（放物線・反比例）／関数の利用（料金プラン）／規則性
+  const s3 = rng.pick([sec3Para, sec3Para, sec3Inv, secPlan, secPattern]);
   const s4 = rng.chance(0.5) ? sec4Cuboid : sec4Pyramid;
   let secs;
   if (kind === 'mini') {

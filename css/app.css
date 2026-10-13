@@ -1775,3 +1775,21 @@ svg.mapdir { width: 100%; max-width: 230px; height: auto; display: block; margin
 .pz-btns button { white-space: nowrap; padding: 0 6px; font-size: 14px; }
 .pz-conv { display: flex; flex-direction: column; }
 .pz-conv button { width: 100%; }
+
+/* 勉強 : カラー解除 */
+.pa-rbar { display: flex; gap: 2px; height: 28px; border-radius: 8px; overflow: hidden; margin: 6px 0; font-size: 12px; font-weight: 800; }
+.pa-rbar i { display: flex; align-items: center; justify-content: center; min-width: 0; overflow: hidden; white-space: nowrap; font-style: normal; color: #1b1030; }
+.pa-rbar .st { background: #6ee7b7; }
+.pa-rbar .co { background: #f9a8d4; }
+.pa-ratio.warn { border-color: #fb7185; }
+.pa-list .pa-row { font-size: 14px; }
+
+/* 📮 要望 */
+.fb-kinds { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.fb-text { width: 100%; min-height: 72px; font-size: 16px; }
+.fb-open { flex: none; min-width: 44px; }
+.pa-fbrow { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 10px; background: #ffffff0a; }
+.pa-fbrow p { margin: 0; white-space: pre-wrap; }
+.pa-fbrow.st-new { box-shadow: 0 0 0 1px #ffd64066 inset; }
+.pa-fbrow.st-done { opacity: .55; }
+.pa-fbrow .btn { align-self: flex-end; }

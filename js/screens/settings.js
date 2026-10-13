@@ -1,4 +1,5 @@
 // 設定: 音、ニックネーム、バックアップ（ファイル/文字列）、データ初期化
+import { openFeedback } from '../ui/feedback.js';
 import { h, btn, modal, toast, confirmBox } from '../core/ui.js';
 import { S, save, exportText, importText, resetAll, today } from '../core/store.js';
 import { go } from '../core/router.js';
@@ -156,6 +157,9 @@ export function render(el) {
         btn('📂 ファイルから復元', () => fileIn.click(), 'ghost'),
         btn('📝 文字から復元', pasteBox, 'ghost')),
       fileIn,
+      h('h3', { class: 'sec' }, '📮 要望・こまったこと'),
+      h('p', { class: 'note' }, 'おかしいところ・分からないところ・こうしてほしいこと・景品のことを、おうちの人に送れる。問題の画面（まちがえたとき）の 📮 からも送れるよ。'),
+      btn('📮 要望を送る', () => openFeedback('設定'), 'ghost'),
       h('h3', { class: 'sec' }, '👪 おうちの人ページ'),
       h('p', { class: 'note' }, '勉強時間・教科ごとの正答率・苦手な単元・今週の計画・模試・ごほうびの記録を1画面で見られます。合言葉を設定していると、合言葉を入れたときだけ開きます。'),
       btn('👪 おうちの人ページを開く', () => openParent(s), 'primary'),

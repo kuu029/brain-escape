@@ -1,7 +1,7 @@
 // おうちの人ページ: 勉強時間・教科ごとの正答率・苦手な単元・今週の計画・模試・ごほうびの記録を1画面で
 //   設定から入る（合言葉を設定していれば、合言葉を入れたときだけ）
-import { h, btn, toast, modal } from '../core/ui.js';
-import { S, today, streakAlive } from '../core/store.js';
+import { h, btn, toast, modal, phrases } from '../core/ui.js';
+import { S, today, streakAlive, saveNow } from '../core/store.js';
 import { UNIT } from '../units/registry.js';
 import { go } from '../core/router.js';
 import { topBar, daysUntil } from './home.js';
@@ -11,6 +11,7 @@ import { REWARD, rewardState } from '../game/reward.js';
 import * as PT from '../game/points.js';
 import { readStats } from '../game/readlog.js';
 import { colorStats } from '../game/colorlog.js';
+import { FB_KINDS, fbList, fbText } from '../ui/feedback.js';
 
 const dayMs = 86400000;
 const pastDays = (n) => Array.from({ length: n }, (_, i) => today(new Date(Date.now() - (n - 1 - i) * dayMs)));
@@ -140,7 +141,7 @@ function readBox() {
       h('div', { class: 'pa-row' }, h('span', {}, `1回目のまちがい ${r.m1}回 →「解き方を見る」を押した`), h('b', {}, r.rate === null ? '—' : `${r.rate}%`)),
       h('div', { class: 'pa-row' }, h('span', {}, '1回目のヒントを見ていた時間（平均）'), h('b', {}, r.avg1 === null ? '—' : `${r.avg1}秒`)),
       h('div', { class: 'pa-row' }, h('span', {}, `2回目のまちがい ${r.m2}回 → 解き方と答えを見ていた時間（平均）`), h('b', {}, r.avg2 === null ? '—' : `${r.avg2}秒`)),
-      h('small', { class: 'note' }, '目安: 2回目の解き方は 10秒以上なら読んでいそう。3〜4秒（「次へ」が押せるようになってすぐ）ばかりなら、読み飛ばしているかも。'))
+      h('small', { class: 'note' }, '目安: 2回目の解き方は 10秒以上なら読んでいそう。「次へ」が押せるようになってすぐ（3〜8秒）ばかりなら、読み飛ばしているかも。'))
       : h('p', { class: 'note' }, 'まだ記録がありません（この7日、ウェーブでまちがえていない）。'));
 }
 
@@ -153,6 +154,29 @@ function colorBox() {
     c.n ? h('div', { class: 'pa-list' }, c.list.slice(-8).reverse().map((x) => h('div', { class: `pa-row${x.idle ? ' warn-text' : ''}` }, h('span', {}, fmt(x.t)), h('b', {}, x.wait ? '（10分たつまで待ち）' : x.idle ? `⚠️ 勉強${x.min}分` : `勉強${x.min}分`))))
       : h('p', { class: 'note' }, 'この7日は使っていません。'),
     h('small', { class: 'note' }, '「カラーにする」を押してから10分のうちに、勉強が2分未満だと ⚠️。カラーのまま ほかのアプリに行ったのかもしれません。'));
+}
+
+// 📮 届いた要望: 「見た」「対応した」の印・まとめてコピー（Claude に貼りつけて直してもらう）
+function feedbackBox(el) {
+  const list = fbList();
+  const redo = () => el.querySelector('.pa-fb')?.replaceWith(feedbackBox(el));
+  const open = list.filter((f) => f.status !== 'done');
+  const ST = { new: '🆕 新しい', seen: '👀 見た', done: '✅ 対応した' };
+  const next = { new: 'seen', seen: 'done', done: 'new' };
+  const fmt = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  const copy = async () => {
+    const text = open.map((f, i) => `${i + 1}. ${fbText(f)}`).join(String.fromCharCode(10).repeat(2));
+    try { await navigator.clipboard.writeText(text); toast('コピーした。Claude に貼りつけてね', 2200); } catch { toast('コピーできなかった'); }
+  };
+  return h('div', { class: 'pa-card pa-fb' },
+    h('h3', { class: 'pa-h' }, '📮 届いた要望', h('small', {}, `まだ対応していない ${open.length}件`)),
+    list.length ? h('div', { class: 'pa-list' }, list.slice(0, 15).map((f) => h('div', { class: `pa-fbrow st-${f.status}` },
+      h('div', {}, h('b', {}, FB_KINDS[f.kind] || f.kind), h('small', {}, `　${fmt(f.at)}・${f.where}`)),
+      f.text && h('p', {}, f.text),
+      f.err && h('small', { class: 'note' }, `エラー: ${f.err}`),
+      btn(ST[f.status], () => { f.status = next[f.status]; saveNow(); redo(); }, 'ghost small'))))
+      : h('p', { class: 'note' }, 'まだ届いていません。弟さんは 設定 →「📮 要望を送る」か、問題をまちがえたときの 📮 から送れます。'),
+    open.length > 0 && btn('📋 対応していない要望をまとめてコピー', copy, 'primary small'));
 }
 
 // 🍬 景品ポイント: 残り・今週・景品リストの登録（ここで登録した物を、弟さんが「景品」タブからたのむ）
@@ -169,6 +193,22 @@ function pointBox(el) {
     h('b', {}, '景品リスト'),
     p.catalog.length ? h('div', { class: 'pa-list' }, p.catalog.map((it) => h('div', { class: 'pa-row' }, h('span', {}, it.name), h('b', {}, `${it.pt}pt`), btn('消す', () => { PT.removeItem(it.id); redo(); }, 'ghost small')))) : h('p', { class: 'note' }, 'まだありません。下から追加してください。'),
     h('div', { class: 'pa-add' }, name, pt, btn('追加', () => { if (!PT.addItem(name.value, pt.value)) return toast('名前と pt を入れてください'); redo(); }, 'primary small')));
+}
+
+// 勉強とカラー解除の比率（この7日）: 勉強1分あたり、カラー解除が何分か。1分以下（1対1以内）が目標
+export function ratio7() {
+  const s = S();
+  const study = Math.round(pastDays(7).reduce((a, d) => a + (s.log[d]?.seconds || 0), 0) / 60);
+  const color = rewardState().log.filter((x) => x.at >= Date.now() - 7 * dayMs).reduce((a, x) => a + x.min, 0);
+  return { study, color, r: study ? color / study : null };
+}
+function ratioBox() {
+  const { study, color, r } = ratio7();
+  const ok = r === null ? color === 0 : r <= 1;
+  return h('div', { class: `pa-card pa-ratio${ok ? '' : ' warn'}` },
+    h('h3', { class: 'pa-h' }, '⚖️ 勉強 : カラー解除', h('small', {}, 'この7日・目標は 1対1 以内')),
+    h('div', { class: 'pa-rbar' }, h('i', { class: 'st', style: { flex: `${Math.max(study, 1)}` } }, `勉強 ${study}分`), color > 0 && h('i', { class: 'co', style: { flex: `${color}` } }, `カラー ${color}分`)),
+    h('p', { class: 'note' }, ...phrases(r === null ? (color ? `勉強の記録がないのに、カラー解除を ${color}分 使っています。` : 'まだ勉強もカラー解除もありません。') : `勉強1分あたり カラー解除 ${r.toFixed(2)}分（${ok ? '✅ 1対1 以内' : '⚠️ 1対1 をこえている'}）`)));
 }
 
 function rewardBox() {
@@ -216,6 +256,10 @@ export function summaryText() {
   const R = rewardState();
   const used = R.log.filter((x) => x.at >= Date.now() - 7 * dayMs).reduce((a, x) => a + x.min, 0);
   lines.push('', `💎 この7日で 💎${gems}｜🌈 カラー解除 ${used}分 使用`);
+  const fbn = fbList().filter((f) => f.status === 'new').length;
+  if (fbn) lines.push(`📮 新しい要望 ${fbn}件（おうちの人ページで見られます）`);
+  const rt = ratio7();
+  if (rt.r !== null) lines.push(`⚖️ 勉強 : カラー解除 = 1 : ${rt.r.toFixed(2)}（${rt.r <= 1 ? '1対1 以内' : '⚠️ 1対1 をこえている'}）`);
   const cs = colorStats(Date.now() - 7 * dayMs);
   if (cs.n) lines.push(`🎨 勉強カラー ${cs.n}回${cs.idle ? `（⚠️ そのあと勉強しなかった ${cs.idle}回）` : ''}`);
   const rd = readStats(days);
@@ -257,6 +301,8 @@ export function render(el) {
       subjectTable(bu),
       weakList(bu),
       examBox(),
+      feedbackBox(el),
+      ratioBox(),
       gemBox(),
       readBox(),
       colorBox(),
