@@ -15,7 +15,9 @@ export const BONUS_HOURS = [6, 22]; // 6時台〜22時台
 // くり返し減衰: 同じ日に同じもの（同じ単元のウェーブ・同じ暗号ラッシュなど）をくり返すと、💎がへる
 //   3回目までは満額、4〜5回目は 60%、6回目からは 30%。日がかわるともどる。ちがう単元・モードなら満額
 export const REPEAT_RULE = [[3, 1], [5, 0.6], [Infinity, 0.3]];
-export const repeatMultOf = (n) => REPEAT_RULE.find(([k]) => n <= k)[1];
+export const repeatMultOf = (n, rule = REPEAT_RULE) => rule.find(([k]) => n <= k)[1];
+// 暗号ディフェンスは1回が短いので、きびしめ（2回目まで満額、3〜4回目 50%、5回目から 20%）
+export const DEF_REPEAT_RULE = [[2, 1], [4, 0.5], [Infinity, 0.2]];
 
 function state() {
   const s = S();
@@ -37,16 +39,25 @@ export function slotStatus(now = new Date()) {
 }
 
 // くり返しの回数を1つ進めて、今回の倍率を返す。n: 今日この key をやった回数（今回をふくむ）
-export function repeatMult(key) {
+export function repeatMult(key, rule = REPEAT_RULE) {
   const b = state();
   const r = (b.rep ||= {});
   r[key] = (r[key] || 0) + 1;
   save();
-  return { n: r[key], mult: repeatMultOf(r[key]) };
+  return { n: r[key], mult: repeatMultOf(r[key], rule) };
 }
 // 次にやったときの倍率（表示用）
-export function repeatNext(key) {
-  return repeatMultOf(((state().rep || {})[key] || 0) + 1);
+export function repeatNext(key, rule = REPEAT_RULE) {
+  return repeatMultOf(((state().rep || {})[key] || 0) + 1, rule);
+}
+// ガチャ券など「1日1回だけ」のもの。まだなら記録して true
+export function onceToday(key) {
+  const b = state();
+  const o = (b.once ||= {});
+  if (o[key]) return false;
+  o[key] = true;
+  save();
+  return true;
 }
 
 // 何かを1つクリアしたときに呼ぶ。kind: 'wave' | 'training' | 'memory' | 'exam' | 'timeattack'

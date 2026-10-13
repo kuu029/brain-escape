@@ -16,6 +16,7 @@ import { chalTable } from './memory.js';
 import { unlockCode, shortcutUrl, SHORTCUT_NAME } from '../game/unlock.js';
 import { REWARD, EXCHANGE, RGACHA_RATES, exchangeCost, rgachaCost, priceFactor, rewardState, rewardTickets, rgachaTickets, exchangeReward, rewardGacha, useReward, GACHA_BONUS, BONUS_NAME, CONVERT, convertReward } from '../game/reward.js';
 import { nightStop } from '../game/night.js';
+import { prizeTab } from './prize.js';
 
 const RARE = { 1: 'ノーマル', 2: 'レア', 3: 'スーパーレア', 4: 'レジェンド' };
 
@@ -201,7 +202,7 @@ function gachaStage(results) {
 
 export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
   const s = S();
-  const tabs = [['cards', '🃏 カード'], ['gacha', '🎰 ガチャ'], ['skins', '🎨 スキン'], ['tools', '🧰 道具'], ['reward', '🌈 ごほうび']];
+  const tabs = [['cards', '🃏 カード'], ['gacha', '🎰 ガチャ'], ['skins', '🎨 スキン'], ['tools', '🧰 道具'], ['reward', '🌈 ごほうび'], ['prize', '🍬 景品']];
   const owned = Object.keys(s.collection.cards).length;
   const shards = s.collection.shards || 0;
   const content = h('div', { class: 'coll' });
@@ -331,6 +332,8 @@ export function render(el, { tab = 'cards', gtype = 'normal', chal = 0 } = {}) {
         })))));
   } else if (tab === 'reward') {
     content.append(rewardTab(s));
+  } else if (tab === 'prize') {
+    content.append(prizeTab());
   } else {
     // ウェーブに持っていけるのは1つだけ。タップでえらぶ
     const on = equippedTool();

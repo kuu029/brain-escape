@@ -1,5 +1,5 @@
 // 暗号室（暗記）: トップ → 暗号ラッシュ（最大20枚・4分）→ 結果 ／ 暗号ノート（デッキ）
-import { h, btn, toast, modal, confirmBox } from '../core/ui.js';
+import { h, btn, toast, modal, confirmBox, phrases } from '../core/ui.js';
 import { S, save, saveNow, beginSession, tallySession, closeSession } from '../core/store.js';
 import { makeRng, newSeed } from '../core/rng.js';
 import { checkAnswer } from '../core/check.js';
@@ -18,7 +18,9 @@ import * as FC from '../game/flowchal.js';
 import { defenseView } from './memdef.js';
 import { MEM_BOSS } from '../memory/defense.js';
 import { claimActivity, repeatMult } from '../game/bonus.js';
-import { bonusChips } from './result.js';
+import { bonusChips, poolNote, poolBanner } from './result.js';
+import { earn } from '../game/pool.js';
+import { syncMemory } from '../game/points.js';
 import { flyGems } from '../ui/gems.js';
 import { canSpeak, speakLines, stopSpeech } from '../ui/speech.js';
 import { logGems } from '../game/gemlog.js';
@@ -109,7 +111,7 @@ function topView(el, subject) {
         h('div', { class: 'mt-flow' },
           h('span', { class: T.stage === 'intro' ? 'now' : T.introLeft > 0 ? '' : 'done' }, `① 顔合わせ ${T.day.motivation ? `${T.done}/${T.limit}` : ''}`),
           h('span', { class: T.stage === 'review' ? 'now' : T.stage === 'done' ? 'done' : '' }, `② 復習 ${T.review ? `あと${T.review}` : ''}`)),
-        ME.staleInfo(M, subject) && h('p', { class: 'note warn-text' }, `🆕 ${ME.STALE_DAYS}日間、新しい暗号を覚えていない。いまは暗記の💎が半分（顔合わせで新しい暗号を覚えるともどる）`),
+        poolBanner(`mem:${subject}`),
         nextButtons(subject, T, M),
         weak > 0 && btn(`😵 苦手だけ（${weak}枚）`, () => startRush(subject, { weak: true }), 'ghost small')),
       // 暗号ディフェンス（リアルタイムのゲーム）
@@ -194,18 +196,20 @@ function flowView(el, subject, bet = 0) {
   function finish() {
     if (bet) return finishChal();
     studyEnd();
-    const gems = Math.max(1, Math.round(ok * repeatMult(`flow:${subject}`).mult));
-    S().gems += gems;
-    logGems('flow', gems);
+    const earned = Math.max(1, Math.round(ok * repeatMult(`flow:${subject}`).mult));
+    logGems('flow', earned);
+    const pool = earn(`mem:${subject}`, earned);
+    const gems = pool.got + pool.released;
     const bonus = claimActivity('memory');
     closeSession('clear');
     saveNow();
     sfx('win');
-    const gemEl = h('p', { class: 'note center' }, `💎 +${gems}`);
+    const gemEl = h('p', { class: 'note center' }, pool.pooled && !pool.released ? `🔒 💎 +${earned}（保留）` : `💎 +${gems}`);
     stage.replaceChildren(h('div', { class: 'center-col' },
       h('div', { class: 'big-em' }, ok >= FLOW_N - 1 ? '🧭' : '📜'),
       h('h2', {}, `${ok} / ${FLOW_N} 問 正解`),
       gemEl,
+      poolNote(pool),
       bonusChips(bonus),
       btn('🧭 もう1回', () => go('memory', { phase: 'flow', subject }), 'primary big'),
       btn('🔐 暗号室へ', () => go('memory', { subject }), 'ghost')));
@@ -413,9 +417,8 @@ function rushView(el, subject, opts) {
     // 同じ教科・同じモードのくり返しは💎がへる（デッキ試験の合格ボーナスはそのまま）
     // 難易度を変えても同じ教科なら同じ回数として数える
     R.repeat = repeatMult(`m:${R.test ? 'test' : 'rush'}:${R.subject}`);
-    // 最近、新しい暗号を覚えていないと半分
-    R.stale = ME.staleInfo(M, R.subject);
-    gems = Math.max(1, Math.round(gems * R.repeat.mult * (R.stale ? R.stale.mult : 1)));
+    gems = Math.max(1, Math.round(gems * R.repeat.mult));
+    let fixed = 0; // デッキ試験のはじめての合格（保留しない）
     const extra = [];
     if (R.test) {
       const pct = Math.round((R.ok / Math.max(R.asked, 1)) * 100);
@@ -424,16 +427,19 @@ function rushView(el, subject, opts) {
       rec.best = Math.max(rec.best || 0, pct);
       if (pct >= 90) {
         R.passed = true;
-        if (!rec.cleared) { rec.cleared = new Date().toISOString().slice(0, 10); gems += 30; const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)]; if (addCard(id)) extra.push(id); }
+        if (!rec.cleared) { rec.cleared = new Date().toISOString().slice(0, 10); fixed = 30; const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)]; if (addCard(id)) extra.push(id); }
       }
     } else if (mode === 'hard' && R.asked >= 10 && Math.random() < 0.2) {
       const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)];
       if (addCard(id)) extra.push(id);
     }
-    S().gems += gems;
-    logGems(`m:${R.subject}`, gems);
-    R.gems = gems;
+    logGems(`m:${R.subject}`, gems + fixed);
+    // 新しい暗号との顔合わせが足りないうちは、暗号室のプールに保留
+    R.pool = earn(`mem:${R.subject}`, gems);
+    S().gems += fixed;
+    R.gems = R.pool.got + fixed;
     R.bonus = claimActivity('memory');
+    syncMemory(R.subject); // 🍬 顔合わせノルマ（1日1回）
     R.cards = extra;
     closeSession(R.test ? (R.passed ? 'win' : 'lose') : 'clear');
     saveNow();
@@ -459,9 +465,9 @@ function resultView(el, subject, R) {
           R.test && h('b', { class: R.passed ? 'mm-pass' : 'mm-fail' }, R.passed ? '🏅 解読成功！（9割以上）' : `あと少し！（${acc}% → 90% で解読）`)),
         h('div', { class: 'mm-total' },
           [['🆕 新しく覚えた', R.news], ['⬆️ レベルアップ', R.ups], ['🔒 定着した', R.solid], ['✍️ 書けるように', R.wr], ['⚡ 最大コンボ', R.maxCombo]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))))),
-      h('p', { class: 'note center mm-gems' }, `💎 +${R.gems}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
-      R.repeat?.mult < 1 && h('p', { class: 'note center' }, `🔁 今日この教科 ${R.repeat.n}回目 → 💎×${R.repeat.mult}（明日またもどる）`),
-      R.stale && h('p', { class: 'note center warn-text' }, `🆕 ${R.stale.days}日間 新しい暗号を覚えていないので 💎×${R.stale.mult}。「顔合わせ」で新しい暗号を覚えるともどる`),
+      h('p', { class: 'note center mm-gems' }, `${R.pool?.pooled && !R.pool.released ? `🔒 💎 +${R.pool.pooled}（保留）${R.gems ? `・💎 +${R.gems}` : ''}` : `💎 +${R.gems + (R.pool?.released || 0)}`}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
+      R.repeat?.mult < 1 && h('p', { class: 'note center' }, ...phrases(`🔁 今日この教科 ${R.repeat.n}回目 → 💎×${R.repeat.mult}（明日またもどる）`)),
+      poolNote(R.pool),
       bonusChips(R.bonus),
       R.cards?.length > 0 && h('p', { class: 'note center' }, `🃏 カードゲット: ${R.cards.map((id) => GAME_CARDS.find((c) => c.id === id)?.name || id).join('、')}`),
       R.misses.length > 0 && h('h3', { class: 'sec' }, R.intro ? '😵 まちがえた暗号（顔合わせのあとの復習でまた出るよ）' : '😵 まちがえた暗号（少し時間をおいて、また出るよ）'),
@@ -469,5 +475,5 @@ function resultView(el, subject, R) {
       h('div', { class: 'up-btns' },
         R.deck && !R.test ? btn('⚡ このデッキをもう1回', () => startRush(subject, { deck: R.deck }), 'primary') : nextButtons(subject, todayState(M, subject, Date.now()), M),
         btn('🔐 暗号室へ', () => go('memory', { subject }), 'ghost'))));
-  if (!R.shown) { R.shown = true; flyGems(R.gems + (R.bonus?.gems || 0), el.querySelector('.mm-gems'), 400); }
+  if (!R.shown) { R.shown = true; flyGems(R.gems + (R.pool?.released || 0) + (R.bonus?.gems || 0), el.querySelector('.mm-gems'), 400); }
 }

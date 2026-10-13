@@ -23,13 +23,16 @@ export const MEM_BOSS = {
 };
 export const MOB_KINDS = ['grunt', 'runner', 'tank', 'review'];
 // 難易度: n = ふつうの敵の数 / pace = 出てくる間隔（小さいほど次々来る）/ walk = 歩く時間（小さいほど速い）
-//   big = いっしょに来る最大人数 / bossHp = ボスに必要な正解数 / gem = 💎の倍率 / ticket = 勝ったときのガチャ券
+//   big = いっしょに来る最大人数 / bossHp = ボスに必要な正解数 / gem = 💎の倍率 / ticket = 勝ったときのガチャ券（その難易度で1日1回だけ）
+//   2026-10 見直し: おにを数回まわすだけで 1分に💎50 近く出ていたので、倍率を下げ、1分あたりの上限（DEF_PER_MIN）をつけた
 export const DEF_LEVELS = {
   easy: { name: 'やさしい', emoji: '🌱', n: 12, pace: 1.15, walk: 1.2, big: 2, bossHp: 2, gem: 0.8, ticket: 0, desc: '看守が少なく、ゆっくり。まずはここから' },
   normal: { name: 'ふつう', emoji: '⚔️', n: DEF_N, pace: 1, walk: 1, big: 3, bossHp: BOSS_HP, gem: 1, ticket: 0, desc: 'いつもの暗号ディフェンス' },
-  hard: { name: 'むずかしい', emoji: '🔥', n: 22, pace: 0.85, walk: 0.85, big: 3, bossHp: 4, gem: 1.8, ticket: 1, desc: '大軍が速くせまる！ 💎1.8倍＋勝てばガチャ券' },
-  oni: { name: 'おに', emoji: '👹', n: 28, pace: 0.78, walk: 0.8, big: 4, bossHp: 5, gem: 2.6, ticket: 2, desc: '超大軍＆超スピード。💎2.6倍＋勝てばガチャ券2枚' },
+  hard: { name: 'むずかしい', emoji: '🔥', n: 22, pace: 0.85, walk: 0.85, big: 3, bossHp: 4, gem: 1.2, ticket: 1, desc: '大軍が速くせまる！ 💎1.2倍＋その日はじめて勝つとガチャ券' },
+  oni: { name: 'おに', emoji: '👹', n: 28, pace: 0.78, walk: 0.8, big: 4, bossHp: 5, gem: 1.4, ticket: 1, desc: '超大軍＆超スピード。💎1.4倍＋その日はじめて勝つとガチャ券' },
 };
+// 💎の上限: 遊んだ時間1分あたり（速く終わらせても、時間あたりはほかのモードと同じくらいに）
+export const DEF_PER_MIN = 12;
 
 // 出題に使うカード: 見たことのあるカード。少なければ、まだのカードも足して40枚以上に（同じ問題ばかりにならないように）
 export function defensePool(M, subject) {
@@ -215,5 +218,7 @@ export function defQuestion(st, e) {
   return { card, q: makeQuestion(card, e.form, st.rng) };
 }
 
-// 報酬（💎）: 撃退数 ＋ ボス撃破 ＋ 全滅ボーナスの回数
-export const defGems = (st) => Math.round((Math.max(1, Math.round(st.kills * 0.6)) + (st.bossDown ? 8 : 0) + st.clears) * DEF_LEVELS[st.level].gem);
+// 報酬（💎）: 撃退数 ＋ ボス撃破 ＋ 全滅ボーナスの回数（難易度の倍率つき）。ただし遊んだ時間で上限
+export const defGemsRaw = (st) => Math.round((Math.max(1, Math.round(st.kills * 0.4)) + (st.bossDown ? 5 : 0) + st.clears * 0.5) * DEF_LEVELS[st.level].gem);
+export const defGemCap = (st) => Math.max(1, Math.round((st.t / 60) * DEF_PER_MIN));
+export const defGems = (st) => Math.min(defGemsRaw(st), defGemCap(st));

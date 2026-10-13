@@ -1,5 +1,7 @@
 // ホーム: ロゴ・脱獄進捗・ゲームのポスター（数学・英語）＋ デイリーミッション
-import { h, btn, toast, modal } from '../core/ui.js';
+import { allPools } from '../game/pool.js';
+import { syncPlan, syncStreak } from '../game/points.js';
+import { h, btn, toast, modal, phrases } from '../core/ui.js';
 import { S, streakAlive, dayLog, cleared, save, today } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
 import { nextUnit, GACHA10_COST, claimLogin, gachaTickets, LOGIN_CAL } from '../game/progress.js';
@@ -94,6 +96,8 @@ export function render(el) {
   if (end) return go('ending', { kind: end });
   // 実績: 新しく達成したものは、あとでまとめてお知らせ（💎はここで入る）
   for (const a of checkAchievements()) (s.achieveNew ||= []).push(a.id);
+  syncPlan(); // 🍬 景品ポイント（今週の計画・連続日数）
+  syncStreak();
   const lb = claimLogin(); // 先にもらっておく（ナビの「券あり」吹き出しに反映するため）
   const mins = Math.floor(dayLog().seconds / 60);
   const mlist = h('div', { class: 'missions' });
@@ -128,7 +132,7 @@ export function render(el) {
           h('span', { class: 'em-label', html: `${iconHTML('icon-key', '🗝️', '')} 脱獄進捗` }),
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),
           h('b', { class: 'em-pct' }, `${pct}%`))),
-      isNight() && h('div', { class: 'bk-line night' }, h('span', {}, `🌙 ${NIGHT.from}時をすぎた。ウェーブ・暗記・模試・ガチャは${NIGHT.to}時までお休み。今日はもう寝よう！`)),
+      isNight() && h('div', { class: 'bk-line night' }, h('span', {}, ...phrases(`🌙 ${NIGHT.from}時をすぎた。 ウェーブ・暗記・模試・ガチャは ${NIGHT.to}時までお休み。 今日はもう寝よう！`))),
       backupLine(),
       countdown(),
       eventCard(),
@@ -139,6 +143,7 @@ export function render(el) {
         h('h3', { class: 'mboard-title', html: `${iconHTML('icon-mission', '📋', '')} 今日の指令` }),
         mlist,
         hourLine(),
+        poolLine(),
         h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ リベンジ待ち 👻${s.reviewQueue.length}`)),
       allModes(),
     ),
@@ -211,11 +216,21 @@ function todayCard() {
 // 2時間ボーナスの表示: この2時間の勉強時間が10分たまるとゲット（1日3回まで）
 function hourLine() {
   const st = slotStatus();
-  if (st.off) return h('p', { class: 'hour-line off' }, '⏰ 2時間ボーナスは 6時〜22時台（夜はしっかり寝よう）');
-  if (st.full) return h('p', { class: 'hour-line done' }, `⏰ 今日の2時間ボーナス ${SLOT_MAX}/${SLOT_MAX} ぜんぶゲット！ また明日`);
-  if (st.got) return h('p', { class: 'hour-line done' }, `⏰ この枠のボーナス ゲット済み（今日 ${st.count}/${SLOT_MAX}）。次は ${st.next}`);
+  // 文のかたまり（nb）の中では改行しない → 区切りのいいところで折り返す
+  if (st.off) return h('p', { class: 'hour-line off' }, nb('⏰ 2時間ボーナスは'), ' ', nb('6時〜22時台'), nb('（夜はしっかり寝よう）'));
+  if (st.full) return h('p', { class: 'hour-line done' }, nb(`⏰ 今日の2時間ボーナス ${SLOT_MAX}/${SLOT_MAX}`), ' ', nb('ぜんぶゲット！'), ' ', nb('また明日'));
+  if (st.got) return h('p', { class: 'hour-line done' }, nb('⏰ この枠のボーナス ゲット済み'), nb(`（今日 ${st.count}/${SLOT_MAX}）`), ' ', nb(`次は ${st.next}`));
   const min = Math.floor(st.sec / 60);
-  return h('p', { class: 'hour-line open' }, `⏰ ${st.label}の間に 10分勉強で 💎+${SLOT_GEMS}（いま ${Math.min(min, 10)}/10分・今日 ${st.count}/${SLOT_MAX}）`);
+  return h('p', { class: 'hour-line open' }, nb(`⏰ ${st.label}の間に`), ' ', nb(`10分勉強で 💎+${SLOT_GEMS}`), h('br'), h('small', {}, nb(`いま ${Math.min(min, 10)}/10分`), '・', nb(`今日 ${st.count}/${SLOT_MAX}回`)));
+}
+const nb = (t) => h('span', { class: 'nb' }, t);
+
+// 保留中の💎（棟・暗号室）: たまっているところだけ1行で
+function poolLine() {
+  const ps = allPools().filter((p) => p.gated);
+  if (!ps.length) return '';
+  return h('p', { class: 'hour-line pool' }, nb('🔒 保留中の💎'), ' ', ...ps.flatMap((p, i) => [i ? '・' : '', nb(`${p.name.replace(/の棟$/, '棟').replace(/^暗号室（(.+)）$/, '暗号室$1')} ${p.gems}`)]),
+    h('br'), h('small', {}, nb('棟は 新しいボスを倒すと、'), nb('暗号室は 新しい暗号と顔合わせすると'), nb('受け取れる')));
 }
 
 // 週に1回のバックアップのお知らせ（保存するか「あとで」で、今日は消える）
@@ -223,7 +238,7 @@ function backupLine() {
   if (!backupDue()) return '';
   const age = backupAge();
   const box = h('div', { class: 'bk-line' },
-    h('span', {}, `💾 ${age === null ? 'まだ一度もバックアップしていない' : `${age}日バックアップしていない`}。スマホをかえても記録が消えないように保存しよう`),
+    h('span', {}, ...phrases(`💾 ${age === null ? 'まだ一度もバックアップしていない' : `${age}日バックアップしていない`}。 スマホをかえても 記録が消えないように 保存しよう`)),
     h('div', { class: 'bk-btns' },
       btn('保存する', async () => { if (await saveBackupFile()) { toast('バックアップした！'); box.remove(); } }, 'primary small'),
       btn('あとで', () => { snoozeBackup(); box.remove(); }, 'ghost small')));

@@ -11,6 +11,8 @@ import { rich } from '../core/mathml.js';
 import { TOOLS, BOSSES } from '../game/content.js';
 import { spriteHTML, bgUrl } from '../game/art.js';
 import { sfx } from '../core/sound.js';
+import { poolBanner } from './result.js';
+import { targets } from '../game/pool.js';
 
 const GAP = 128; // マスとマスの縦の間かく
 const FLOOR_TOP = 92; // 階の看板のぶん
@@ -85,6 +87,7 @@ export function render(el, { focus = null, subject = null } = {}) {
   for (let i = 0; i < 16; i++) embers.append(h('i', { style: { left: `${(i * 37) % 100}%`, top: `${(i * 53) % 100}%`, animationDelay: `${-(i * 1.7) % 9}s`, animationDuration: `${7 + (i % 5)}s` } }));
   tower.append(embers);
 
+  const wk = weekTargets(subj);
   for (const u of all) {
     const st = u.comingSoon ? 'soon' : cleared(u.id) ? 'cleared' : u.id === nextId ? 'next' : isUnlocked(u.id) ? 'open' : 'locked';
     const ms = u.comingSoon ? 'new' : mastery(u.id);
@@ -97,6 +100,7 @@ export function render(el, { focus = null, subject = null } = {}) {
       onclick: () => { sfx('tap'); openUnit(u.id); },
     },
       st === 'next' && h('span', { class: 'n-flag' }, 'NEXT!'),
+      wk.has(u.id) && h('span', { class: 'n-flag pool' }, '🔓💎'),
       h('span', { class: 'n-ring', html: face }),
       h('span', { class: 'n-badge' }, { cleared: '✔', locked: '🔒', soon: '🚧' }[st] || ''),
       h('span', { class: 'n-label' },
@@ -137,7 +141,14 @@ function mapHead(el, s, subj, all, nextId) {
       el.querySelector(`[data-unit="${nextId}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       openUnit(nextId);
     }, 'primary small mh-next'),
+    poolBanner(subj),
     rq > 0 && btn(`👻 リベンジウェーブ（${rq}体待ち）`, () => go('battle', { mode: 'review', subject: subj }), 'warn small'));
+}
+
+// 全部のボスを倒した棟: この1週間倒していないボス（倒すと保留💎を受け取れる）
+function weekTargets(subj) {
+  const t = targets(subj);
+  return new Set(t.kind === 'week' ? t.units.map((u) => u.id) : []);
 }
 
 // リスト表示: 1階から順に。いまの階だけ開いて、全部終わった階・まだ開いていない階はたたむ
@@ -150,6 +161,7 @@ function listView(subj, stages, all, nextId) {
     const anyOpen = us.some((u) => isUnlocked(u.id));
     const open = stg.n === nextStage || (!nextStage && anyOpen && doneN < us.length);
     const sum = doneN === us.length ? '✔ 全部突破' : !anyOpen ? '🔒 まだ開いていない' : `突破 ${doneN}/${us.length}`;
+    const wk = weekTargets(subj);
     const det = h('details', { class: 'ml-floor' },
       h('summary', {}, h('span', { class: 'fs-n' }, `${stg.n}F`), h('b', {}, stg.title.replace(/^第\d段階\s*/, '')), h('small', {}, sum)),
       us.map((u) => {
@@ -157,7 +169,7 @@ function listView(subj, stages, all, nextId) {
         const ms = mastery(u.id);
         return h('button', { class: `ml-row st-${st}`, type: 'button', 'data-unit': u.id, onclick: () => { sfx('tap'); openUnit(u.id); } },
           h('span', { class: 'mr-art', html: spriteHTML(`boss-${u.id}`, BOSSES[u.id]?.emoji || u.emoji, '') }),
-          h('span', { class: 'mr-body' }, h('b', { html: u.title }), h('small', {}, st === 'locked' ? `🔒 先に「${missingPrereqs(u.id).map((x) => UNIT[x].title).join('」「')}」` : st === 'next' ? '👉 次はこれ' : MASTERY_LABEL[ms])),
+          h('span', { class: 'mr-body' }, h('b', { html: u.title }), h('small', {}, st === 'locked' ? `🔒 先に「${missingPrereqs(u.id).map((x) => UNIT[x].title).join('」「')}」` : st === 'next' ? '👉 次はこれ' : wk.has(u.id) ? '🔓 1週間倒していない → 倒すと保留💎を受け取れる' : MASTERY_LABEL[ms])),
           h('span', { class: 'ml-stars' }, st === 'cleared' ? '✔' : '★★★'.slice(0, STARS[ms]) + '☆☆☆'.slice(0, 3 - STARS[ms])));
       }));
     if (open) det.open = true;

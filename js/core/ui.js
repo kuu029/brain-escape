@@ -153,3 +153,9 @@ export function floatText(parent, text, cls = '') {
 }
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 日本語の文を、区切りのいいところ（空白・「。！、」のあと・「（＋」の前）で折り返すようにする
+//   かたまり（.nb）の中では改行しない。戻り値は h() の子にそのまま入れられる配列
+export function phrases(text) {
+  return String(text).split(/(?<=[ 　。！？、）])|(?=[（＋])/).filter((t) => t.trim()).map((t) => h('span', { class: 'nb' }, t));
+}

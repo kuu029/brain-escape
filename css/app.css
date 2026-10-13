@@ -1738,3 +1738,40 @@ svg.mapdir { width: 100%; max-width: 230px; height: auto; display: block; margin
 .ml-row.st-locked { opacity: .55; }
 .ml-row.st-next { background: #ffd64018; }
 .ml-stars { flex: none; color: #ffd640; font-size: 13px; }
+
+/* 区切りのいいところで折り返す（かたまりの中では改行しない） */
+.nb { display: inline-block; }
+.hour-line small { font-size: 11px; opacity: .9; }
+.hour-line.pool { color: #ffd640; background: #ffd64014; }
+/* 💎の保留プール */
+.pool-note { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; padding: 8px 12px; border-radius: 12px; background: #ffd64014; box-shadow: 0 0 0 1px #ffd64055 inset; text-align: left; font-size: 13px; }
+.pool-note b { color: #ffd640; font-size: 14px; }
+.pool-note small { color: var(--dim); font-size: 12px; }
+.pool-note.got { background: #4ade8018; box-shadow: 0 0 0 1px #4ade8066 inset; }
+.pool-note.got b { color: var(--good); }
+.gs-pool b, .gs-pool { color: #ffd640; }
+.n-flag.pool { background: #ffd640; color: #2a1d00; }
+
+/* 🍬 景品 */
+.pz-bal { display: flex; gap: 10px; align-items: stretch; margin: 6px 0; }
+.pz-bal > div { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 14px; background: #ffd64018; box-shadow: 0 0 0 1px #ffd64055 inset; }
+.pz-bal b { font-size: 22px; color: #ffd640; }
+.pz-bal small { color: var(--dim); font-size: 12px; }
+.pz-week b { font-size: 16px; }
+.pz-bar { display: block; height: 6px; border-radius: 3px; background: #0004; overflow: hidden; }
+.pz-bar i { display: block; height: 100%; background: #ffd640; }
+.pz-req { flex-direction: column; align-items: stretch; }
+.rw-row.pz-req > .pz-btns { display: flex; gap: 6px; flex-direction: row; margin: 0; }
+.pz-btns .btn, .pz-btns button { flex: 1; }
+.pz-how { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.pz-how > div { display: flex; gap: 8px; justify-content: space-between; padding: 6px 10px; border-radius: 10px; background: #ffffff0a; }
+.pz-how b { flex: none; color: #ffd640; }
+.pa-list { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.pa-row { display: flex; align-items: center; gap: 8px; }
+.pa-row span { flex: 1; }
+.pa-add { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pa-add .mr-input { flex: 3 1 0; min-width: 0; font-size: 16px; }
+.pa-add .mr-input[type=number] { flex: 1 1 0; }
+.pz-btns button { white-space: nowrap; padding: 0 6px; font-size: 14px; }
+.pz-conv { display: flex; flex-direction: column; }
+.pz-conv button { width: 100%; }

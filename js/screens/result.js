@@ -1,5 +1,5 @@
 // 結果画面: ランク・正答率・報酬・新しく開いたエリア・復習行きの問題
-import { h, btn } from '../core/ui.js';
+import { h, btn, phrases } from '../core/ui.js';
 import { UNIT, makeProblem } from '../units/registry.js';
 import { CARDS, BOSSES } from '../game/content.js';
 import { go } from '../core/router.js';
@@ -12,6 +12,7 @@ import { sfx } from '../core/sound.js';
 import { topBar } from './home.js';
 import { unitNext } from './map.js';
 import { flyGems } from '../ui/gems.js';
+import { poolInfo } from '../game/pool.js';
 
 // 数字がカチカチ増えていく表示
 function countUp(to, fmt, delay) {
@@ -58,7 +59,10 @@ export function render(el, r) {
 
   backdrop(el, r.win ? 'win' : 'lose');
   el.append(topBar(() => go('map', { focus: r.unitId, subject: r.subject })));
-  const gemStat = h('div', {}, countUp(r.gems, (v) => `💎${v}`, 450), h('small', {}, 'ゲット'));
+  const pooled = r.pool?.pooled || 0;
+  const gemStat = pooled > 0
+    ? h('div', { class: 'gs-pool' }, countUp(pooled, (v) => `🔒${v}`, 450), h('small', {}, '💎 保留へ'))
+    : h('div', {}, countUp(r.gems, (v) => `💎${v}`, 450), h('small', {}, 'ゲット'));
   // 主役: その単元のボス（ボス戦なら「撃破」のハンコ）／復習なら おばけ
   const face = u
     ? spriteHTML(`boss-${u.id}`, boss?.emoji || u.emoji, boss?.name || u.title)
@@ -74,7 +78,8 @@ export function render(el, r) {
     hero,
     h('h2', {}, head.t),
     bonusChips(r.bonus),
-    r.repeat && r.repeat.mult < 1 && h('p', { class: 'note center rs-repeat' }, `🔁 今日この単元 ${r.repeat.n}回目 → 💎×${r.repeat.mult}（ちがう単元なら満額。明日またもどる）`),
+    poolNote(r.pool),
+    r.repeat && r.repeat.mult < 1 && h('p', { class: 'note center rs-repeat' }, ...phrases(`🔁 今日この単元 ${r.repeat.n}回目 → 💎×${r.repeat.mult}（ちがう単元なら満額。明日またもどる）`)),
     h('p', { class: 'rs-sub' }, rank ? `${RANK_TEXT[rank]} ${head.s}` : head.s),
     h('div', { class: 'stats tickets' },
       h('div', {}, countUp(rate, (v) => `${v}%`, 0), h('small', {}, `正答率（${r.firstCorrect}/${r.asked}）`)),
@@ -94,7 +99,30 @@ export function render(el, r) {
       !nextCta && r.mode === 'practice' && r.unitId && canBoss(r.unitId) && btn('👑 ボスウェーブへ', () => go('battle', { mode: 'boss', unit: r.unitId }), 'boss'),
       btn('マップへ', () => go('map', { focus: r.unitId, subject: r.subject }), 'ghost')),
     u && h('p', { class: 'note center' }, `${u.area}｜${u.title}`)));
-  flyGems(r.gems + (r.bonus?.gems || 0), gemStat, 1300);
+  flyGems(r.gems + (r.pool?.released || 0) + (r.bonus?.gems || 0), gemStat, 1300);
+}
+
+const howLine = (how) => h('small', {}, '👉 ', ...how.map((t) => h('span', { class: 'nb' }, t)));
+
+// 棟・暗号室の上に出す: いま保留がかかっているか・いくらたまっているか・どうすれば受け取れるか
+export function poolBanner(key) {
+  const pi = poolInfo(key);
+  if (!pi.gated) return '';
+  return h('div', { class: 'pool-note' },
+    h('b', {}, h('span', { class: 'nb' }, `🔒 ${pi.name}の保留 `), h('span', { class: 'nb' }, `💎${pi.gems}`)),
+    howLine(pi.how),
+    pi.gems === 0 && h('small', { class: 'pn-sub' }, 'ここでかせいだ💎は、いったんプールにたまる'));
+}
+
+// 保留プールのお知らせ: 受け取った／プールに入った（いくらたまっているか・どうすれば受け取れるか）
+export function poolNote(pr) {
+  if (!pr || (!pr.pooled && !pr.released)) return '';
+  const info = poolInfo(pr.key);
+  if (pr.released) return h('div', { class: 'pool-note got' }, h('b', {}, `🔓 ${info.name}の保留 💎${pr.released} を受け取った！`), pr.pooled > 0 && h('small', {}, `（今回の 💎${pr.pooled} もふくむ）`));
+  return h('div', { class: 'pool-note' },
+    h('b', {}, `🔒 💎+${pr.pooled} は${info.name}のプールへ`),
+    h('span', {}, `いま 💎${pr.total} 保留中`),
+    howLine(info.how));
 }
 
 // 習慣ボーナス（2時間ボーナス・はじめての模試）の表示

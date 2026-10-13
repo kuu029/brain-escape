@@ -492,7 +492,7 @@ export function render(el, params) {
     await sleep(1100);
     studyEnd();
     closeSession(diagMode ? 'clear' : win ? 'win' : 'lose');
-    const summary = finishWave({ mode, unitId, st, asked, firstCorrect, wrongList });
+    const summary = finishWave({ mode, unitId, st, asked, firstCorrect, wrongList, subject });
     go('result', { ...summary, subject });
   }
 

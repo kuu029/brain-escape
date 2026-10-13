@@ -14,7 +14,8 @@ import { claimActivity, repeatMult } from '../game/bonus.js';
 import { flyGems } from '../ui/gems.js';
 import { paperCheck, countdown } from '../ui/ready.js';
 import { topBar } from './home.js';
-import { bonusChips } from './result.js';
+import { bonusChips, poolNote } from './result.js';
+import { earn } from '../game/pool.js';
 import { backdrop, confetti } from '../ui/deco.js';
 import { logGems } from '../game/gemlog.js';
 
@@ -116,9 +117,10 @@ export function render(el, { unit }) {
     if (isBest) rec.best = ms;
     const rank = ok === TA_N && ms <= target * 600 ? 'S' : counts && ms <= target * 1000 ? 'A' : 'B';
     const rep = repeatMult(`ta:${unit}`); // 同じ単元のくり返しは💎がへる
-    const gems = Math.max(1, Math.round((5 + ok) * rep.mult));
-    s.gems += gems;
-    logGems(`ta:${unit}`, gems);
+    const earned = Math.max(1, Math.round((5 + ok) * rep.mult));
+    logGems(`ta:${unit}`, earned);
+    const pool = earn(u.subject, earned); // まだ倒していないボスがいる棟では保留
+    const gems = pool.got + pool.released;
     for (let i = 0; i < ok; i++) tallySession(true);
     const bonus = claimActivity('timeattack');
     closeSession('clear');
@@ -126,7 +128,7 @@ export function render(el, { unit }) {
     sfx('win');
     el.replaceChildren();
     backdrop(el, isBest ? 'win' : 'desk');
-    const gemEl = h('p', { class: 'note center' }, `💎 +${gems}`);
+    const gemEl = h('p', { class: 'note center' }, pool.pooled && !pool.released ? `🔒 💎 +${earned}（保留）` : `💎 +${gems}`);
     el.append(topBar(() => go('map', { focus: unit })),
       h('div', { class: 'ta-result' },
         isBest && confetti(),
@@ -138,6 +140,7 @@ export function render(el, { unit }) {
             isBest ? h('b', { class: 'mm-pass' }, '🏆 ベスト更新！') : rec.best ? h('small', {}, `ベスト ${fmt(rec.best)}`) : h('small', {}, `ベスト記録は ${TA_N - 2} 問以上正解で残る`)),
           h('div', { class: `rs-rank rank-${rank} ta-rank` }, h('small', {}, 'RANK'), h('b', {}, rank))),
         gemEl,
+        poolNote(pool),
         bonusChips(bonus),
         misses.length > 0 && h('h3', { class: 'sec' }, '😵 まちがえた問題（あとで「リベンジおばけ」になって戻ってくるよ）'),
         misses.length > 0 && h('div', { class: 'wrong-list' }, misses.map((p) => h('details', { class: 'wl-item' }, h('summary', { rich: p.stem }), h('div', { class: 'answer-line', html: `正解: ${rich(p.answerText)}` })))),

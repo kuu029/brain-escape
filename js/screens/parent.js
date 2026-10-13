@@ -8,6 +8,7 @@ import { topBar, daysUntil } from './home.js';
 import { histRow } from './exam.js';
 import { weekPlan, SUBJ_JA, PLAN_GOAL, PLAN_SUBJ } from '../game/plan.js';
 import { REWARD, rewardState } from '../game/reward.js';
+import * as PT from '../game/points.js';
 
 const dayMs = 86400000;
 const pastDays = (n) => Array.from({ length: n }, (_, i) => today(new Date(Date.now() - (n - 1 - i) * dayMs)));
@@ -128,6 +129,22 @@ function gemBox() {
     top.some(([k, e]) => e.maxDay >= 6 && /^(w|m|md|ta):/.test(k)) && h('p', { class: 'note' }, '⚠️ = 同じものを1日に6回以上くり返した日がある（4回目から💎は減るしくみ）'));
 }
 
+// 🍬 景品ポイント: 残り・今週・景品リストの登録（ここで登録した物を、弟さんが「景品」タブからたのむ）
+function pointBox(el) {
+  const p = PT.pts();
+  const name = h('input', { class: 'mr-input', type: 'text', maxlength: '30', placeholder: '名前（例: ポテチ）' });
+  const pt = h('input', { class: 'mr-input', type: 'number', inputmode: 'numeric', min: '1', placeholder: 'pt' });
+  const redo = () => el.querySelector('.pa-points')?.replaceWith(pointBox(el));
+  const wait = p.reqs.filter((r) => r.status === 'wait');
+  const used30 = p.log.filter((e) => e.key === 'use' && e.at >= Date.now() - 30 * dayMs).reduce((a, e) => a - e.pt, 0);
+  return h('div', { class: 'pa-card pa-points' },
+    h('h3', { class: 'pa-h' }, '🍬 景品ポイント', h('small', {}, `のこり ${p.bal}pt（予約中 ${PT.held()}pt）・今週 ${PT.weekEarned()}/${PT.WEEK_CAP}pt・この30日で使った ${used30}pt`)),
+    wait.length > 0 && h('p', { class: 'note' }, `⏳ たのまれている: ${wait.map((r) => `${r.name}${r.pt ? `（${r.pt}pt）` : ''}`).join('、')}。渡したら、弟さんの「コレクション → 🍬 景品」で「渡した」を押して合言葉を入れてください。`),
+    h('b', {}, '景品リスト'),
+    p.catalog.length ? h('div', { class: 'pa-list' }, p.catalog.map((it) => h('div', { class: 'pa-row' }, h('span', {}, it.name), h('b', {}, `${it.pt}pt`), btn('消す', () => { PT.removeItem(it.id); redo(); }, 'ghost small')))) : h('p', { class: 'note' }, 'まだありません。下から追加してください。'),
+    h('div', { class: 'pa-add' }, name, pt, btn('追加', () => { if (!PT.addItem(name.value, pt.value)) return toast('名前と pt を入れてください'); redo(); }, 'primary small')));
+}
+
 function rewardBox() {
   const R = rewardState();
   const wk = Date.now() - 7 * dayMs;
@@ -173,6 +190,10 @@ export function summaryText() {
   const R = rewardState();
   const used = R.log.filter((x) => x.at >= Date.now() - 7 * dayMs).reduce((a, x) => a + x.min, 0);
   lines.push('', `💎 この7日で 💎${gems}｜🌈 カラー解除 ${used}分 使用`);
+  const P = PT.pts();
+  const got = P.log.filter((e) => e.date >= days[0] && e.pt > 0).reduce((a, e) => a + e.pt, 0);
+  const use = P.log.filter((e) => e.date >= days[0] && e.key === 'use');
+  lines.push(`🍬 景品ポイント +${got}pt（のこり ${P.bal}pt）${use.length ? `｜交換: ${use.map((e) => e.label.replace(/^景品/, '')).join('、')}` : ''}`);
   return lines.join('\n');
 }
 async function shareSummary() {
@@ -207,6 +228,7 @@ export function render(el) {
       weakList(bu),
       examBox(),
       gemBox(),
+      pointBox(el),
       rewardBox(),
       btn('◀ 設定にもどる', () => go('settings'), 'ghost')),
   );

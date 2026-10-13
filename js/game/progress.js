@@ -8,6 +8,8 @@ import { isEvent } from './event.js';
 import { claimActivity, repeatMult } from './bonus.js';
 import { addReward, rollBonus, RGT_DROP } from './reward.js';
 import { logGems } from './gemlog.js';
+import { earn, release, isTarget } from './pool.js';
+import { onPoolBoss, syncPlan, syncStreak } from './points.js';
 
 export function isUnlocked(id) {
   const u = UNIT[id];
@@ -86,12 +88,13 @@ export function useTicket(id) {
 }
 
 // ウェーブ終了。戻り値は結果画面に渡す
-export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList }) {
+export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList, subject }) {
   const s = S();
   const win = st.over === 'win';
   const out = { mode, unitId, win, asked, firstCorrect, wrongList, gems: 0, cards: [], opened: [], leaks: st.leaks, maxCombo: st.maxCombo };
   let gems = firstCorrect * 2 + (win ? 10 : 3);
   let fixed = 0; // くり返し減衰をかけない💎（ボスのはじめての撃破）
+  let poolBoss = false; // まだ倒したことのない（全部倒したあとは、この1週間倒していない）ボスを倒した → 棟のプールを受け取れる
   if (unitId && mode !== 'review') unitState(unitId).practiced++;
   s.stats.bestCombo = Math.max(s.stats.bestCombo, st.maxCombo);
   bump('combo', st.maxCombo);
@@ -106,7 +109,9 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
       const before = Object.keys(UNIT).filter((id) => isUnlocked(id));
       const us = unitState(unitId);
       const first = !us.bossCleared;
+      poolBoss = isTarget(unitId, UNIT[unitId].subject);
       us.bossCleared = true;
+      us.bossAt = today();
       s.stats.bosses++;
       if (first) fixed += 40 * (isEvent('bossrush') ? 3 : 1); // 週末イベント「ボスラッシュ」は3倍
       else gems += 15 * (isEvent('bossrush') ? 3 : 1);
@@ -136,10 +141,18 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList })
     gems = Math.round(gems * out.repeat.mult);
   }
   gems += fixed;
-  s.gems += gems;
   logGems(unitId && mode !== 'review' ? `w:${unitId}` : mode, gems);
-  out.gems = gems;
+  // 棟の保留プール（苦手ミックス・診断は教科をまたぐので保留しない）
+  const poolKey = mode === 'weak' || mode === 'diagnosis' ? null : UNIT[unitId]?.subject || subject || null;
+  if (poolBoss) {
+    s.gems += gems;
+    out.pool = { got: gems, pooled: 0, released: release(poolKey), key: poolKey, total: 0 };
+    out.pt = onPoolBoss(UNIT[unitId].title); // 🍬 景品ポイント
+  } else out.pool = earn(poolKey, gems);
+  out.gems = out.pool.got;
   out.bonus = claimActivity('wave');
+  syncPlan();
+  syncStreak();
   saveNow();
   return out;
 }

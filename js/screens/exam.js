@@ -21,6 +21,7 @@ import { flyGems } from '../ui/gems.js';
 import { paperCheck, countdown } from '../ui/ready.js';
 import { logGems } from '../game/gemlog.js';
 import { planFromExam } from '../game/plan.js';
+import { onExam } from '../game/points.js';
 
 const GRADERS = ['本人', 'お母さん', 'お兄さん'];
 const mmss = (sec) => `${Math.floor(sec / 60)}:${String(Math.max(0, sec % 60)).padStart(2, '0')}`;
@@ -250,6 +251,7 @@ function sheetView(el) {
     rec.bonus = claimActivity('exam');
     (s.exams ||= []).push(rec);
     if (s.exams.length > 40) s.exams.shift();
+    onExam(rec); // 🍬 前回より点が上がった
     s.examDraft = null;
     closeSession('clear');
     saveNow();
