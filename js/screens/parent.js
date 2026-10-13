@@ -12,6 +12,7 @@ import * as PT from '../game/points.js';
 import { readStats } from '../game/readlog.js';
 import { colorStats } from '../game/colorlog.js';
 import { FB_KINDS, fbList, fbText } from '../ui/feedback.js';
+import { noteList, giftText } from '../ui/notecheck.js';
 
 const dayMs = 86400000;
 const pastDays = (n) => Array.from({ length: n }, (_, i) => today(new Date(Date.now() - (n - 1 - i) * dayMs)));
@@ -156,6 +157,17 @@ function colorBox() {
     h('small', { class: 'note' }, '「カラーにする」を押してから10分のうちに、勉強が2分未満だと ⚠️。カラーのまま ほかのアプリに行ったのかもしれません。'));
 }
 
+// 📓 ノートチェック: いつ見せたか・何をあげたか
+function noteBox() {
+  const list = noteList().filter((x) => x.at >= Date.now() - 14 * dayMs);
+  const fmt = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]})`; };
+  return h('div', { class: 'pa-card' },
+    h('h3', { class: 'pa-h' }, '📓 ノートチェック', h('small', {}, `この14日 ${list.length}回`)),
+    list.length ? h('div', { class: 'pa-list' }, list.slice(0, 10).map((x) => h('div', { class: 'pa-row' }, h('span', {}, `${fmt(x.at)}${x.comment ? `「${x.comment}」` : ''}`), h('b', {}, x.give.length ? giftText(x.give) : 'ほめた'))))
+      : h('p', { class: 'note' }, 'まだありません。'),
+    h('small', { class: 'note' }, '弟さんがホームの「📓 ノートを家族に見せる」を押したら、ノートを見て、合言葉を入れてごほうびをえらんでください。ここであげた分は、💎の2時間の上限や、景品ポイントの週の上限には入りません。'));
+}
+
 // 📮 届いた要望: 「見た」「対応した」の印・まとめてコピー（Claude に貼りつけて直してもらう）
 function feedbackBox(el) {
   const list = fbList();
@@ -256,6 +268,8 @@ export function summaryText() {
   const R = rewardState();
   const used = R.log.filter((x) => x.at >= Date.now() - 7 * dayMs).reduce((a, x) => a + x.min, 0);
   lines.push('', `💎 この7日で 💎${gems}｜🌈 カラー解除 ${used}分 使用`);
+  const nts = noteList().filter((x) => x.at >= Date.now() - 7 * dayMs);
+  if (nts.length) lines.push(`📓 ノートチェック ${nts.length}回`);
   const fbn = fbList().filter((f) => f.status === 'new').length;
   if (fbn) lines.push(`📮 新しい要望 ${fbn}件（おうちの人ページで見られます）`);
   const rt = ratio7();
@@ -301,6 +315,7 @@ export function render(el) {
       subjectTable(bu),
       weakList(bu),
       examBox(),
+      noteBox(),
       feedbackBox(el),
       ratioBox(),
       gemBox(),

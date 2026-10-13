@@ -1793,3 +1793,13 @@ svg.mapdir { width: 100%; max-width: 230px; height: auto; display: block; margin
 .pa-fbrow.st-new { box-shadow: 0 0 0 1px #ffd64066 inset; }
 .pa-fbrow.st-done { opacity: .55; }
 .pa-fbrow .btn { align-self: flex-end; }
+
+/* 📓 ノートチェック */
+.hm-note { width: 100%; margin-top: 6px; }
+.hm-note small { font-size: 11px; opacity: .8; }
+.nc-gifts { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.nc-row { display: grid; grid-template-columns: 1fr 44px 48px 52px; align-items: center; gap: 6px; font-size: 14px; }
+.nc-row span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc-row .btn { padding: 0 4px; min-width: 0; }
+.nc-row b { text-align: center; }
+.nc-comment { font-size: 18px; font-weight: 800; color: var(--accent); }

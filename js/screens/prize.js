@@ -5,6 +5,7 @@ import { go } from '../core/router.js';
 import { sfx } from '../core/sound.js';
 import { REWARD, rewardTickets } from '../game/reward.js';
 import * as P from '../game/points.js';
+import { openNoteCheck } from '../ui/notecheck.js';
 
 const redo = () => go('collection', { tab: 'prize' });
 const md = (d) => d.slice(5).replace('-', '/');
@@ -88,6 +89,7 @@ export function prizeTab() {
       h('div', {}, h('small', {}, '🍬 景品ポイント'), h('b', {}, `${free}pt`), held > 0 && h('small', {}, `（ほかに予約中 ${held}pt）`)),
       h('div', { class: 'pz-week' }, h('small', {}, '今週たまった（勉強）'), h('b', {}, `${P.weekEarned()} / ${P.WEEK_CAP}pt`), h('span', { class: 'pz-bar' }, h('i', { style: { width: `${Math.min(100, (P.weekEarned() / P.WEEK_CAP) * 100)}%` } })), P.weekConvPt() > 0 && h('small', {}, `＋解除券から ${P.weekConvPt()}pt（上限とはべつ）`))),
     h('p', { class: 'note' }, 'リアルの景品（お菓子など）と交換できるポイント。1pt ＝ 1円くらい。くり返しでは増えない。本当に進んだときだけたまる。'),
+    btn(h('span', {}, '📓 ノートを家族に見せる', h('small', {}, '　ごほうびは家族がえらぶ')), () => openNoteCheck(redo), 'ghost small'),
     h('h3', { class: 'sec' }, '🛍 景品をたのむ'),
     p.catalog.length
       ? h('div', { class: 'rw-list' }, p.catalog.map((it) => h('div', { class: 'rw-row' }, h('span', { class: 'rw-em' }, '🍬'), h('div', {}, h('b', {}, it.name), h('small', {}, `${it.pt}pt`)), btn('たのむ', () => ask(it), `small ${free >= it.pt ? 'primary' : 'ghost'}`))))

@@ -53,6 +53,14 @@ function addLog(e) {
   if (p.log.length > 300) p.log.splice(0, p.log.length - 300);
 }
 
+// 家族がえらんで足すポイント（📓 ノートチェック）: 週の上限にはかけない
+export function grantPt(key, pt, label) {
+  if (!(pt > 0)) return 0;
+  pts().bal += pt;
+  addLog({ key, pt, label });
+  save();
+  return pt;
+}
 // ポイントを足す（週の上限まで）。戻り値: 足した pt（0 なら上限）
 export function earnPt(key, pt, label, now = new Date()) {
   const room = Math.max(0, WEEK_CAP - weekEarned(now));

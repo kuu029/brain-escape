@@ -2,6 +2,7 @@
 import { allPools } from '../game/pool.js';
 import { syncPlan, syncStreak } from '../game/points.js';
 import { noteColor } from '../game/colorlog.js';
+import { openNoteCheck, noteWeek } from '../ui/notecheck.js';
 import { h, btn, toast, modal, phrases } from '../core/ui.js';
 import { S, streakAlive, dayLog, cleared, save, today } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
@@ -145,6 +146,8 @@ export function render(el) {
         mlist,
         hourLine(),
         poolLine(),
+        // 📓 ノート（紙）を家族に見せると、家族がごほうびをえらんでくれる
+        s.settings.unlockSecret && btn(h('span', {}, '📓 ノートを家族に見せる', h('small', {}, `　ごほうびは家族がえらぶ｜今週 ${noteWeek()}回`)), () => openNoteCheck(() => go('home')), 'ghost small hm-note'),
         h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ リベンジ待ち 👻${s.reviewQueue.length}`)),
       allModes(),
     ),
