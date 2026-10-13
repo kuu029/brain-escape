@@ -97,6 +97,9 @@ export function addSeconds(n) {
   lg.slots ||= {};
   lg.slots[sl] = Math.max(0, (lg.slots[sl] || 0) + n);
   if (active) active.seconds = Math.max(0, active.seconds + n);
+  // 「カラーにする」を押してから10分の勉強時間（おうちの人ページの記録用）
+  const now = Date.now();
+  for (const c of state.colorLog || []) if (now - c.t < 600000) c.study = Math.max(0, c.study + n);
   save();
 }
 

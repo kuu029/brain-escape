@@ -9,6 +9,7 @@
 import { S, save, unitState, today, dayDiff } from '../core/store.js';
 import { unitsOf, SUBJECTS } from '../units/registry.js';
 import { CARDS, MEM_SUBJECTS } from '../memory/engine.js';
+import { takeGems } from './gemcap.js';
 
 const SUBJ_JA = { math: '数学', english: '英語', japanese: '国語', science: '理科', social: '社会' };
 
@@ -67,21 +68,24 @@ function memReady(key) {
 
 // 💎をかせいだときに呼ぶ（S().gems に直接足すかわりに）
 //   戻り値: { got: すぐ受け取った💎, pooled: プールに入れた💎, released: プールから受け取った💎, key, total: いまの保留 }
+//   2時間の上限（gemcap）をこえた分は入らない（cut: 入らなかった💎）
 export function earn(key, gems) {
+  const { got: g0, cut } = takeGems(gems);
+  gems = g0;
   if (!gated(key)) {
     // 保留が終わった（棟を全部制覇した等）: たまっていた分もいっしょに
     const released = key && S().pool?.[key]?.gems ? release(key) : 0;
     S().gems += gems;
-    return { got: gems, pooled: 0, released, key, total: 0 };
+    return { got: gems, pooled: 0, released, key, total: 0, cut };
   }
   const b = box(key);
   b.gems += gems;
   if (key.startsWith('mem:') && memReady(key)) {
     const released = release(key);
-    return { got: 0, pooled: gems, released, key, total: 0 };
+    return { got: 0, pooled: gems, released, key, total: 0, cut };
   }
   save();
-  return { got: 0, pooled: gems, released: 0, key, total: b.gems };
+  return { got: 0, pooled: gems, released: 0, key, total: b.gems, cut };
 }
 
 // まだ倒したことのないボスを倒したとき（棟）／顔合わせを終えたとき（暗号室）に呼ぶ

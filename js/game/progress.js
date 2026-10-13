@@ -9,6 +9,7 @@ import { claimActivity, repeatMult } from './bonus.js';
 import { addReward, rollBonus, RGT_DROP } from './reward.js';
 import { logGems } from './gemlog.js';
 import { earn, release, isTarget } from './pool.js';
+import { takeGems } from './gemcap.js';
 import { onPoolBoss, syncPlan, syncStreak } from './points.js';
 
 export function isUnlocked(id) {
@@ -115,7 +116,10 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList, s
       s.stats.bosses++;
       if (first) fixed += 40 * (isEvent('bossrush') ? 3 : 1); // 週末イベント「ボスラッシュ」は3倍
       else gems += 15 * (isEvent('bossrush') ? 3 : 1);
-      if (BOSS_CARD[unitId] && addCard(BOSS_CARD[unitId])) out.cards.push(BOSS_CARD[unitId]);
+      // ボスカード: 同じボスのカードは、ほかのボスを BOSS_GAP 体たおしてから（同じボスの周回ではもらえない）
+      const bc = BOSS_CARD[unitId];
+      if (bc && bossCardOk(bc)) { if (addCard(bc)) out.cards.push(bc); else out.bossTix = bc; } else if (bc) out.cardWait = bc;
+      if (bc) noteBossWin(bc);
       out.opened = Object.keys(UNIT).filter((id) => isUnlocked(id) && !before.includes(id));
       // 脱獄王: 数学の全ボス撃破
       const mathBoss = Object.entries(BOSS_CARD).filter(([u]) => UNIT[u]?.subject === 'math').map(([, c]) => c);
@@ -123,9 +127,10 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList, s
     } else {
       // 練習・リベンジのウェーブも、勝てば少し💎（解くのがゆっくりでも、ちゃんとたまるように）
       if (mode !== 'diagnosis') gems += WAVE_GEMS * (isEvent('gemfever') ? 2 : 1); // 「💎フィーバー」は2倍
-      if (unitId && BOSS_CARD[unitId] && unitState(unitId).bossCleared && Math.random() < BOSS_DROP * (isEvent('bossrush') ? 3 : 1)) {
+      if (unitId && BOSS_CARD[unitId] && unitState(unitId).bossCleared && bossCardOk(BOSS_CARD[unitId]) && Math.random() < BOSS_DROP * (isEvent('bossrush') ? 3 : 1)) {
         // レアドロップ: ボスを倒したことのある単元の練習で、まれにボスカード（召喚チケット +1）
         addCard(BOSS_CARD[unitId]);
+        noteBossWin(BOSS_CARD[unitId]);
         out.drops.push(`card:${BOSS_CARD[unitId]}`);
       } else if (Math.random() < 0.35) {
         const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)];
@@ -141,14 +146,15 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList, s
     gems = Math.round(gems * out.repeat.mult);
   }
   gems += fixed;
-  logGems(unitId && mode !== 'review' ? `w:${unitId}` : mode, gems);
   // 棟の保留プール（苦手ミックス・診断は教科をまたぐので保留しない）
   const poolKey = mode === 'weak' || mode === 'diagnosis' ? null : UNIT[unitId]?.subject || subject || null;
   if (poolBoss) {
-    s.gems += gems;
-    out.pool = { got: gems, pooled: 0, released: release(poolKey), key: poolKey, total: 0 };
+    const c = takeGems(gems - fixed); // はじめての撃破ボーナス（fixed）は上限にかけない
+    s.gems += c.got + fixed;
+    out.pool = { got: c.got + fixed, pooled: 0, released: release(poolKey), key: poolKey, total: 0, cut: c.cut };
     out.pt = onPoolBoss(UNIT[unitId].title); // 🍬 景品ポイント
   } else out.pool = earn(poolKey, gems);
+  logGems(unitId && mode !== 'review' ? `w:${unitId}` : mode, out.pool.got + out.pool.pooled);
   out.gems = out.pool.got;
   out.bonus = claimActivity('wave');
   syncPlan();
@@ -361,6 +367,17 @@ export function equippedTool() {
 
 // ウェーブ勝利のドロップ（たまに）: へそくり・ガチャ券・ごほうびガチャ券。ボス撃破は券が出やすい
 export const DROP = { coins: 0.12, ticket: 0.06, bossTicket: 0.3 };
+// ボスカードの間かく: 同じボスのカードをまたもらうには、そのあいだに ほかのボスを BOSS_GAP 体たおす（カードのドロップもふくむ）
+export const BOSS_GAP = 3;
+export function bossCardOk(card) {
+  const hist = S().collection.bossHist || [];
+  return !hist.slice(-BOSS_GAP).includes(card);
+}
+export function noteBossWin(card) {
+  const c = S().collection;
+  (c.bossHist ||= []).push(card);
+  if (c.bossHist.length > 20) c.bossHist.splice(0, c.bossHist.length - 20);
+}
 export const BOSS_DROP = 0.05; // 練習ウェーブでボスカードが落ちる確率（ボス撃破ずみの単元）
 export function rollDrops(boss, rand = Math.random) {
   const out = [];

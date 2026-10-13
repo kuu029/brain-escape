@@ -3,7 +3,7 @@ import { h, btn, phrases } from '../core/ui.js';
 import { UNIT, makeProblem } from '../units/registry.js';
 import { CARDS, BOSSES } from '../game/content.js';
 import { go } from '../core/router.js';
-import { canBoss } from '../game/progress.js';
+import { canBoss, BOSS_GAP } from '../game/progress.js';
 import { answerLine } from '../ui/answer.js';
 import { askBtn } from '../ui/asklater.js';
 import { cardSprite, spriteHTML } from '../game/art.js';
@@ -13,6 +13,7 @@ import { topBar } from './home.js';
 import { unitNext } from './map.js';
 import { flyGems } from '../ui/gems.js';
 import { poolInfo } from '../game/pool.js';
+import { capText } from '../game/gemcap.js';
 
 // 数字がカチカチ増えていく表示
 function countUp(to, fmt, delay) {
@@ -86,6 +87,8 @@ export function render(el, r) {
       gemStat,
       h('div', {}, countUp(r.maxCombo, (v) => `⚡${v}`, 900), h('small', {}, '最大コンボ'))),
     (r.drops || []).length > 0 && h('div', { class: 'drop-list' }, h('h3', { class: 'sec' }, '🎁 ドロップ！'), r.drops.map((d) => h('span', { class: `bonus-chip drop${d.startsWith('card:') ? ' rare' : ''}` }, d === 'coins' ? '💰 へそくり ×1' : d === 'ticket' ? '🎟 ガチャ券 ×1' : d === 'rgt' ? '🎫 ごほうびガチャ券 ×1' : `🃏 レア！ ボスカード「${CARDS.find((c) => c.id === d.slice(5))?.name}」（召喚チケット +1）`))),
+    r.bossTix && h('p', { class: 'note center' }, `🃏 ボスカード「${CARDS.find((c) => c.id === r.bossTix)?.name}」（召喚チケット +1）`),
+    r.cardWait && h('p', { class: 'note center' }, ...phrases(`🃏 「${CARDS.find((c) => c.id === r.cardWait)?.name}」のカードは、ほかのボスを${BOSS_GAP}体たおすと またもらえる`)),
     cards.length > 0 && h('div', { class: 'new-cards' }, h('h3', { class: 'sec' }, '🃏 新カード！'), cards.map((c) => h('div', { class: `card r${c.rarity} flip-in` }, h('div', { class: 'c-art', html: cardSprite(c.id) }), h('div', { class: 'c-name' }, c.name)))),
     r.opened.length > 0 && h('div', { class: 'opened' }, h('h3', { class: 'sec' }, '🚪 新しいエリアが開いた！'), r.opened.map((id) => h('div', { class: 'op-row' }, h('span', { class: 'op-face', html: spriteHTML(`boss-${id}`, BOSSES[id]?.emoji || UNIT[id].emoji, '') }), h('span', { class: 'op-text' }, h('small', {}, UNIT[id].area), h('b', {}, UNIT[id].title))))),
     wrong.length > 0 && h('div', { class: 'wrong-list' },
@@ -116,6 +119,11 @@ export function poolBanner(key) {
 
 // 保留プールのお知らせ: 受け取った／プールに入った（いくらたまっているか・どうすれば受け取れるか）
 export function poolNote(pr) {
+  const capEl = pr?.cut > 0 ? h('div', { class: 'pool-note cap' }, h('small', {}, ...phrases(capText(pr.cut)))) : '';
+  const main = poolNote0(pr);
+  return capEl && main ? h('div', {}, capEl, main) : capEl || main;
+}
+function poolNote0(pr) {
   if (!pr || (!pr.pooled && !pr.released)) return '';
   const info = poolInfo(pr.key);
   if (pr.released) return h('div', { class: 'pool-note got' }, h('b', {}, `🔓 ${info.name}の保留 💎${pr.released} を受け取った！`), pr.pooled > 0 && h('small', {}, `（今回の 💎${pr.pooled} もふくむ）`));

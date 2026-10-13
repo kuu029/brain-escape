@@ -86,7 +86,7 @@ export function prizeTab() {
   return h('div', { class: 'reward-box prize-box' },
     h('div', { class: 'pz-bal' },
       h('div', {}, h('small', {}, '🍬 景品ポイント'), h('b', {}, `${free}pt`), held > 0 && h('small', {}, `（ほかに予約中 ${held}pt）`)),
-      h('div', { class: 'pz-week' }, h('small', {}, '今週たまった'), h('b', {}, `${P.weekEarned()} / ${P.WEEK_CAP}pt`), h('span', { class: 'pz-bar' }, h('i', { style: { width: `${Math.min(100, (P.weekEarned() / P.WEEK_CAP) * 100)}%` } })))),
+      h('div', { class: 'pz-week' }, h('small', {}, '今週たまった（勉強）'), h('b', {}, `${P.weekEarned()} / ${P.WEEK_CAP}pt`), h('span', { class: 'pz-bar' }, h('i', { style: { width: `${Math.min(100, (P.weekEarned() / P.WEEK_CAP) * 100)}%` } })), P.weekConvPt() > 0 && h('small', {}, `＋解除券から ${P.weekConvPt()}pt（上限とはべつ）`))),
     h('p', { class: 'note' }, 'リアルの景品（お菓子など）と交換できるポイント。1pt ＝ 1円くらい。くり返しでは増えない。本当に進んだときだけたまる。'),
     h('h3', { class: 'sec' }, '🛍 景品をたのむ'),
     p.catalog.length

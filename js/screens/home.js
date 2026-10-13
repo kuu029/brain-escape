@@ -1,6 +1,7 @@
 // ホーム: ロゴ・脱獄進捗・ゲームのポスター（数学・英語）＋ デイリーミッション
 import { allPools } from '../game/pool.js';
 import { syncPlan, syncStreak } from '../game/points.js';
+import { noteColor } from '../game/colorlog.js';
 import { h, btn, toast, modal, phrases } from '../core/ui.js';
 import { S, streakAlive, dayLog, cleared, save, today } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
@@ -127,7 +128,7 @@ export function render(el) {
           : h('div', { class: 'hlogo' }, h('span', { class: 'hlogo-en' }, 'BRAIN ESCAPE'), h('span', { class: 'hlogo-row' }, h('span', { class: 'hlogo-a' }, 'ブレイン'), h('span', { class: 'hlogo-b' }, '脱獄'))),
         h('p', { class: 'hello' }, `よう、${s.nickname}。今日も脱獄の時間だ。`),
         // ごほうびの合言葉を設定している（＝ショートカットを入れている）ときだけ: 勉強中はカラーにできる
-        s.settings.unlockSecret && !isNight() && btn('🎨 カラーにする', () => { location.href = studyColorUrl(); }, 'small ghost hm-color'),
+        s.settings.unlockSecret && !isNight() && btn('🎨 カラーにする', () => { noteColor(); location.href = studyColorUrl(); }, 'small ghost hm-color'), // 押した記録はおうちの人ページに出る
         h('div', { class: 'escape-meter' },
           h('span', { class: 'em-label', html: `${iconHTML('icon-key', '🗝️', '')} 脱獄進捗` }),
           h('span', { class: 'em-bar' }, h('i', { style: { width: `${Math.max(pct, 2)}%` } })),

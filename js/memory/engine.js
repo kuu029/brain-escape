@@ -35,6 +35,8 @@ export const MOTIVATION = {
   mid: { label: '🙂 ふつう', mult: 1 },
   high: { label: '🔥 がっつり', mult: 1.3 },
 };
+// まちがい1回で💎が少しへる（あてずっぽうでタップしても得しない）。顔合わせ（はじめて見る暗号）ではへらない
+export const MISS_PEN = 0.3;
 export const RUSH_SIZE = 20; // 復習ラッシュの枚数
 export const INTRO_SIZE = 12; // 顔合わせ1回の新しいカード数（4枚ずつ「見る → 答える」）
 const INTRO_GROUP = 4;

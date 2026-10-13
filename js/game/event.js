@@ -3,7 +3,7 @@
 export const EVENTS = [
   { id: 'gemfever', emoji: '💎', name: '💎フィーバー', desc: 'ウェーブと暗号ディフェンスの💎が2倍！' },
   { id: 'bossrush', emoji: '👑', name: 'ボスラッシュ', desc: 'ボス撃破の💎が3倍、練習ウェーブでボスカードが落ちやすい！' },
-  { id: 'gachafes', emoji: '🎰', name: 'ガチャ祭り', desc: 'ガチャがぜんぶ2割引き！' },
+  { id: 'gachafes', emoji: '🎰', name: 'ガチャ祭り', desc: 'ガチャがぜんぶ2割引き！（ごほうびガチャも）' },
   { id: 'allyfes', emoji: '🤝', name: 'なかま祭り', desc: 'なかまのゲージが1つ少なくてOK！' },
 ];
 export const EVENT = Object.fromEntries(EVENTS.map((e) => [e.id, e]));

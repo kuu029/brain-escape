@@ -1,6 +1,7 @@
 // バトル画面（ウェーブ）: 盤面 + 予測 + 問題 + 入力 + タワー建設 + 道具
 // 答えたらエンジンの状態はすぐ確定。盤面の演出は裏で再生し、正解ならすぐ次の問題を出す（待たせない）
-import { h, btn, readBtn, modal, toast, floatText, sleep, confirmBox } from '../core/ui.js';
+import { h, btn, waitBtn, modal, toast, floatText, sleep, confirmBox } from '../core/ui.js';
+import { fbShow, fbSteps, fbClose } from '../game/readlog.js';
 import * as E from '../game/engine.js';
 import { practiceSchedule, bossSchedule, diagnosisSchedule, makePicker, practicePool, bossPoolOf } from '../game/waves.js';
 import { makeProblem, UNIT } from '../units/registry.js';
@@ -93,7 +94,7 @@ export function render(el, params) {
   // まちがえたときのヒントは盤面の上に重ねる（テンキーの位置を動かさない）
   const hintLayer = h('div', { class: 'hint-layer' });
   el.append(hud, h('div', { class: 'board-row' }, board.el, toolbar, hintLayer), predLine, qarea);
-  const closeHint = () => { hintLayer.innerHTML = ''; hintLayer.classList.remove('on'); };
+  const closeHint = () => { fbClose(); hintLayer.innerHTML = ''; hintLayer.classList.remove('on'); };
 
   function paintHud() {
     if (!diagMode) paintReserve();
@@ -452,6 +453,7 @@ export function render(el, params) {
     const { p } = cur;
     hintLayer.innerHTML = '';
     hintLayer.classList.add('on');
+    fbShow(cur.attempts === 1 ? 1 : 2); // 解き方を読んでいるかの記録（おうちの人ページ）
     const box = h('div', { class: 'fb bad' });
     box.append(h('div', { class: 'fb-head' }, cur.attempts === 1 ? '😵 おしい！ 看守が1歩進んだ…' : '😵 まだちがうみたい'));
     if (msg) box.append(h('div', { class: 'fb-msg', rich: msg }));
@@ -460,13 +462,14 @@ export function render(el, params) {
       const stepsBox = h('div', { class: 'fb-steps hidden' }, stepsView(p));
       box.append(stepsBox,
         h('div', { class: 'fb-btns' },
-          btn('解き方を見る', (e) => { stepsBox.classList.toggle('hidden'); e.target.remove(); stepsBox.append(askBtn(p, 'ウェーブ')); }, 'ghost small'),
+          btn('解き方を見る', (e) => { fbSteps(); stepsBox.classList.toggle('hidden'); e.target.remove(); stepsBox.append(askBtn(p, 'ウェーブ')); }, 'ghost small'),
           btn('もう一回！', () => { closeHint(); cur.pad.clearMarks(); }, 'primary small')));
       box.append(h('p', { class: 'fb-sub' }, 'このまま下で答えを入れ直してもOK'));
     } else {
       // 2回まちがえたら、解き方と答えを見せて次へ（この問題はあとでリベンジおばけになる）
       box.append(h('div', { class: 'fb-sub' }, '解き方はこう👇 この問題はあとで「リベンジおばけ」になって戻ってくるよ。'), stepsView(p), answerLine(p), askBtn(p, 'ウェーブ'),
-        h('div', { class: 'fb-btns' }, readBtn('わかった！ 次へ', () => nextProblem(), 'primary small', 3000)));
+        h('div', { class: 'fb-btns' }, waitBtn('わかった！ 次へ', () => nextProblem(), 'primary small', Math.min(8000, 3000 + (p.steps || []).length * 800))));
+      // ↑ 2回まちがえたら、解き方を読むまで押せない（長い解き方ほど少し長く。3〜8秒）
       cur.pad.el.classList.add('done');
     }
     hintLayer.append(box);

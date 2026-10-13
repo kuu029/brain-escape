@@ -5,7 +5,7 @@
 //   正解でゲージがたまり、なかま（ウェーブのなかまと同じ）が門から出撃して、ぶつかった看守を足止め＆おしもどす
 //   （たおすのは暗号に正解したときだけ。なかまは時間かせぎ）。場の看守を全滅させたら、次の組がすぐ来る（全滅ボーナス）
 // 間隔反復（SRS）のレベルは変えない（ゲームとしての練習）
-import { CARDS, CARD, makeQuestion } from './engine.js';
+import { CARDS, CARD, makeQuestion, MISS_PEN } from './engine.js';
 import { CARDS as GAME_CARDS } from '../game/content.js';
 import { gaugeNeed, allyLevel } from '../game/engine.js';
 
@@ -23,13 +23,14 @@ export const MEM_BOSS = {
 };
 export const MOB_KINDS = ['grunt', 'runner', 'tank', 'review'];
 // 難易度: n = ふつうの敵の数 / pace = 出てくる間隔（小さいほど次々来る）/ walk = 歩く時間（小さいほど速い）
+//   lunge = まちがえたときに看守が前へ出る幅（道の長さを1として。おにはほぼ門の前まで）
 //   big = いっしょに来る最大人数 / bossHp = ボスに必要な正解数 / gem = 💎の倍率 / ticket = 勝ったときのガチャ券（その難易度で1日1回だけ）
 //   2026-10 見直し: おにを数回まわすだけで 1分に💎50 近く出ていたので、倍率を下げ、1分あたりの上限（DEF_PER_MIN）をつけた
 export const DEF_LEVELS = {
-  easy: { name: 'やさしい', emoji: '🌱', n: 12, pace: 1.15, walk: 1.2, big: 2, bossHp: 2, gem: 0.8, ticket: 0, desc: '看守が少なく、ゆっくり。まずはここから' },
-  normal: { name: 'ふつう', emoji: '⚔️', n: DEF_N, pace: 1, walk: 1, big: 3, bossHp: BOSS_HP, gem: 1, ticket: 0, desc: 'いつもの暗号ディフェンス' },
-  hard: { name: 'むずかしい', emoji: '🔥', n: 22, pace: 0.85, walk: 0.85, big: 3, bossHp: 4, gem: 1.2, ticket: 1, desc: '大軍が速くせまる！ 💎1.2倍＋その日はじめて勝つとガチャ券' },
-  oni: { name: 'おに', emoji: '👹', n: 28, pace: 0.78, walk: 0.8, big: 4, bossHp: 5, gem: 1.4, ticket: 1, desc: '超大軍＆超スピード。💎1.4倍＋その日はじめて勝つとガチャ券' },
+  easy: { name: 'やさしい', emoji: '🌱', n: 12, pace: 1.15, walk: 1.2, big: 2, bossHp: 2, gem: 0.8, ticket: 0, lunge: 0.1, desc: '看守が少なく、ゆっくり。まずはここから' },
+  normal: { name: 'ふつう', emoji: '⚔️', n: DEF_N, pace: 1, walk: 1, big: 3, bossHp: BOSS_HP, gem: 1, ticket: 0, lunge: 0.15, desc: 'いつもの暗号ディフェンス' },
+  hard: { name: 'むずかしい', emoji: '🔥', n: 22, pace: 0.85, walk: 0.85, big: 3, bossHp: 4, gem: 1.2, ticket: 1, lunge: 0.32, desc: '大軍が速くせまる！ まちがえると大きく前へ。💎1.2倍＋その日はじめて勝つとガチャ券' },
+  oni: { name: 'おに', emoji: '👹', n: 28, pace: 0.78, walk: 0.8, big: 4, bossHp: 5, gem: 1.4, ticket: 1, lunge: 0.65, desc: '超大軍＆超スピード。まちがえたら ほぼ門の前まで来る！ 💎1.4倍＋その日はじめて勝つとガチャ券' },
 };
 // 💎の上限: 遊んだ時間1分あたり（速く終わらせても、時間あたりはほかのモードと同じくらいに）
 export const DEF_PER_MIN = 12;
@@ -205,7 +206,7 @@ export function answerDef(st, ok) {
     else { e.card = drawCard(st); e.form = pickForm(st, e.card); } // ボスは次の暗号へ
   } else {
     st.misses++;
-    e.x = Math.min(0.97, e.x + 0.12); // まちがえると、ぐっと前へ
+    e.x = Math.min(0.97, e.x + (DEF_LEVELS[st.level].lunge ?? 0.12)); // まちがえると、ぐっと前へ（むずかしいほど大きく）
     ev.push({ t: 'lunge', id: e.id });
   }
   checkWin(st, ev);
@@ -219,6 +220,8 @@ export function defQuestion(st, e) {
 }
 
 // 報酬（💎）: 撃退数 ＋ ボス撃破 ＋ 全滅ボーナスの回数（難易度の倍率つき）。ただし遊んだ時間で上限
-export const defGemsRaw = (st) => Math.round((Math.max(1, Math.round(st.kills * 0.4)) + (st.bossDown ? 5 : 0) + st.clears * 0.5) * DEF_LEVELS[st.level].gem);
+// まちがい1回で 💎−0.3（あてずっぽうでタップしても得しない）
+export const defMissPen = (st) => Math.round(st.misses * MISS_PEN * DEF_LEVELS[st.level].gem);
+export const defGemsRaw = (st) => Math.max(1, Math.round((Math.max(1, Math.round(st.kills * 0.4)) + (st.bossDown ? 5 : 0) + st.clears * 0.5) * DEF_LEVELS[st.level].gem) - defMissPen(st));
 export const defGemCap = (st) => Math.max(1, Math.round((st.t / 60) * DEF_PER_MIN));
 export const defGems = (st) => Math.min(defGemsRaw(st), defGemCap(st));

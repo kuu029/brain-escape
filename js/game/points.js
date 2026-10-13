@@ -42,6 +42,7 @@ const thisWeek = (now) => pts().log.filter((e) => e.date >= wk(now));
 // 今週たまった（変換はのぞく）
 export const weekEarned = (now = new Date()) => thisWeek(now).filter((e) => e.pt > 0 && e.key !== 'conv').reduce((a, e) => a + e.pt, 0);
 export const weekConvMin = (now = new Date()) => thisWeek(now).filter((e) => e.key === 'conv').reduce((a, e) => a + (e.min || 0), 0);
+export const weekConvPt = (now = new Date()) => thisWeek(now).filter((e) => e.key === 'conv').reduce((a, e) => a + e.pt, 0);
 // 予約中（たのんで、まだ渡していない）
 export const held = () => pts().reqs.filter((r) => r.status === 'wait' && r.pt).reduce((a, r) => a + r.pt, 0);
 export const free = () => pts().bal - held();

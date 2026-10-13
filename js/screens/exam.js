@@ -19,7 +19,7 @@ import { claimActivity } from '../game/bonus.js';
 import { bonusChips } from './result.js';
 import { flyGems } from '../ui/gems.js';
 import { paperCheck, countdown } from '../ui/ready.js';
-import { logGems } from '../game/gemlog.js';
+import { gainGems } from '../game/gemlog.js';
 import { planFromExam } from '../game/plan.js';
 import { onExam } from '../game/points.js';
 
@@ -245,9 +245,8 @@ function sheetView(el) {
     Object.assign(rec, { got: G.got, max: G.max, secs: G.secs, weak: weakUnits(G.items) });
     rec.planned = planFromExam(rec.weak).map((w) => w.unit); // 点を落とした単元を今週の計画へ
     const gems = 5 + Math.round(G.score100 / 4);
-    s.gems += gems;
-    logGems('exam', gems);
-    rec.gems = gems;
+    const gr = gainGems('exam', gems);
+    rec.gems = gr.got;
     rec.bonus = claimActivity('exam');
     (s.exams ||= []).push(rec);
     if (s.exams.length > 40) s.exams.shift();

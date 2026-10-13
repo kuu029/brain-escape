@@ -4,6 +4,7 @@
 //   アプリは券を発行して「使った記録」を残すだけ。時間はおうちの人が測る
 // reward = { tix: { u15: 枚数, u30, u60 }, log: [{ at, min, via }] }
 import { S, save, saveNow } from '../core/store.js';
+import { isEvent } from './event.js';
 
 export const REWARD = {
   u15: { min: 15, name: '15分 解除券', emoji: '🌈', rarity: 2 },
@@ -28,7 +29,8 @@ export function priceFactor(now = new Date()) {
 }
 const r10 = (x) => Math.round(x / 10) * 10;
 export const exchangeCost = (id, now) => r10(EXCHANGE[id] * priceFactor(now));
-export const rgachaCost = (now) => r10(RGACHA_COST * priceFactor(now));
+// 週末イベント「ガチャ祭り」は、ごほうびガチャも2割引き
+export const rgachaCost = (now) => r10(RGACHA_COST * priceFactor(now) * (isEvent('gachafes') ? 0.8 : 1));
 export const RGACHA_RATES = [
   { id: 'u60', weight: 3 },
   { id: 'u30', weight: 9 },

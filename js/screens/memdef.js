@@ -9,7 +9,7 @@ import { go } from '../core/router.js';
 import { sfx } from '../core/sound.js';
 import { answerPad } from '../ui/answer.js';
 import { bump } from '../game/missions.js';
-import { addCard, party, towerSkin } from '../game/progress.js';
+import { addCard, party, towerSkin, bossCardOk, noteBossWin, BOSS_GAP } from '../game/progress.js';
 import { claimActivity, repeatMult, repeatNext, onceToday, DEF_REPEAT_RULE } from '../game/bonus.js';
 import { cardSprite, enemySprite, towerSprite, spriteHTML, bgUrl, hasArt } from '../game/art.js';
 import { CARDS as GAME_CARDS } from '../game/content.js';
@@ -260,21 +260,24 @@ export function defenseView(el, subject, started = false) {
     const rep = repeatMult(`md:${subject}`, DEF_REPEAT_RULE); // 同じ教科のくり返しは💎がへる（むずかしさを変えても同じ回数）
     const capped = D.defGemsRaw(st) > D.defGemCap(st);
     const earned = Math.max(1, Math.round(D.defGems(st) * (isEvent('gemfever') ? 2 : 1) * rep.mult)); // 週末イベント「💎フィーバー」
-    logGems(`md:${subject}`, earned);
     // 新しい暗号との顔合わせが足りないうちは、暗号室のプールに保留
     const pool = earn(`mem:${subject}`, earned);
+    logGems(`md:${subject}`, pool.got + pool.pooled);
     const gems = pool.got + pool.released;
     // むずかしい・おに: その日はじめて勝つとガチャ券（難易度ごとに1日1回）
     const tix = win && LV.ticket && onceToday(`md-tix:${level}`) ? LV.ticket : 0;
     if (tix) S().collection.gachaTickets = (S().collection.gachaTickets || 0) + tix;
     // ボスを倒すとボスカード（2回目からは召喚チケット +1）
-    const card = win ? boss.card : null;
+    // ボスカード: 同じボスのカードは、ほかのボスを3体たおしてから（連続ではもらえない）
+    const cardOk = win && bossCardOk(boss.card);
+    if (win) noteBossWin(boss.card);
+    const card = cardOk ? boss.card : null;
     const isNew = card ? addCard(card) : false;
     const bonus = claimActivity('memory');
     closeSession(win ? 'clear' : 'fail');
     saveNow();
     sfx(win ? 'win' : 'ng');
-    const gemEl = h('p', { class: 'note center' }, `${pool.pooled && !pool.released ? `🔒 💎 +${earned}（保留）` : `💎 +${gems}`}${rep.mult < 1 ? `（今日 ${rep.n}回目 ×${rep.mult}）` : ''}${capped ? `（1分あたり最大${D.DEF_PER_MIN}）` : ''}`);
+    const gemEl = h('p', { class: 'note center' }, `${pool.pooled && !pool.released ? `🔒 💎 +${earned}（保留）` : `💎 +${gems}`}${rep.mult < 1 ? `（今日 ${rep.n}回目 ×${rep.mult}）` : ''}${capped ? `（1分あたり最大${D.DEF_PER_MIN}）` : ''}${D.defMissPen(st) > 0 ? `（まちがい ${st.misses}回 −${D.defMissPen(st)}）` : ''}`);
     setTimeout(() => {
       el.replaceChildren(h('div', { class: 'center-col' },
         h('div', { class: 'big-em' }, win ? '🏆' : '💥'),
@@ -286,6 +289,7 @@ export function defenseView(el, subject, started = false) {
         win && LV.ticket > 0 && !tix && h('p', { class: 'note center' }, '🎟 ガチャ券は、この難易度では今日はもうもらった（明日またもらえる）'),
         tix > 0 && h('p', { class: 'center' }, h('span', { class: 'bonus-chip drop' }, `🎟 ガチャ券 ×${tix}`)),
         bonusChips(bonus),
+        win && !card && h('p', { class: 'note center' }, ...phrases(`🃏 ${boss.name}のカードは、ほかのボスを${BOSS_GAP}体たおすと またもらえる`)),
         card && h('div', { class: 'md-boss got' }, h('span', { class: 'md-boss-face', html: cardSprite(card) }), h('div', {}, h('small', {}, isNew ? '🃏 新カード！ なかまにすると必殺技' : '🃏 ボスカード（召喚チケット +1）'), h('b', {}, boss.name))),
         btn('🛡️ もう1回', () => go('memory', { phase: 'defense', subject }), 'primary big'),
         btn('🔐 暗号室へ', () => go('memory', { subject }), 'ghost')));

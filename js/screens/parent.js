@@ -9,6 +9,8 @@ import { histRow } from './exam.js';
 import { weekPlan, SUBJ_JA, PLAN_GOAL, PLAN_SUBJ } from '../game/plan.js';
 import { REWARD, rewardState } from '../game/reward.js';
 import * as PT from '../game/points.js';
+import { readStats } from '../game/readlog.js';
+import { colorStats } from '../game/colorlog.js';
 
 const dayMs = 86400000;
 const pastDays = (n) => Array.from({ length: n }, (_, i) => today(new Date(Date.now() - (n - 1 - i) * dayMs)));
@@ -129,6 +131,30 @@ function gemBox() {
     top.some(([k, e]) => e.maxDay >= 6 && /^(w|m|md|ta):/.test(k)) && h('p', { class: 'note' }, '⚠️ = 同じものを1日に6回以上くり返した日がある（4回目から💎は減るしくみ）'));
 }
 
+// 解き方を読んでいるか（ウェーブでまちがえたあと）
+function readBox() {
+  const r = readStats(pastDays(7));
+  return h('div', { class: 'pa-card' },
+    h('h3', { class: 'pa-h' }, '📖 解き方を読んでいる？', h('small', {}, 'この7日・ウェーブでまちがえたとき')),
+    r ? h('div', { class: 'pa-list' },
+      h('div', { class: 'pa-row' }, h('span', {}, `1回目のまちがい ${r.m1}回 →「解き方を見る」を押した`), h('b', {}, r.rate === null ? '—' : `${r.rate}%`)),
+      h('div', { class: 'pa-row' }, h('span', {}, '1回目のヒントを見ていた時間（平均）'), h('b', {}, r.avg1 === null ? '—' : `${r.avg1}秒`)),
+      h('div', { class: 'pa-row' }, h('span', {}, `2回目のまちがい ${r.m2}回 → 解き方と答えを見ていた時間（平均）`), h('b', {}, r.avg2 === null ? '—' : `${r.avg2}秒`)),
+      h('small', { class: 'note' }, '目安: 2回目の解き方は 10秒以上なら読んでいそう。3〜4秒（「次へ」が押せるようになってすぐ）ばかりなら、読み飛ばしているかも。'))
+      : h('p', { class: 'note' }, 'まだ記録がありません（この7日、ウェーブでまちがえていない）。'));
+}
+
+// 「🎨 カラーにする」を押したあと、ちゃんと勉強したか
+function colorBox() {
+  const c = colorStats(Date.now() - 7 * dayMs);
+  const fmt = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]}) ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  return h('div', { class: 'pa-card' },
+    h('h3', { class: 'pa-h' }, '🎨 勉強カラー', h('small', {}, `この7日 ${c.n}回${c.n ? `・そのあと10分以内に勉強しなかった ${c.idle}回` : ''}`)),
+    c.n ? h('div', { class: 'pa-list' }, c.list.slice(-8).reverse().map((x) => h('div', { class: `pa-row${x.idle ? ' warn-text' : ''}` }, h('span', {}, fmt(x.t)), h('b', {}, x.wait ? '（10分たつまで待ち）' : x.idle ? `⚠️ 勉強${x.min}分` : `勉強${x.min}分`))))
+      : h('p', { class: 'note' }, 'この7日は使っていません。'),
+    h('small', { class: 'note' }, '「カラーにする」を押してから10分のうちに、勉強が2分未満だと ⚠️。カラーのまま ほかのアプリに行ったのかもしれません。'));
+}
+
 // 🍬 景品ポイント: 残り・今週・景品リストの登録（ここで登録した物を、弟さんが「景品」タブからたのむ）
 function pointBox(el) {
   const p = PT.pts();
@@ -138,7 +164,7 @@ function pointBox(el) {
   const wait = p.reqs.filter((r) => r.status === 'wait');
   const used30 = p.log.filter((e) => e.key === 'use' && e.at >= Date.now() - 30 * dayMs).reduce((a, e) => a - e.pt, 0);
   return h('div', { class: 'pa-card pa-points' },
-    h('h3', { class: 'pa-h' }, '🍬 景品ポイント', h('small', {}, `のこり ${p.bal}pt（予約中 ${PT.held()}pt）・今週 ${PT.weekEarned()}/${PT.WEEK_CAP}pt・この30日で使った ${used30}pt`)),
+    h('h3', { class: 'pa-h' }, '🍬 景品ポイント', h('small', {}, `のこり ${p.bal}pt（予約中 ${PT.held()}pt）・今週 ${PT.weekEarned()}/${PT.WEEK_CAP}pt${PT.weekConvPt() ? `＋解除券から${PT.weekConvPt()}pt` : ''}・この30日で使った ${used30}pt`)),
     wait.length > 0 && h('p', { class: 'note' }, `⏳ たのまれている: ${wait.map((r) => `${r.name}${r.pt ? `（${r.pt}pt）` : ''}`).join('、')}。渡したら、弟さんの「コレクション → 🍬 景品」で「渡した」を押して合言葉を入れてください。`),
     h('b', {}, '景品リスト'),
     p.catalog.length ? h('div', { class: 'pa-list' }, p.catalog.map((it) => h('div', { class: 'pa-row' }, h('span', {}, it.name), h('b', {}, `${it.pt}pt`), btn('消す', () => { PT.removeItem(it.id); redo(); }, 'ghost small')))) : h('p', { class: 'note' }, 'まだありません。下から追加してください。'),
@@ -190,6 +216,10 @@ export function summaryText() {
   const R = rewardState();
   const used = R.log.filter((x) => x.at >= Date.now() - 7 * dayMs).reduce((a, x) => a + x.min, 0);
   lines.push('', `💎 この7日で 💎${gems}｜🌈 カラー解除 ${used}分 使用`);
+  const cs = colorStats(Date.now() - 7 * dayMs);
+  if (cs.n) lines.push(`🎨 勉強カラー ${cs.n}回${cs.idle ? `（⚠️ そのあと勉強しなかった ${cs.idle}回）` : ''}`);
+  const rd = readStats(days);
+  if (rd) lines.push(`📖 解き方: 1回目のまちがいで開いた ${rd.rate ?? '—'}%・2回目の解き方を見ていた 平均${rd.avg2 ?? '—'}秒`);
   const P = PT.pts();
   const got = P.log.filter((e) => e.date >= days[0] && e.pt > 0).reduce((a, e) => a + e.pt, 0);
   const use = P.log.filter((e) => e.date >= days[0] && e.key === 'use');
@@ -228,6 +258,8 @@ export function render(el) {
       weakList(bu),
       examBox(),
       gemBox(),
+      readBox(),
+      colorBox(),
       pointBox(el),
       rewardBox(),
       btn('◀ 設定にもどる', () => go('settings'), 'ghost')),

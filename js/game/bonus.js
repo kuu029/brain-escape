@@ -5,7 +5,7 @@
 //    受け取りは、何かを1つクリアしたとき（claimActivity）
 //  ・その日はじめての模試: +💎
 import { S, save, today, dayLog, slotOf } from '../core/store.js';
-import { logGems } from './gemlog.js';
+import { gainGems } from './gemlog.js';
 
 export const SLOT_GEMS = 15;
 export const SLOT_NEED = 600; // 1枠で必要な勉強時間（秒）= 10分
@@ -80,8 +80,7 @@ export function claimActivity(kind, now = new Date()) {
     items.push({ label: '📝 今日はじめての模試ボーナス', gems: FIRST_EXAM_GEMS });
   }
   const gems = items.reduce((a, x) => a + x.gems, 0);
-  S().gems += gems;
-  logGems('bonus', gems);
+  const r = gainGems('bonus', gems);
   save();
-  return { items, gems };
+  return { items, gems: r.got, cut: r.cut };
 }

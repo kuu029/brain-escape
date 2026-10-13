@@ -46,6 +46,24 @@ export function readBtn(label, onclick, cls = '', ms = 2500, what = '解説') {
   requestAnimationFrame(start);
   return b;
 }
+// ms のあいだ押せないボタン（残り秒を表示）。画面が裏にあるあいだは数えない
+export function waitBtn(label, onclick, cls = '', ms = 3000) {
+  const b = btn(label, onclick, cls);
+  b.disabled = true;
+  let left = ms;
+  let last = performance.now();
+  const tick = () => {
+    if (!b.isConnected && left < ms) return;
+    const now = performance.now();
+    if (b.isConnected && !document.hidden) left -= now - last;
+    last = now;
+    if (left <= 0) { b.disabled = false; b.textContent = label; return; }
+    b.textContent = `👀 解き方を読もう… ${Math.ceil(left / 1000)}`;
+    setTimeout(tick, 200);
+  };
+  tick();
+  return b;
+}
 // 読む量に合わせた「早すぎ」の目安（1秒に約8文字。1.2〜5秒）
 export const readMs = (text) => Math.max(1200, Math.min(5000, String(text || '').replace(/<[^>]+>|\$|\\[a-z]+/g, '').length * 125));
 

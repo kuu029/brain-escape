@@ -196,9 +196,10 @@ function flowView(el, subject, bet = 0) {
   function finish() {
     if (bet) return finishChal();
     studyEnd();
-    const earned = Math.max(1, Math.round(ok * repeatMult(`flow:${subject}`).mult));
-    logGems('flow', earned);
+    const pen = Math.round((FLOW_N - ok) * ME.MISS_PEN);
+    const earned = Math.max(1, Math.round(Math.max(0, ok - pen) * repeatMult(`flow:${subject}`).mult));
     const pool = earn(`mem:${subject}`, earned);
+    logGems('flow', pool.got + pool.pooled);
     const gems = pool.got + pool.released;
     const bonus = claimActivity('memory');
     closeSession('clear');
@@ -209,6 +210,7 @@ function flowView(el, subject, bet = 0) {
       h('div', { class: 'big-em' }, ok >= FLOW_N - 1 ? '🧭' : '📜'),
       h('h2', {}, `${ok} / ${FLOW_N} 問 正解`),
       gemEl,
+      pen > 0 && h('p', { class: 'note center' }, `❌ まちがい ${FLOW_N - ok}問 → −${pen}`),
       poolNote(pool),
       bonusChips(bonus),
       btn('🧭 もう1回', () => go('memory', { phase: 'flow', subject }), 'primary big'),
@@ -413,7 +415,9 @@ function rushView(el, subject, opts) {
     clearInterval(iv);
     studyEnd();
     const mult = ME.MODES[mode].mult;
-    let gems = Math.max(1, Math.round((R.ok * 0.5 + R.news * 0.5) * mult));
+    R.missN = R.intro ? 0 : R.asked - R.ok;
+    R.pen = Math.round(R.missN * ME.MISS_PEN * mult);
+    let gems = Math.max(1, Math.round((R.ok * 0.5 + R.news * 0.5) * mult) - R.pen);
     // 同じ教科・同じモードのくり返しは💎がへる（デッキ試験の合格ボーナスはそのまま）
     // 難易度を変えても同じ教科なら同じ回数として数える
     R.repeat = repeatMult(`m:${R.test ? 'test' : 'rush'}:${R.subject}`);
@@ -433,9 +437,9 @@ function rushView(el, subject, opts) {
       const id = GACHA_CARDS[Math.floor(Math.random() * GACHA_CARDS.length)];
       if (addCard(id)) extra.push(id);
     }
-    logGems(`m:${R.subject}`, gems + fixed);
     // 新しい暗号との顔合わせが足りないうちは、暗号室のプールに保留
     R.pool = earn(`mem:${R.subject}`, gems);
+    logGems(`m:${R.subject}`, R.pool.got + R.pool.pooled + fixed);
     S().gems += fixed;
     R.gems = R.pool.got + fixed;
     R.bonus = claimActivity('memory');
@@ -466,6 +470,7 @@ function resultView(el, subject, R) {
         h('div', { class: 'mm-total' },
           [['🆕 新しく覚えた', R.news], ['⬆️ レベルアップ', R.ups], ['🔒 定着した', R.solid], ['✍️ 書けるように', R.wr], ['⚡ 最大コンボ', R.maxCombo]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))))),
       h('p', { class: 'note center mm-gems' }, `${R.pool?.pooled && !R.pool.released ? `🔒 💎 +${R.pool.pooled}（保留）${R.gems ? `・💎 +${R.gems}` : ''}` : `💎 +${R.gems + (R.pool?.released || 0)}`}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
+      R.pen > 0 && h('p', { class: 'note center' }, ...phrases(`❌ まちがい ${R.missN}回 → 💎−${R.pen}（あてずっぽうは得しない）`)),
       R.repeat?.mult < 1 && h('p', { class: 'note center' }, ...phrases(`🔁 今日この教科 ${R.repeat.n}回目 → 💎×${R.repeat.mult}（明日またもどる）`)),
       poolNote(R.pool),
       bonusChips(R.bonus),
