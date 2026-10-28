@@ -11,6 +11,7 @@ import { logGems } from './gemlog.js';
 import { earn, release, isTarget } from './pool.js';
 import { takeGems } from './gemcap.js';
 import { onPoolBoss, syncPlan, syncStreak } from './points.js';
+import { completeNext } from './nextstep.js';
 
 export function isUnlocked(id) {
   const u = UNIT[id];
@@ -157,6 +158,8 @@ export function finishWave({ mode, unitId, st, asked, firstCorrect, wrongList, s
   logGems(unitId && mode !== 'review' ? `w:${unitId}` : mode, out.pool.got + out.pool.pooled);
   out.gems = out.pool.got;
   out.bonus = claimActivity('wave');
+  // 🎯 次の一手（練習・ボスのウェーブで6問以上）
+  if (unitId && (mode === 'practice' || mode === 'boss') && asked >= 6) out.next = completeNext(unitId);
   syncPlan();
   syncStreak();
   saveNow();

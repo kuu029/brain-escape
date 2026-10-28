@@ -19,11 +19,19 @@ export const markUpdateReady = () => { updateReady = true; };
 let onGo = null; // 画面が変わったときに呼ぶ（BGM の切りかえ）
 export const setOnGo = (fn) => { onGo = fn; };
 let rendering = false;
+// 入れない画面のしかけ（次の一手を終えるまで、ほかのモードに入れない）。gate(name, params) が true なら onBlock()
+let gate = null, onBlock = null;
+export const setGate = (fn, blocked) => { gate = fn; onBlock = blocked; };
 export function go(name, params = {}) {
   // 0時〜5時は遊ぶ画面に入れない（いまの画面のまま、寝る時間のお知らせ）
   if (blockedAtNight(name, params)) {
     nightModal();
     // 画面を作っているとちゅうの移動（マップ → 看守チェックなど）で止めたときは、空の画面にならないようにホームへ
+    if (current && !rendering) return;
+    name = 'home'; params = {};
+  }
+  if (gate?.(name, params)) {
+    onBlock?.();
     if (current && !rendering) return;
     name = 'home'; params = {};
   }

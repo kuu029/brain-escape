@@ -1803,3 +1803,12 @@ svg.mapdir { width: 100%; max-width: 230px; height: auto; display: block; margin
 .nc-row .btn { padding: 0 4px; min-width: 0; }
 .nc-row b { text-align: center; }
 .nc-comment { font-size: 18px; font-weight: 800; color: var(--accent); }
+
+/* 🎯 次の一手・🎓 合格貯金 */
+.next-card { box-shadow: 0 0 0 2px #ffd640 inset, 0 0 18px #ffd64044; }
+.save-card { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; padding: 10px 14px; border-radius: 16px; background: linear-gradient(135deg, #2b6b4a55, #ffd64022); box-shadow: 0 0 0 1px #6ee7b766 inset; }
+.save-card .sv-top { display: flex; align-items: baseline; justify-content: space-between; font-weight: 800; }
+.save-card .sv-top b { font-size: 24px; color: #ffd640; }
+.save-card small { color: var(--dim); font-size: 12px; }
+.save-card .sv-proj { color: #6ee7b7; font-weight: 700; }
+.modes.locked .modes-head { opacity: .75; cursor: default; justify-content: center; text-align: center; font-size: 13px; }

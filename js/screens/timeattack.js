@@ -117,7 +117,7 @@ export function render(el, { unit }) {
     if (isBest) rec.best = ms;
     const rank = ok === TA_N && ms <= target * 600 ? 'S' : counts && ms <= target * 1000 ? 'A' : 'B';
     const rep = repeatMult(`ta:${unit}`); // 同じ単元のくり返しは💎がへる
-    const earned = Math.max(1, Math.round((5 + ok) * rep.mult));
+    const earned = rep.mult ? Math.max(1, Math.round((5 + ok) * rep.mult)) : 0;
     const pool = earn(u.subject, earned); // まだ倒していないボスがいる棟では保留
     logGems(`ta:${unit}`, pool.got + pool.pooled);
     const gems = pool.got + pool.released;

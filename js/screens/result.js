@@ -14,6 +14,7 @@ import { unitNext } from './map.js';
 import { flyGems } from '../ui/gems.js';
 import { poolInfo } from '../game/pool.js';
 import { capText } from '../game/gemcap.js';
+import { yen } from '../game/nextstep.js';
 
 // 数字がカチカチ増えていく表示
 function countUp(to, fmt, delay) {
@@ -80,7 +81,8 @@ export function render(el, r) {
     h('h2', {}, head.t),
     bonusChips(r.bonus),
     poolNote(r.pool),
-    r.repeat && r.repeat.mult < 1 && h('p', { class: 'note center rs-repeat' }, ...phrases(`🔁 今日この単元 ${r.repeat.n}回目 → 💎×${r.repeat.mult}（ちがう単元なら満額。明日またもどる）`)),
+    r.next && h('div', { class: 'pool-note got' }, h('b', {}, `🎯 次の一手クリア！（今日 ${r.next.n}つ目）`), h('span', {}, r.next.yen ? `🎓 合格貯金 +${yen(r.next.yen)}${r.next.week ? `（7日つづけたボーナス ${yen(r.next.week)} こみ）` : ''}　いま ${yen(r.next.bal)}` : `🎓 合格貯金 いま ${yen(r.next.bal)}（今日の分はもうたまった）`), r.next.n === 1 && h('small', {}, '🔓 ほかのモードも自由にえらべるようになった')),
+    r.repeat && r.repeat.mult < 1 && h('p', { class: 'note center rs-repeat' }, ...phrases(r.repeat.mult === 0 ? `🔁 今日この単元 ${r.repeat.n}回目 → 💎は入らない（ちがう単元や「次の一手」なら入る。明日またもどる）` : `🔁 今日この単元 ${r.repeat.n}回目 → 💎×${r.repeat.mult}（ちがう単元なら満額。明日またもどる）`)),
     h('p', { class: 'rs-sub' }, rank ? `${RANK_TEXT[rank]} ${head.s}` : head.s),
     h('div', { class: 'stats tickets' },
       h('div', {}, countUp(rate, (v) => `${v}%`, 0), h('small', {}, `正答率（${r.firstCorrect}/${r.asked}）`)),

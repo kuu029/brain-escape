@@ -259,7 +259,7 @@ export function defenseView(el, subject, started = false) {
     if (win) lr.wins++;
     const rep = repeatMult(`md:${subject}`, DEF_REPEAT_RULE); // 同じ教科のくり返しは💎がへる（むずかしさを変えても同じ回数）
     const capped = D.defGemsRaw(st) > D.defGemCap(st);
-    const earned = Math.max(1, Math.round(D.defGems(st) * (isEvent('gemfever') ? 2 : 1) * rep.mult)); // 週末イベント「💎フィーバー」
+    const earned = rep.mult ? Math.max(1, Math.round(D.defGems(st) * (isEvent('gemfever') ? 2 : 1) * rep.mult)) : 0; // 週末イベント「💎フィーバー」
     // 新しい暗号との顔合わせが足りないうちは、暗号室のプールに保留
     const pool = earn(`mem:${subject}`, earned);
     logGems(`md:${subject}`, pool.got + pool.pooled);
@@ -277,7 +277,7 @@ export function defenseView(el, subject, started = false) {
     closeSession(win ? 'clear' : 'fail');
     saveNow();
     sfx(win ? 'win' : 'ng');
-    const gemEl = h('p', { class: 'note center' }, `${pool.pooled && !pool.released ? `🔒 💎 +${earned}（保留）` : `💎 +${gems}`}${rep.mult < 1 ? `（今日 ${rep.n}回目 ×${rep.mult}）` : ''}${capped ? `（1分あたり最大${D.DEF_PER_MIN}）` : ''}${D.defMissPen(st) > 0 ? `（まちがい ${st.misses}回 −${D.defMissPen(st)}）` : ''}`);
+    const gemEl = h('p', { class: 'note center' }, `${pool.pooled && !pool.released ? `🔒 💎 +${earned}（保留）` : `💎 +${gems}`}${rep.mult < 1 ? `（今日 ${rep.n}回目 ${rep.mult ? `×${rep.mult}` : '→ もう💎なし'}）` : ''}${capped ? `（1分あたり最大${D.DEF_PER_MIN}）` : ''}${D.defMissPen(st) > 0 ? `（まちがい ${st.misses}回 −${D.defMissPen(st)}）` : ''}`);
     setTimeout(() => {
       el.replaceChildren(h('div', { class: 'center-col' },
         h('div', { class: 'big-em' }, win ? '🏆' : '💥'),

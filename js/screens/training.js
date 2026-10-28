@@ -1,5 +1,6 @@
 // 訓練（ステップ解説）: 1ステップ=1操作。小問に正解しないと次へ進めない（スキップ不可）
-import { h, btn, readBtn, readMs, modal, confirmBox, sleep } from '../core/ui.js';
+import { completeNext, yen } from '../game/nextstep.js';
+import { h, btn, readBtn, readMs, modal, confirmBox, sleep, toast } from '../core/ui.js';
 import { tex, rich } from '../core/mathml.js';
 import { makeRng, newSeed } from '../core/rng.js';
 import { checkAnswer } from '../core/check.js';
@@ -115,7 +116,9 @@ export function render(el, { unit, lesson }) {
     studyEnd();
     closeSession('clear');
     const bonus = claimActivity('training');
+    const nx = completeNext(unit); // 🎯 次の一手
     saveNow();
+    if (nx) toast(`🎯 次の一手クリア！ 🎓 合格貯金 +${yen(nx.yen)}（いま ${yen(nx.bal)}）`, 3200);
     sfx('win');
     bar.firstChild.style.width = '100%';
     const nextL = u.lessons.find((l) => !us.lessons[l.id]);

@@ -13,11 +13,11 @@ export const SLOT_MAX = 3; // 1日にもらえる回数
 export const FIRST_EXAM_GEMS = 20;
 export const BONUS_HOURS = [6, 22]; // 6時台〜22時台
 // くり返し減衰: 同じ日に同じもの（同じ単元のウェーブ・同じ暗号ラッシュなど）をくり返すと、💎がへる
-//   3回目までは満額、4〜5回目は 60%、6回目からは 30%。日がかわるともどる。ちがう単元・モードなら満額
-export const REPEAT_RULE = [[3, 1], [5, 0.6], [Infinity, 0.3]];
+//   2回目までは満額、3回目は 50%、4回目からは 0（周回しても💎は入らない）。日がかわるともどる。ちがう単元・モードなら満額
+export const REPEAT_RULE = [[2, 1], [3, 0.5], [Infinity, 0]];
 export const repeatMultOf = (n, rule = REPEAT_RULE) => rule.find(([k]) => n <= k)[1];
-// 暗号ディフェンスは1回が短いので、きびしめ（2回目まで満額、3〜4回目 50%、5回目から 20%）
-export const DEF_REPEAT_RULE = [[2, 1], [4, 0.5], [Infinity, 0.2]];
+// 暗号ディフェンスは1回が短いので、もっときびしく（1回目だけ満額、2回目 50%、3回目から 0）
+export const DEF_REPEAT_RULE = [[1, 1], [2, 0.5], [Infinity, 0]];
 
 function state() {
   const s = S();

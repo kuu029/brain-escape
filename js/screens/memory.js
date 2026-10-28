@@ -197,7 +197,8 @@ function flowView(el, subject, bet = 0) {
     if (bet) return finishChal();
     studyEnd();
     const pen = Math.round((FLOW_N - ok) * ME.MISS_PEN);
-    const earned = Math.max(1, Math.round(Math.max(0, ok - pen) * repeatMult(`flow:${subject}`).mult));
+    const fm = repeatMult(`flow:${subject}`).mult;
+    const earned = fm ? Math.max(1, Math.round(Math.max(0, ok - pen) * fm)) : 0; // くり返しすぎると0
     const pool = earn(`mem:${subject}`, earned);
     logGems('flow', pool.got + pool.pooled);
     const gems = pool.got + pool.released;
@@ -421,7 +422,7 @@ function rushView(el, subject, opts) {
     // 同じ教科・同じモードのくり返しは💎がへる（デッキ試験の合格ボーナスはそのまま）
     // 難易度を変えても同じ教科なら同じ回数として数える
     R.repeat = repeatMult(`m:${R.test ? 'test' : 'rush'}:${R.subject}`);
-    gems = Math.max(1, Math.round(gems * R.repeat.mult));
+    gems = R.repeat.mult ? Math.max(1, Math.round(gems * R.repeat.mult)) : 0; // くり返しすぎると0
     let fixed = 0; // デッキ試験のはじめての合格（保留しない）
     const extra = [];
     if (R.test) {
@@ -471,7 +472,7 @@ function resultView(el, subject, R) {
           [['🆕 新しく覚えた', R.news], ['⬆️ レベルアップ', R.ups], ['🔒 定着した', R.solid], ['✍️ 書けるように', R.wr], ['⚡ 最大コンボ', R.maxCombo]].map(([k, v]) => h('div', {}, h('b', {}, String(v)), h('small', {}, k))))),
       h('p', { class: 'note center mm-gems' }, `${R.pool?.pooled && !R.pool.released ? `🔒 💎 +${R.pool.pooled}（保留）${R.gems ? `・💎 +${R.gems}` : ''}` : `💎 +${R.gems + (R.pool?.released || 0)}`}${R.mode !== 'easy' ? `（${ME.MODES[R.mode].name} ×${ME.MODES[R.mode].mult}）` : ''}`),
       R.pen > 0 && h('p', { class: 'note center' }, ...phrases(`❌ まちがい ${R.missN}回 → 💎−${R.pen}（あてずっぽうは得しない）`)),
-      R.repeat?.mult < 1 && h('p', { class: 'note center' }, ...phrases(`🔁 今日この教科 ${R.repeat.n}回目 → 💎×${R.repeat.mult}（明日またもどる）`)),
+      R.repeat?.mult < 1 && h('p', { class: 'note center' }, ...phrases(R.repeat.mult === 0 ? `🔁 今日この教科 ${R.repeat.n}回目 → 💎は入らない（明日またもどる）` : `🔁 今日この教科 ${R.repeat.n}回目 → 💎×${R.repeat.mult}（明日またもどる）`)),
       poolNote(R.pool),
       bonusChips(R.bonus),
       R.cards?.length > 0 && h('p', { class: 'note center' }, `🃏 カードゲット: ${R.cards.map((id) => GAME_CARDS.find((c) => c.id === id)?.name || id).join('、')}`),

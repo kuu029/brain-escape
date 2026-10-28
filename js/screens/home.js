@@ -3,6 +3,7 @@ import { allPools } from '../game/pool.js';
 import { syncPlan, syncStreak } from '../game/points.js';
 import { noteColor } from '../game/colorlog.js';
 import { openNoteCheck, noteWeek } from '../ui/notecheck.js';
+import { nextTask, nextDoneToday, freeOpen, savings, projection, yen, SAVE } from '../game/nextstep.js';
 import { h, btn, toast, modal, phrases } from '../core/ui.js';
 import { S, streakAlive, dayLog, cleared, save, today } from '../core/store.js';
 import { UNITS, unitsOf } from '../units/registry.js';
@@ -139,7 +140,9 @@ export function render(el) {
       countdown(),
       eventCard(),
       // ① 迷ったらこれ（計画から1つ）　② 今週の計画　③ 今日の指令　④ 自分でえらぶ（たたんである）
-      todayCard(),
+      // 🎯 次の一手（1つ目を終えるまで、ほかのモードは閉じている）＋ 🎓 合格貯金
+      nextCard(),
+      savingsCard(),
       planCard(el),
       h('div', { class: 'mboard' },
         h('h3', { class: 'mboard-title', html: `${iconHTML('icon-mission', '📋', '')} 今日の指令` }),
@@ -149,7 +152,7 @@ export function render(el) {
         // 📓 ノート（紙）を家族に見せると、家族がごほうびをえらんでくれる
         s.settings.unlockSecret && btn(h('span', {}, '📓 ノートを家族に見せる', h('small', {}, `　ごほうびは家族がえらぶ｜今週 ${noteWeek()}回`)), () => openNoteCheck(() => go('home')), 'ghost small hm-note'),
         h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ リベンジ待ち 👻${s.reviewQueue.length}`)),
-      allModes(),
+      freeOpen() || !nextTask() ? allModes() : h('div', { class: 'modes locked' }, h('div', { class: 'modes-head' }, h('span', {}, ...phrases('🔒 自分でえらぶ（5つの棟・暗号室・模試）は、 今日の「次の一手」を1つ終えると開く')))),
     ),
     h('nav', { class: 'bottom-nav' },
       [['🎰', 'ガチャ', 'collection', { tab: 'gacha' }, 'gacha'], ['🃏', 'コレクション', 'collection', {}, 'collection'], ['📊', '記録', 'records', {}, 'records'], ['⚙️', '設定', 'settings', {}, 'settings']].map(([em, label, to, p, key]) =>
@@ -209,6 +212,33 @@ function todayPick() {
   }
   return { em: '🔐', art: cardSprite('golem'), label: '新しい暗号を覚える', sub: '暗号室・約3分', to: ['memory', {}] };
 }
+// 🎯 次の一手: 5教科を順番に。1つ目は合格貯金 +¥300、2つ目 +¥100、3つ目からは💎だけ
+function nextCard() {
+  const t = nextTask();
+  if (!t) return todayCard();
+  const u = UNIT[t.unit];
+  const n = nextDoneToday();
+  const gain = n === 0 ? `🎓 +${yen(SAVE.first)}` : n === 1 ? `🎓 +${yen(SAVE.second)}` : '';
+  return h('button', { class: 'today-card next-card', type: 'button', onclick: () => { sfx('tap'); go(...t.cta.to); } },
+    h('span', { class: 'tc-em', html: spriteHTML(`boss-${u.id}`, BOSSES[u.id]?.emoji || u.emoji, '') }),
+    h('span', { class: 'tc-body' },
+      h('small', { class: 'tc-tag' }, n === 0 ? '🎯 次の一手（今日の1つ目）' : `🎯 次の一手（今日 ${n + 1}つ目）`),
+      h('b', { html: t.cta.label.replace(/^\S+\s/, '') }),
+      h('small', { class: 'tc-sub' }, ...phrases(`${t.subjJa}｜${plainTitle(u.title)}・ 約5〜10分${gain ? ` ｜${gain}` : ''}`))),
+    h('span', { class: 'tc-go' }, '▶'));
+}
+const plainTitle = (t) => String(t).replace(/<[^>]+>/g, '');
+// 🎓 合格貯金: いまの額と、このまま毎日やったときの見こみ
+function savingsCard() {
+  const sv = savings();
+  const p1 = projection(1), p2 = projection(2);
+  const school = S().settings.firstChoice;
+  return h('div', { class: 'save-card' },
+    h('div', { class: 'sv-top' }, h('span', {}, '🎓 合格貯金'), h('b', {}, yen(sv.bal))),
+    h('small', {}, ...phrases(`${school ? `第1志望（${school}）` : '第1志望'}に合格で受け取り（不合格でも半分）`)),
+    h('small', { class: 'sv-proj' }, ...phrases(`このまま毎日「次の一手」をやると、 入試の日${p1.guess ? '（仮: 3/9）' : ''}に 約${yen(p1.yen)}（1日2つなら 約${yen(p2.yen)}）`)));
+}
+
 function todayCard() {
   const t = todayPick();
   return h('button', { class: 'today-card', type: 'button', onclick: () => { sfx('tap'); go(...t.to); } },

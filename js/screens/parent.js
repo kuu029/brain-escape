@@ -13,6 +13,7 @@ import { readStats } from '../game/readlog.js';
 import { colorStats } from '../game/colorlog.js';
 import { FB_KINDS, fbList, fbText } from '../ui/feedback.js';
 import { noteList, giftText } from '../ui/notecheck.js';
+import { savings, projection, yen, SAVE, streakDays } from '../game/nextstep.js';
 
 const dayMs = 86400000;
 const pastDays = (n) => Array.from({ length: n }, (_, i) => today(new Date(Date.now() - (n - 1 - i) * dayMs)));
@@ -157,6 +158,22 @@ function colorBox() {
     h('small', { class: 'note' }, '「カラーにする」を押してから10分のうちに、勉強が2分未満だと ⚠️。カラーのまま ほかのアプリに行ったのかもしれません。'));
 }
 
+// 🎓 合格貯金: いまの額・見こみ・第1志望の名前・たまった記録
+function savingsBox(el) {
+  const s = S();
+  const sv = savings();
+  const p1 = projection(1), p2 = projection(2);
+  const inp = h('input', { class: 'mr-input', type: 'text', maxlength: '20', placeholder: '第1志望の学校名', value: s.settings.firstChoice || '' });
+  const days = (s.next?.hist || []).filter((x) => x.at >= Date.now() - 7 * dayMs);
+  return h('div', { class: 'pa-card pa-save' },
+    h('h3', { class: 'pa-h' }, '🎓 合格貯金', h('small', {}, `いま ${yen(sv.bal)}・上限 ${yen(SAVE.max)}`)),
+    h('p', { class: 'note' }, ...phrases(`第1志望に合格したら、たまった額を家族から渡してください（不合格でも半分）。 たまり方: はじめ ${yen(SAVE.start)}、 「次の一手」その日の1つ目 +${yen(SAVE.first)}・2つ目 +${yen(SAVE.second)}、 7日つづけるごとに +${yen(SAVE.week)}。`)),
+    h('p', { class: 'note' }, ...phrases(`見こみ: 入試の日（${p1.date}${p1.guess ? '・仮。設定で入試日を入れると正確になります' : ''}）まで毎日1つなら 約${yen(p1.yen)}、 2つなら 約${yen(p2.yen)}。`)),
+    h('p', { class: 'note' }, `この7日の「次の一手」${days.length}回（${new Set(days.map((x) => x.date)).size}日）・いま ${streakDays()}日つづいている`),
+    h('div', { class: 'pa-add' }, inp, btn('保存', () => { s.settings.firstChoice = inp.value.trim().slice(0, 20); saveNow(); toast('第1志望を保存した'); el.querySelector('.pa-save')?.replaceWith(savingsBox(el)); }, 'primary small')),
+    h('div', { class: 'rw-log' }, sv.log.slice(-8).reverse().map((x) => h('div', {}, `${x.date.slice(5).replace('-', '/')}　+${yen(x.yen)}　${x.why}`))));
+}
+
 // 📓 ノートチェック: いつ見せたか・何をあげたか
 function noteBox() {
   const list = noteList().filter((x) => x.at >= Date.now() - 14 * dayMs);
@@ -268,6 +285,9 @@ export function summaryText() {
   const R = rewardState();
   const used = R.log.filter((x) => x.at >= Date.now() - 7 * dayMs).reduce((a, x) => a + x.min, 0);
   lines.push('', `💎 この7日で 💎${gems}｜🌈 カラー解除 ${used}分 使用`);
+  const sv = savings();
+  const nd = (s.next?.hist || []).filter((x) => x.date >= days[0]);
+  lines.push(`🎯 次の一手 ${nd.length}回（${new Set(nd.map((x) => x.date)).size}日）｜🎓 合格貯金 ${yen(sv.bal)}`);
   const nts = noteList().filter((x) => x.at >= Date.now() - 7 * dayMs);
   if (nts.length) lines.push(`📓 ノートチェック ${nts.length}回`);
   const fbn = fbList().filter((f) => f.status === 'new').length;
@@ -315,6 +335,7 @@ export function render(el) {
       subjectTable(bu),
       weakList(bu),
       examBox(),
+      savingsBox(el),
       noteBox(),
       feedbackBox(el),
       ratioBox(),
