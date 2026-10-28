@@ -149,8 +149,8 @@ export function render(el) {
         mlist,
         hourLine(),
         poolLine(),
-        // 📓 ノート（紙）を家族に見せると、家族がごほうびをえらんでくれる
-        s.settings.unlockSecret && btn(h('span', {}, '📓 ノートを家族に見せる', h('small', {}, `　ごほうびは家族がえらぶ｜今週 ${noteWeek()}回`)), () => openNoteCheck(() => go('home')), 'ghost small hm-note'),
+        // 📓 ノート・学校のワーク（紙）を家族に見せると、家族がごほうびをえらんでくれる
+        s.settings.unlockSecret && btn(h('span', {}, '📓 ノート・ワークを家族に見せる', h('small', {}, `　ごほうびは家族がえらぶ｜今週 ${noteWeek()}回`)), () => openNoteCheck(() => go('home')), 'ghost small hm-note'),
         h('p', { class: 'note center' }, `今日のプレイ時間 ${mins} 分 ／ リベンジ待ち 👻${s.reviewQueue.length}`)),
       freeOpen() || !nextTask() ? allModes() : h('div', { class: 'modes locked' }, h('div', { class: 'modes-head' }, h('span', {}, ...phrases('🔒 自分でえらぶ（5つの棟・暗号室・模試）は、 今日の「次の一手」を1つ終えると開く')))),
     ),

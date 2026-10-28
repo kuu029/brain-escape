@@ -1,6 +1,6 @@
 // おうちの人ページ: 勉強時間・教科ごとの正答率・苦手な単元・今週の計画・模試・ごほうびの記録を1画面で
 //   設定から入る（合言葉を設定していれば、合言葉を入れたときだけ）
-import { h, btn, toast, modal, phrases } from '../core/ui.js';
+import { h, btn, toast, modal, phrases, confirmBox } from '../core/ui.js';
 import { S, today, streakAlive, saveNow } from '../core/store.js';
 import { UNIT } from '../units/registry.js';
 import { go } from '../core/router.js';
@@ -179,10 +179,10 @@ function noteBox() {
   const list = noteList().filter((x) => x.at >= Date.now() - 14 * dayMs);
   const fmt = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]})`; };
   return h('div', { class: 'pa-card' },
-    h('h3', { class: 'pa-h' }, '📓 ノートチェック', h('small', {}, `この14日 ${list.length}回`)),
+    h('h3', { class: 'pa-h' }, '📓 ノート・ワークチェック', h('small', {}, `この14日 ${list.length}回`)),
     list.length ? h('div', { class: 'pa-list' }, list.slice(0, 10).map((x) => h('div', { class: 'pa-row' }, h('span', {}, `${fmt(x.at)}${x.comment ? `「${x.comment}」` : ''}`), h('b', {}, x.give.length ? giftText(x.give) : 'ほめた'))))
       : h('p', { class: 'note' }, 'まだありません。'),
-    h('small', { class: 'note' }, '弟さんがホームの「📓 ノートを家族に見せる」を押したら、ノートを見て、合言葉を入れてごほうびをえらんでください。ここであげた分は、💎の2時間の上限や、景品ポイントの週の上限には入りません。'));
+    h('small', { class: 'note' }, '弟さんがホームの「📓 ノート・ワークを家族に見せる」を押したら、ノートやワークを見て、合言葉を入れてごほうびをえらんでください。🎓 合格貯金もふやせます（合計の上限 ¥100,000 まで）。ここであげた分は、💎の2時間の上限や、景品ポイントの週の上限には入りません。'));
 }
 
 // 📮 届いた要望: 「見た」「対応した」の印・まとめてコピー（Claude に貼りつけて直してもらう）
@@ -215,13 +215,27 @@ function pointBox(el) {
   const pt = h('input', { class: 'mr-input', type: 'number', inputmode: 'numeric', min: '1', placeholder: 'pt' });
   const redo = () => el.querySelector('.pa-points')?.replaceWith(pointBox(el));
   const wait = p.reqs.filter((r) => r.status === 'wait');
-  const used30 = p.log.filter((e) => e.key === 'use' && e.at >= Date.now() - 30 * dayMs).reduce((a, e) => a - e.pt, 0);
+  const used30 = p.log.filter((e) => (e.key === 'use' || e.key === 'adj') && e.at >= Date.now() - 30 * dayMs).reduce((a, e) => a - e.pt, 0);
   return h('div', { class: 'pa-card pa-points' },
     h('h3', { class: 'pa-h' }, '🍬 景品ポイント', h('small', {}, `のこり ${p.bal}pt（予約中 ${PT.held()}pt）・今週 ${PT.weekEarned()}/${PT.WEEK_CAP}pt${PT.weekConvPt() ? `＋解除券から${PT.weekConvPt()}pt` : ''}・この30日で使った ${used30}pt`)),
     wait.length > 0 && h('p', { class: 'note' }, `⏳ たのまれている: ${wait.map((r) => `${r.name}${r.pt ? `（${r.pt}pt）` : ''}`).join('、')}。渡したら、弟さんの「コレクション → 🍬 景品」で「渡した」を押して合言葉を入れてください。`),
     h('b', {}, '景品リスト'),
     p.catalog.length ? h('div', { class: 'pa-list' }, p.catalog.map((it) => h('div', { class: 'pa-row' }, h('span', {}, it.name), h('b', {}, `${it.pt}pt`), btn('消す', () => { PT.removeItem(it.id); redo(); }, 'ghost small')))) : h('p', { class: 'note' }, 'まだありません。下から追加してください。'),
-    h('div', { class: 'pa-add' }, name, pt, btn('追加', () => { if (!PT.addItem(name.value, pt.value)) return toast('名前と pt を入れてください'); redo(); }, 'primary small')));
+    h('div', { class: 'pa-add' }, name, pt, btn('追加', () => { if (!PT.addItem(name.value, pt.value)) return toast('名前と pt を入れてください'); redo(); }, 'primary small')),
+    h('b', {}, 'ポイントをへらす'),
+    h('small', { class: 'note' }, 'アプリを通さずに景品を渡したときなどに。'),
+    (() => {
+      const why = h('input', { class: 'mr-input', type: 'text', maxlength: '30', placeholder: '理由（例: お菓子を買った）' });
+      const n = h('input', { class: 'mr-input', type: 'number', inputmode: 'numeric', min: '1', placeholder: 'pt' });
+      return h('div', { class: 'pa-add' }, why, n, btn('へらす', async () => {
+        const v = Math.round(Number(n.value));
+        if (!(v > 0)) return toast('pt を入れてください');
+        if (!(await confirmBox(`${Math.min(v, p.bal)}pt へらす？`, `のこり ${p.bal}pt → ${Math.max(0, p.bal - v)}pt`, 'へらす', 'やめる'))) return;
+        const got = PT.deductPt(v, why.value.trim());
+        toast(got ? `🍬 −${got}pt` : 'へらせるポイントがない');
+        redo();
+      }, 'ghost small'));
+    })());
 }
 
 // 勉強とカラー解除の比率（この7日）: 勉強1分あたり、カラー解除が何分か。1分以下（1対1以内）が目標
@@ -289,7 +303,7 @@ export function summaryText() {
   const nd = (s.next?.hist || []).filter((x) => x.date >= days[0]);
   lines.push(`🎯 次の一手 ${nd.length}回（${new Set(nd.map((x) => x.date)).size}日）｜🎓 合格貯金 ${yen(sv.bal)}`);
   const nts = noteList().filter((x) => x.at >= Date.now() - 7 * dayMs);
-  if (nts.length) lines.push(`📓 ノートチェック ${nts.length}回`);
+  if (nts.length) lines.push(`📓 ノート・ワークチェック ${nts.length}回`);
   const fbn = fbList().filter((f) => f.status === 'new').length;
   if (fbn) lines.push(`📮 新しい要望 ${fbn}件（おうちの人ページで見られます）`);
   const rt = ratio7();

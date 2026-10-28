@@ -94,6 +94,8 @@ export function savings() {
   if (!s.savings) s.savings = { bal: SAVE.start, log: [{ date: today(), yen: SAVE.start, why: 'スタート' }] };
   return s.savings;
 }
+// 家族がえらんで足す（📓 ノート・ワークチェック）。上限 SAVE.max まで。戻り値: 足した額
+export const addSavings = (yen, why) => { const g = deposit(yen, why); save(); return g; };
 function deposit(yen, why) {
   const sv = savings();
   const got = Math.max(0, Math.min(yen, SAVE.max - sv.bal));

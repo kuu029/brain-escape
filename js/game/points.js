@@ -53,6 +53,16 @@ function addLog(e) {
   if (p.log.length > 300) p.log.splice(0, p.log.length - 300);
 }
 
+// おうちの人が直接へらす（例: 自分で買ってきた・約束をやぶった）。0 より下にはしない。戻り値: へらした pt
+export function deductPt(pt, why = '') {
+  const p = pts();
+  const n = Math.min(Math.max(0, Math.round(Number(pt) || 0)), p.bal);
+  if (!n) return 0;
+  p.bal -= n;
+  addLog({ key: 'adj', pt: -n, label: `おうちの人がへらした${why ? `（${String(why).slice(0, 30)}）` : ''}` });
+  save();
+  return n;
+}
 // 家族がえらんで足すポイント（📓 ノートチェック）: 週の上限にはかけない
 export function grantPt(key, pt, label) {
   if (!(pt > 0)) return 0;
